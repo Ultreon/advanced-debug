@@ -202,7 +202,7 @@ public class DebugGui implements IIngameOverlay {
         StringBuilder sb = new StringBuilder();
 
 //        sb.append(ChatFormatting.DARK_AQUA).append(text);
-        sb.append(WHITE).append(UNDERLINE).append(text);
+        sb.append(WHITE).append(ITALIC).append(text);
         sb.append(GRAY).append(": ");
         sb.append(format(obj));
 

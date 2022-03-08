@@ -1,6 +1,7 @@
 package com.ultreon.mods.advanceddebug;
 
 import com.ultreon.mods.advanceddebug.client.menu.DebugGui;
+import com.ultreon.mods.advanceddebug.init.ModDebugFormatters;
 import com.ultreon.mods.advanceddebug.init.ModOverlays;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.event.InputEvent;
@@ -51,6 +52,7 @@ public class AdvancedDebug {
         LOGGER.debug("Doing client side setup rn.");
         LOGGER.debug("Registering modded overlays...");
         ModOverlays.registerAll();
+        ModDebugFormatters.initClass();
         LOGGER.debug("Client side setup done!");
     }
 }

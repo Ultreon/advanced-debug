@@ -95,7 +95,8 @@ public abstract class DebugRenderContext {
     }
 
     private void drawRight(PoseStack pose, String text, int line, Object obj, Object... objects) {
-        drawLine(pose, DebugGui.format(text, obj, objects), this.width - HORIZONTAL_OFFSET - mc.font.width(text), VERTICAL_OFFSET + line * (mc.font.lineHeight + 2));
+        String format = DebugGui.format(text, obj, objects);
+        drawLine(pose, format, this.width - HORIZONTAL_OFFSET - mc.font.width(format), VERTICAL_OFFSET + line * (mc.font.lineHeight + 2));
     }
 
     private void drawRight(PoseStack pose, String text, int line) {
