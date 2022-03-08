@@ -19,6 +19,7 @@ plugins {
 apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'org.spongepowered.mixin'
 apply plugin: 'eclipse'
+apply plugin: 'maven-publish'
 
 group = 'com.ultreon.mods'
 version = '1.0.0'
@@ -180,3 +181,23 @@ jar {
 }
 
 jar.finalizedBy('reobfJar')
+
+publishing {
+    repositories {
+        maven {
+            name = "Main"
+            url = uri("${projectDir}/.maven_repo")
+        }
+        mavenLocal()
+    }
+    publications {
+        //noinspection GroovyAssignabilityCheck
+        gpr(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
+tasks.withType(GenerateModuleMetadata) {
+    enabled = false
+}
