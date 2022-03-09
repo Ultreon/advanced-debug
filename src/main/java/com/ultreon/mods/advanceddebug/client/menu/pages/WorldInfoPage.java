@@ -22,9 +22,6 @@ public class WorldInfoPage extends DebugPage {
 
             ctx.left("Spawn Angle", dimensionInfo.getSpawnAngle());
             ctx.left("Difficulty", dimensionInfo.getDifficulty());
-            ctx.left("Day Time", dimensionInfo.getDayTime());
-            ctx.left("Game Time", dimensionInfo.getGameTime());
-            ctx.left("Fog Distance", dimensionInfo.getClearColorScale());
             ctx.left("Spawn", new Vec3i(dimensionInfo.getXSpawn(), dimensionInfo.getYSpawn(), dimensionInfo.getZSpawn()));
 
             ctx.right("Difficulty Locked", dimensionInfo.isDifficultyLocked());
