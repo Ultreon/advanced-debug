@@ -5,12 +5,4 @@
   <groupId>com.ultreon.mods</groupId>
   <artifactId>advanced-debug</artifactId>
   <version>1.0.0</version>
-  <dependencies>
-    <dependency>
-      <groupId>net.minecraftforge</groupId>
-      <artifactId>forge</artifactId>
-      <version>1.18.1-39.1.0_mapped_official_1.18.1_at_b610833011f7264fedbbfb14c31d9bcbada8eba9</version>
-      <scope>runtime</scope>
-    </dependency>
-  </dependencies>
 </project>
