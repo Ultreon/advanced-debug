@@ -3,8 +3,8 @@ package com.ultreon.mods.advanceddebug.client.menu.pages;
 import com.mojang.blaze3d.platform.Monitor;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.ultreon.mods.advanceddebug.client.menu.DebugPage;
-import com.ultreon.mods.advanceddebug.client.menu.DebugRenderContext;
+import com.ultreon.mods.advanceddebug.api.client.menu.DebugPage;
+import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
 import net.minecraft.client.Minecraft;
 
 public class ComputerPage extends DebugPage {
@@ -16,7 +16,7 @@ public class ComputerPage extends DebugPage {
     }
 
     @Override
-    public void render(PoseStack poseStack, DebugRenderContext ctx) {
+    public void render(PoseStack poseStack, IDebugRenderContext ctx) {
         Monitor monitor = window.findBestMonitor();
         int screenWidth = window.getScreenWidth();
         int screenHeight = window.getScreenHeight();

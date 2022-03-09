@@ -1,8 +1,9 @@
 package com.ultreon.mods.advanceddebug.client.menu.pages;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.ultreon.mods.advanceddebug.client.menu.DebugPage;
-import com.ultreon.mods.advanceddebug.client.menu.DebugRenderContext;
+import com.ultreon.mods.advanceddebug.api.client.menu.DebugPage;
+import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
+import com.ultreon.mods.advanceddebug.api.common.MoonPhase;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
@@ -13,7 +14,7 @@ public class WorldPage extends DebugPage {
     }
 
     @Override
-    public void render(PoseStack poseStack, DebugRenderContext ctx) {
+    public void render(PoseStack poseStack, IDebugRenderContext ctx) {
         if (Minecraft.getInstance().level != null) {
             ClientLevel dimension = Minecraft.getInstance().level;
 
@@ -22,7 +23,7 @@ public class WorldPage extends DebugPage {
             ctx.left("Loaded Entities", dimension.getEntityCount());
             ctx.left("Difficulty", dimension.getDifficulty().getDisplayName().getString());
             ctx.left("Sea Level", dimension.getSeaLevel());
-            ctx.left("Moon Phase", getMoonPhase(dimension.getMoonPhase()));
+            ctx.left("Moon Phase", MoonPhase.fromIndex(dimension.getMoonPhase()));
             ctx.left("Spawn Angle", getAngle(dimension.getLevelData().getSpawnAngle()));
             ctx.left("Dimension", dimension.dimension().location());
             ctx.left("Day Time", dimension.getDayTime());

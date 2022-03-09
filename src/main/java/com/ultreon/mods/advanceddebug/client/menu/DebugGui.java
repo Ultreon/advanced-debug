@@ -2,11 +2,14 @@ package com.ultreon.mods.advanceddebug.client.menu;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.ultreon.mods.advanceddebug.AdvancedDebug;
+import com.ultreon.mods.advanceddebug.api.client.menu.DebugPage;
+import com.ultreon.mods.advanceddebug.api.client.menu.Formatter;
+import com.ultreon.mods.advanceddebug.api.client.menu.IDebugGui;
+import com.ultreon.mods.advanceddebug.api.common.*;
+import com.ultreon.mods.advanceddebug.api.events.IInitPagesEvent;
 import com.ultreon.mods.advanceddebug.client.input.KeyBindingList;
 import com.ultreon.mods.advanceddebug.client.menu.pages.DefaultPage;
-import com.ultreon.mods.advanceddebug.client.registry.DbgFormatterRegistry;
-import com.ultreon.mods.advanceddebug.common.Formattable;
-import com.ultreon.mods.advanceddebug.common.*;
+import com.ultreon.mods.advanceddebug.client.registry.FormatterRegistry;
 import com.ultreon.mods.advanceddebug.util.InputUtils;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -33,11 +36,11 @@ import static net.minecraft.util.FastColor.ARGB32.*;
  * @author (partial) CoFH - https://github.com/CoFH
  */
 @SuppressWarnings("unused")
-public class DebugGui implements IIngameOverlay {
+public final class DebugGui implements IIngameOverlay, IDebugGui {
     private static final DebugGui INSTANCE = new DebugGui();
     private static final List<DebugPage> pages = new ArrayList<>();
     private static final DebugPage DEFAULT = new DefaultPage();
-    private static final DbgFormatterRegistry FORMATTER_REGISTRY = DbgFormatterRegistry.get();
+    private static final FormatterRegistry FORMATTER_REGISTRY = FormatterRegistry.get();
     private static final Formatter<Object> DEFAULT_FORMATTER = new Formatter<>(Object.class, AdvancedDebug.res("object")) {
         @Override
         public void format(Object obj, StringBuilder sb) {
@@ -98,6 +101,7 @@ public class DebugGui implements IIngameOverlay {
         return Collections.unmodifiableList(pages);
     }
 
+    @Override
     @SuppressWarnings("UnusedReturnValue")
     public <T extends DebugPage> T registerPage(T page) {
         pages.add(page);
@@ -108,6 +112,7 @@ public class DebugGui implements IIngameOverlay {
         return page;
     }
 
+    @Override
     @Nullable
     public DebugPage getDebugPage() {
         fixPage();
@@ -124,14 +129,17 @@ public class DebugGui implements IIngameOverlay {
         }
     }
 
+    @Override
     public int getPage() {
         return page;
     }
 
+    @Override
     public void setPage(int page) {
         this.page = page % (pages.size() + 1);
     }
 
+    @Override
     public void setPage(DebugPage page) {
         if (!pages.contains(page)) {
             throw new IllegalArgumentException("Page not registered.");
@@ -139,10 +147,12 @@ public class DebugGui implements IIngameOverlay {
         this.page = pages.indexOf(page);
     }
 
+    @Override
     public void next() {
         setPage(getPage() + 1);
     }
 
+    @Override
     public void prev() {
         setPage(getPage() - 1);
     }
@@ -154,23 +164,23 @@ public class DebugGui implements IIngameOverlay {
         }
     }
 
-    private Formattable getFormatted(String s) {
+    private IFormattable getFormatted(String s) {
         return () -> s;
     }
 
-    private Formattable getMultiplier(double multiplier) {
+    private IFormattable getMultiplier(double multiplier) {
         return new Multiplier(multiplier);
     }
 
-    private Formattable getSize(int w, int h) {
+    private IFormattable getSize(int w, int h) {
         return new IntSize(w, h);
     }
 
-    private Formattable getSize(float w, float h) {
+    private IFormattable getSize(float w, float h) {
         return new FloatSize(w, h);
     }
 
-    private Formattable getPercentage(double value) {
+    private IFormattable getPercentage(double value) {
         return new Percentage(value);
     }
 
@@ -182,23 +192,19 @@ public class DebugGui implements IIngameOverlay {
         return new Color(red(rgb), green(rgb), blue(rgb), alpha(rgb));
     }
 
-    private Formattable getAngle(double angle) {
+    private IFormattable getAngle(double angle) {
         return new Angle(angle * 360.0d);
     }
 
-    private Formattable getRadians(double angle) {
+    private IFormattable getRadians(double angle) {
         return new Angle(Math.toDegrees(angle));
     }
 
-    private Formattable getDegrees(double angle) {
+    private IFormattable getDegrees(double angle) {
         return new Angle(angle);
     }
 
-    private MoonPhase getMoonPhase(int index) {
-        return MoonPhase.fromIndex(index);
-    }
-
-    public static String format(String text, Object obj, Object... objects) {
+    public String format(String text, Object obj, Object... objects) {
         StringBuilder sb = new StringBuilder();
 
 //        sb.append(ChatFormatting.DARK_AQUA).append(text);
@@ -214,8 +220,9 @@ public class DebugGui implements IIngameOverlay {
         return sb.toString();
     }
 
+    @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public static String format(Object obj) {
+    public String format(Object obj) {
         StringBuilder sb = new StringBuilder();
 
         if (obj == null) {
@@ -309,7 +316,12 @@ public class DebugGui implements IIngameOverlay {
         drawLine(matrixStack, text, (int) (width - mx - fontRenderer.width(text)), (int) y);
     }
 
+    @Override
     public Formatter<Object> getDefault() {
         return DEFAULT_FORMATTER;
+    }
+
+    public IInitPagesEvent createInitEvent() {
+        return this::registerPage;
     }
 }

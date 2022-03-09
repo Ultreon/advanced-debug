@@ -1,10 +1,11 @@
 package com.ultreon.mods.advanceddebug.client.menu;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
-public abstract class DebugRenderContext {
+public abstract class DebugRenderContext implements IDebugRenderContext {
     private int left;
     private int top;
     private int right;
@@ -30,54 +31,67 @@ public abstract class DebugRenderContext {
         return height;
     }
 
+    @Override
     public void left(Component text, Object object, Object... objects) {
         drawLeft(pose, text.getString(), left++, object, objects);
     }
 
+    @Override
     public void left(String text, Object object, Object... objects) {
         drawLeft(pose, text, left++, object, objects);
     }
 
+    @Override
     public void left(Component text) {
         drawLeft(pose, text.getString(), left++);
     }
 
+    @Override
     public void left(String text) {
         drawLeft(pose, text, left++);
     }
 
+    @Override
     public void left() {
         left++;
     }
 
+    @Override
     public void right(Component text, Object object, Object... objects) {
         drawRight(pose, text.getString(), right++, object, objects);
     }
 
+    @Override
     public void right(String text, Object object, Object... objects) {
         drawRight(pose, text, right++, object, objects);
     }
 
+    @Override
     public void right(Component text) {
         drawRight(pose, text.getString(), right++);
     }
 
+    @Override
     public void right(String text) {
         drawRight(pose, text, right++);
     }
 
+    @Override
     public void right() {
         right++;
     }
 
+    @Override
     public void top(Component text) {
         drawTop(pose, text.getString(), top++);
     }
 
+    @Override
     public void top(String text) {
         drawTop(pose, text, top++);
     }
 
+    @Override
     public void top() {
         top++;
     }
@@ -87,7 +101,7 @@ public abstract class DebugRenderContext {
     }
 
     private void drawLeft(PoseStack pose, String text, int line, Object obj, Object... objects) {
-        drawLine(pose, DebugGui.format(text, obj, objects), HORIZONTAL_OFFSET, VERTICAL_OFFSET + line * (mc.font.lineHeight + 2));
+        drawLine(pose, DebugGui.get().format(text, obj, objects), HORIZONTAL_OFFSET, VERTICAL_OFFSET + line * (mc.font.lineHeight + 2));
     }
 
     private void drawLeft(PoseStack pose, String text, int line) {
@@ -95,7 +109,7 @@ public abstract class DebugRenderContext {
     }
 
     private void drawRight(PoseStack pose, String text, int line, Object obj, Object... objects) {
-        String format = DebugGui.format(text, obj, objects);
+        String format = DebugGui.get().format(text, obj, objects);
         drawLine(pose, format, this.width - HORIZONTAL_OFFSET - mc.font.width(format), VERTICAL_OFFSET + line * (mc.font.lineHeight + 2));
     }
 

@@ -1,7 +1,7 @@
 package com.ultreon.mods.advanceddebug.client.menu.pages;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.ultreon.mods.advanceddebug.client.menu.DebugRenderContext;
+import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
 import com.ultreon.mods.advanceddebug.util.TargetUtils;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
@@ -15,7 +15,7 @@ public class LivingEntityPage extends EntityPage {
     }
 
     @Override
-    public void render(PoseStack poseStack, DebugRenderContext ctx) {
+    public void render(PoseStack poseStack, IDebugRenderContext ctx) {
         EntityHitResult entityHit = TargetUtils.entity();
         if (entityHit != null && entityHit.getEntity() instanceof LivingEntity entity) {
             ctx.left("Health", entity.getHealth());
@@ -52,8 +52,8 @@ public class LivingEntityPage extends EntityPage {
             ctx.right("Using Item", entity.isUsingItem());
             ctx.right("Visually Swimming", entity.isVisuallySwimming());
         } else {
-            // not looking at a block, or too far away from one to tell
-            ctx.top(RED + "<No Entity Was Found>");
+            // Yup, there isn't a living being there where you look at.
+            ctx.top(RED + "<No Living Entity Was Found>");
         }
     }
 }

@@ -1,8 +1,8 @@
 package com.ultreon.mods.advanceddebug.client.menu.pages;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.ultreon.mods.advanceddebug.client.menu.DebugPage;
-import com.ultreon.mods.advanceddebug.client.menu.DebugRenderContext;
+import com.ultreon.mods.advanceddebug.api.client.menu.DebugPage;
+import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
@@ -16,7 +16,7 @@ public class ItemPage extends DebugPage {
     }
 
     @Override
-    public void render(PoseStack poseStack, DebugRenderContext ctx) {
+    public void render(PoseStack poseStack, IDebugRenderContext ctx) {
         if (Minecraft.getInstance().player != null) {
             Player player = Minecraft.getInstance().player;
             ItemStack stack = player.getMainHandItem();

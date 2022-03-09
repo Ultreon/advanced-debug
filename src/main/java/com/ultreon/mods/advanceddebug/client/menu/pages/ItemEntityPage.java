@@ -1,7 +1,7 @@
 package com.ultreon.mods.advanceddebug.client.menu.pages;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.ultreon.mods.advanceddebug.client.menu.DebugRenderContext;
+import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
 import com.ultreon.mods.advanceddebug.util.TargetUtils;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.phys.EntityHitResult;
@@ -14,9 +14,9 @@ public class ItemEntityPage extends EntityPage {
     }
 
     @Override
-    public void render(PoseStack poseStack, DebugRenderContext ctx) {
+    public void render(PoseStack poseStack, IDebugRenderContext ctx) {
         EntityHitResult entityHit = TargetUtils.entity();
-        if (entityHit.getEntity() instanceof ItemEntity entity) {
+        if (entityHit != null && entityHit.getEntity() instanceof ItemEntity entity) {
             ctx.left("Thrower", entity.getThrower());
             ctx.left("Owner", entity.getOwner());
             ctx.left("Item", entity.getItem());
@@ -24,7 +24,7 @@ public class ItemEntityPage extends EntityPage {
             ctx.right("Attackable", entity.isAttackable());
         } else {
             // not looking at a block, or too far away from one to tell
-            ctx.top(RED + "<No Entity Was Found>");
+            ctx.top(RED + "<No Item Entity Was Found>");
         }
     }
 }

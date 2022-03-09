@@ -1,9 +1,9 @@
 package com.ultreon.mods.advanceddebug.client.menu.pages;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.ultreon.mods.advanceddebug.client.menu.DebugPage;
-import com.ultreon.mods.advanceddebug.client.menu.DebugRenderContext;
-import com.ultreon.mods.advanceddebug.common.Formatted;
+import com.ultreon.mods.advanceddebug.api.client.menu.DebugPage;
+import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
+import com.ultreon.mods.advanceddebug.api.common.Formatted;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.Vec3i;
@@ -16,7 +16,7 @@ public class WorldInfoPage extends DebugPage {
     }
 
     @Override
-    public void render(PoseStack poseStack, DebugRenderContext ctx) {
+    public void render(PoseStack poseStack, IDebugRenderContext ctx) {
         if (Minecraft.getInstance().level != null) {
             ClientLevel.ClientLevelData dimensionInfo = Minecraft.getInstance().level.getLevelData();
 

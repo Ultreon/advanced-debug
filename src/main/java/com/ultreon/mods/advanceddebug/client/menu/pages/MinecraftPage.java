@@ -1,8 +1,8 @@
 package com.ultreon.mods.advanceddebug.client.menu.pages;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.ultreon.mods.advanceddebug.client.menu.DebugPage;
-import com.ultreon.mods.advanceddebug.client.menu.DebugRenderContext;
+import com.ultreon.mods.advanceddebug.api.client.menu.DebugPage;
+import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
 import net.minecraft.client.gui.screens.Screen;
 
 public class MinecraftPage extends DebugPage {
@@ -11,7 +11,7 @@ public class MinecraftPage extends DebugPage {
     }
 
     @Override
-    public void render(PoseStack poseStack, DebugRenderContext ctx) {
+    public void render(PoseStack poseStack, IDebugRenderContext ctx) {
         Screen screen = mc.screen;
 
         ctx.left("Name", mc.name());
