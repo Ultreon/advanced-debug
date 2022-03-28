@@ -194,6 +194,15 @@ publishing {
         //noinspection GroovyAssignabilityCheck
         gpr(MavenPublication) {
             from components.java
+            pom.withXml {
+                //noinspection GroovyImplicitNullArgumentCall
+                def pomNode = asNode()
+                pomNode.dependencies.'*'.findAll() {
+                    it.groupId.text() == 'net.minecraftforge' && it.artifactId.text() == "forge"
+                }.each() {
+                    it.parent().remove(it)
+                }
+            }
         }
     }
 }
