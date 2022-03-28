@@ -9,9 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings("SameParameterValue")
-public class ModOverlays {
+public final class ModOverlays {
     private static final List<IIngameOverlay> OVERLAYS = new ArrayList<>();
-
 
     private static void registerTop(String name, IIngameOverlay overlay) {
         OVERLAYS.add(OverlayRegistry.registerOverlayTop(AdvancedDebug.MOD_ID + ":" + name, overlay));

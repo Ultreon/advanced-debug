@@ -22,11 +22,62 @@ apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
 group = 'com.ultreon.mods'
-version = '1.0.0'
+version = '1.1.1'
 
 java {
     archivesBaseName = 'advanced-debug'
     toolchain.languageVersion = JavaLanguageVersion.of(17)
+}
+
+Project proj = project
+
+eclipse {
+    classpath {
+        file {
+            whenMerged { cp ->
+                project.logger.lifecycle "[eclipse] Excluding sourceSet outputs from eclipse dependencies for project '${project.path}'"
+                cp.entries.grep { it.kind == 'lib' }.each { entry ->
+                    rootProject.allprojects { Project project ->
+                        String buildDirPath = project.buildDir.path.replace('\\', '/') + '/'
+                        String entryPath = entry.path
+
+                        if (entryPath.startsWith(buildDirPath)) {
+                            cp.entries.remove entry
+
+                            if (project != proj) {
+                                boolean projectContainsProjectDep = false
+                                for (Configuration cfg : proj.configurations) {
+                                    boolean cfgContainsProjectDependency = cfg.allDependencies.withType(ProjectDependency).collect { it.dependencyProject }.contains(project)
+                                    if(cfgContainsProjectDependency) {
+                                        projectContainsProjectDep = true
+                                        break
+                                    }
+                                }
+                                if (!projectContainsProjectDep) {
+                                    throw new GradleException("The project '${proj.path}' has a dependency to the outputs of project '${project.path}', but not to the project itself. This is not allowed because it will cause compilation in eclipse to behave differently than in gradle.")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+sourceSets {
+    // Note that just declaring this source set creates two configurations.
+    api {
+        java {
+
+        }
+    }
+    main {
+        java {
+            compileClasspath += api.output
+            runtimeClasspath += api.output
+        }
+    }
 }
 
 minecraft {
@@ -144,6 +195,12 @@ repositories {
     // }
 }
 
+configurations {
+   apiImplementation.extendsFrom(implementation)
+   apiCompileOnly.extendsFrom(compileOnly)
+   apiRuntimeOnly.extendsFrom(runtimeOnly)
+}
+
 dependencies {
     // Specify the version of Minecraft to use. If this is any group other than 'net.minecraft' it is assumed
     // that the dep is a ForgeGradle 'patcher' dependency, and its patches will be applied.
@@ -178,6 +235,67 @@ jar {
                 "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
     }
+
+    dependsOn "apiJar"
+}
+
+classes {
+    dependsOn "apiClasses"
+
+    doLast {
+        // Add directories with generated sources (might be several - one for every supported language).
+        copy {
+            from sourceSets.api.output.classesDirs
+            into sourceSets.main.output.classesDirs.singleFile
+            duplicatesStrategy DuplicatesStrategy.EXCLUDE
+        }
+    }
+}
+
+processResources {
+    dependsOn "processApiResources"
+
+    // Add output directories of the source set's resources.
+    from sourceSets.api.output.resourcesDir
+}
+
+// Example for how to get properties into the manifest for reading at runtime.
+task apiJar (type: Jar) {
+    manifest {
+        attributes([
+                "Specification-Title"     : "advanceddebug",
+                "Specification-Vendor"    : "Qboi123",
+                "Specification-Version"   : "1", // We are version 1 of ourselves
+                "Implementation-Title"    : project.name,
+                "Implementation-Version"  : project.jar.archiveVersion,
+                "Implementation-Vendor"   : "Qboi123",
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+
+    // Add directories with generated sources (might be several - one for every supported language).
+    from sourceSets.api.output.classesDirs
+
+    // Add output directories of the source set's resources.
+    from sourceSets.api.output.resourcesDir
+
+    classifier "api"
+}
+
+reobf {
+    jar {
+
+    }
+
+    apiJar {
+        dependsOn createMcpToSrg
+        mappings = createMcpToSrg.outputs.files.singleFile
+    }
+}
+
+artifacts {
+    archives apiJar
+    archives jar
 }
 
 jar.finalizedBy('reobfJar')
@@ -192,8 +310,9 @@ publishing {
     }
     publications {
         //noinspection GroovyAssignabilityCheck
-        gpr(MavenPublication) {
+        main(MavenPublication) {
             from components.java
+            artifact apiJar
             pom.withXml {
                 //noinspection GroovyImplicitNullArgumentCall
                 def pomNode = asNode()
@@ -206,7 +325,6 @@ publishing {
         }
     }
 }
-
 tasks.withType(GenerateModuleMetadata) {
     enabled = false
 }

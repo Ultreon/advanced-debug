@@ -1,9 +1,9 @@
 package com.ultreon.mods.advanceddebug.client.menu.pages;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.ultreon.mods.advanceddebug.client.menu.DebugPage;
-import com.ultreon.mods.advanceddebug.client.menu.DebugRenderContext;
-import com.ultreon.mods.advanceddebug.common.Formatted;
+import com.ultreon.mods.advanceddebug.api.client.menu.DebugPage;
+import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
+import com.ultreon.mods.advanceddebug.api.common.Formatted;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.Vec3i;
@@ -16,15 +16,12 @@ public class WorldInfoPage extends DebugPage {
     }
 
     @Override
-    public void render(PoseStack poseStack, DebugRenderContext ctx) {
+    public void render(PoseStack poseStack, IDebugRenderContext ctx) {
         if (Minecraft.getInstance().level != null) {
             ClientLevel.ClientLevelData dimensionInfo = Minecraft.getInstance().level.getLevelData();
 
             ctx.left("Spawn Angle", dimensionInfo.getSpawnAngle());
             ctx.left("Difficulty", dimensionInfo.getDifficulty());
-            ctx.left("Day Time", dimensionInfo.getDayTime());
-            ctx.left("Game Time", dimensionInfo.getGameTime());
-            ctx.left("Fog Distance", dimensionInfo.getClearColorScale());
             ctx.left("Spawn", new Vec3i(dimensionInfo.getXSpawn(), dimensionInfo.getYSpawn(), dimensionInfo.getZSpawn()));
 
             ctx.right("Difficulty Locked", dimensionInfo.isDifficultyLocked());
