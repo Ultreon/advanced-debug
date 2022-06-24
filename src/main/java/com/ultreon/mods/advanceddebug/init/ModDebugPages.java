@@ -3,11 +3,8 @@ package com.ultreon.mods.advanceddebug.init;
 import com.ultreon.mods.advanceddebug.AdvancedDebug;
 import com.ultreon.mods.advanceddebug.client.menu.DebugGui;
 import com.ultreon.mods.advanceddebug.client.menu.pages.*;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.common.Mod;
 
 @SuppressWarnings("unused")
-@Mod.EventBusSubscriber(modid = AdvancedDebug.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class ModDebugPages {
     public static final PlayerPage1 PLAYER_PAGE1 = DebugGui.get().registerPage(new PlayerPage1(AdvancedDebug.MOD_ID, "player_1"));
     public static final PlayerPage2 PLAYER_PAGE2 = DebugGui.get().registerPage(new PlayerPage2(AdvancedDebug.MOD_ID, "player_2"));
@@ -22,4 +19,8 @@ public class ModDebugPages {
     public static final MinecraftPage MINECRAFT = DebugGui.get().registerPage(new MinecraftPage(AdvancedDebug.MOD_ID, "minecraft"));
     public static final WindowPage WINDOW = DebugGui.get().registerPage(new WindowPage(AdvancedDebug.MOD_ID, "window"));
     public static final ComputerPage COMPUTER = DebugGui.get().registerPage(new ComputerPage(AdvancedDebug.MOD_ID, "computer"));
+
+    public static void init() {
+
+    }
 }

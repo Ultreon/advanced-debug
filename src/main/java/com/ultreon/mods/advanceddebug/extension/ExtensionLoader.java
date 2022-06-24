@@ -4,6 +4,7 @@ import com.ultreon.mods.advanceddebug.AdvancedDebug;
 import com.ultreon.mods.advanceddebug.api.extension.AdvDebugExt;
 import com.ultreon.mods.advanceddebug.api.extension.IAdvDebugExt;
 import com.ultreon.mods.advanceddebug.client.menu.DebugGui;
+import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.forgespi.language.ModFileScanData;
 import org.apache.logging.log4j.LogManager;
@@ -40,7 +41,7 @@ public final class ExtensionLoader {
             dataList.forEach(data -> {
                 final String modId = (String) data.annotationData().get("modId");
 
-                Optional<Object> modObject = ModList.get().getModObjectById(modId);
+                Optional<? extends ModContainer> modObject = ModList.get().getModContainerById(modId);
                 if (modObject.isEmpty()) {
                     throw new IllegalStateException("Mod with id " + modId + " doesn't exist for Advanced Debug extension class: " + data.clazz().getClassName());
                 }

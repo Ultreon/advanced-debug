@@ -11,6 +11,12 @@ import com.ultreon.mods.advanceddebug.api.common.IFormattable;
 import com.ultreon.mods.advanceddebug.api.common.MoonPhase;
 import lombok.experimental.UtilityClass;
 import net.minecraft.advancements.Advancement;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Direction.Axis;
+import net.minecraft.core.Direction.AxisDirection;
+import net.minecraft.core.Direction.Plane;
+import net.minecraft.core.Direction8;
+import net.minecraft.core.FrontAndTop;
 import net.minecraft.core.Vec3i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -490,6 +496,105 @@ public final class ModDebugFormatters {
             });
         }
     });
+    public static final Formatter<Direction> DIRECTION = REGISTRY.register(new Formatter<>(Direction.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "minecraft/direction")) {
+        @SuppressWarnings("UnnecessaryDefault")
+        @Override
+        public void format(Direction obj, StringBuilder sb) {
+            sb.append(LIGHT_PURPLE).append("direction");
+            sb.append(WHITE).append(": ");
+            sb.append(GOLD).append(switch (obj) {
+                case DOWN -> "down";
+                case UP -> "up";
+                case NORTH -> "north";
+                case SOUTH -> "south";
+                case WEST -> "west";
+                case EAST -> "east";
+                default -> obj.name();
+            });
+        }
+    });
+    public static final Formatter<Axis> AXIS = REGISTRY.register(new Formatter<>(Axis.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "minecraft/axis")) {
+        @SuppressWarnings("UnnecessaryDefault")
+        @Override
+        public void format(Axis obj, StringBuilder sb) {
+            sb.append(LIGHT_PURPLE).append("axis");
+            sb.append(WHITE).append(": ");
+            sb.append(GOLD).append(switch (obj) {
+                case X -> "x";
+                case Y -> "y";
+                case Z -> "z";
+                default -> obj.name();
+            });
+        }
+    });
+    public static final Formatter<AxisDirection> AXIS_DIRECTION = REGISTRY.register(new Formatter<>(AxisDirection.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "minecraft/axis_direction")) {
+        @SuppressWarnings("UnnecessaryDefault")
+        @Override
+        public void format(AxisDirection obj, StringBuilder sb) {
+            sb.append(LIGHT_PURPLE).append("axis-direction");
+            sb.append(WHITE).append(": ");
+            sb.append(GOLD).append(switch (obj) {
+                case POSITIVE -> "positive";
+                case NEGATIVE -> "negative";
+                default -> obj.name();
+            });
+        }
+    });
+    public static final Formatter<Plane> PLANE = REGISTRY.register(new Formatter<>(Plane.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "minecraft/plane")) {
+        @SuppressWarnings("UnnecessaryDefault")
+        @Override
+        public void format(Plane obj, StringBuilder sb) {
+            sb.append(LIGHT_PURPLE).append("plane");
+            sb.append(WHITE).append(": ");
+            sb.append(GOLD).append(switch (obj) {
+                case HORIZONTAL -> "horizontal";
+                case VERTICAL -> "vertical";
+                default -> obj.name();
+            });
+        }
+    });
+    public static final Formatter<Direction8> DIRECTION8 = REGISTRY.register(new Formatter<>(Direction8.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "minecraft/direction_8")) {
+        @SuppressWarnings("UnnecessaryDefault")
+        @Override
+        public void format(Direction8 obj, StringBuilder sb) {
+            sb.append(LIGHT_PURPLE).append("direction-8");
+            sb.append(WHITE).append(": ");
+            sb.append(GOLD).append(switch (obj) {
+                case NORTH -> "north";
+                case NORTH_EAST -> "north east";
+                case EAST -> "east";
+                case SOUTH_EAST -> "south east";
+                case SOUTH -> "south";
+                case SOUTH_WEST -> "south west";
+                case WEST -> "west";
+                case NORTH_WEST -> "north west";
+                default -> obj.name();
+            });
+        }
+    });
+    public static final Formatter<FrontAndTop> FRONT_AND_TOP = REGISTRY.register(new Formatter<>(FrontAndTop.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "minecraft/front_and_top")) {
+        @SuppressWarnings("UnnecessaryDefault")
+        @Override
+        public void format(FrontAndTop obj, StringBuilder sb) {
+            sb.append(LIGHT_PURPLE).append("multi-direction");
+            sb.append(WHITE).append(": ");
+            sb.append(GOLD).append(switch (obj) {
+                case DOWN_EAST -> "down east";
+                case DOWN_NORTH -> "down north";
+                case DOWN_SOUTH -> "down south";
+                case DOWN_WEST -> "down west";
+                case UP_EAST -> "up east";
+                case UP_NORTH -> "up north";
+                case UP_SOUTH -> "up south";
+                case UP_WEST -> "up west";
+                case WEST_UP -> "west up";
+                case EAST_UP -> "east up";
+                case NORTH_UP -> "north up";
+                case SOUTH_UP -> "south up";
+                default -> obj.name();
+            });
+        }
+    });
     public static final Formatter<InteractionHand> INTERACTION_HAND = REGISTRY.register(new Formatter<>(InteractionHand.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "minecraft/interaction_hand")) {
         @SuppressWarnings("UnnecessaryDefault")
         @Override
@@ -551,7 +656,7 @@ public final class ModDebugFormatters {
             sb.append(YELLOW).append(obj.hashCode());
         }
     });
-    public static final Formatter<MoonPhase> RT_MOON_PHASE = REGISTRY.register(new Formatter<>(MoonPhase.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "randomthingz/moon_phase")) {
+    public static final Formatter<MoonPhase> RT_MOON_PHASE = REGISTRY.register(new Formatter<>(MoonPhase.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "moon_phase")) {
         @Override
         public void format(MoonPhase obj, StringBuilder sb) {
             sb.append(LIGHT_PURPLE).append("moon-phase");
@@ -568,13 +673,13 @@ public final class ModDebugFormatters {
             });
         }
     });
-    public static final Formatter<IFormattable> RT_FORMATTABLE = REGISTRY.register(new Formatter<>(IFormattable.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "randomthingz/formattable")) {
+    public static final Formatter<IFormattable> RT_FORMATTABLE = REGISTRY.register(new Formatter<>(IFormattable.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "formattable")) {
         @Override
         public void format(IFormattable obj, StringBuilder sb) {
             sb.append(obj.toFormattedString());
         }
     });
-    public static final Formatter<Angle> RT_ANGLE = REGISTRY.register(new Formatter<>(Angle.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "randomthingz/angle")) {
+    public static final Formatter<Angle> RT_ANGLE = REGISTRY.register(new Formatter<>(Angle.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "angle")) {
         @Override
         public void format(Angle obj, StringBuilder sb) {
             sb.append(obj.toFormattedString());

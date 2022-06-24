@@ -6,6 +6,7 @@ import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
 import com.ultreon.mods.advanceddebug.api.common.Formatted;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.core.Vec3i;
 
 import static net.minecraft.ChatFormatting.GOLD;
@@ -20,6 +21,11 @@ public class WorldInfoPage extends DebugPage {
         if (Minecraft.getInstance().level != null) {
             ClientLevel.ClientLevelData dimensionInfo = Minecraft.getInstance().level.getLevelData();
 
+            IntegratedServer server = Minecraft.getInstance().getSingleplayerServer();
+            if (server != null) {
+                ctx.left("World Name", server.getWorldData().getLevelName());
+            }
+            ctx.left("Spawn Angle", dimensionInfo.getSpawnAngle());
             ctx.left("Spawn Angle", dimensionInfo.getSpawnAngle());
             ctx.left("Difficulty", dimensionInfo.getDifficulty());
             ctx.left("Spawn", new Vec3i(dimensionInfo.getXSpawn(), dimensionInfo.getYSpawn(), dimensionInfo.getZSpawn()));

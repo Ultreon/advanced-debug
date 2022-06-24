@@ -1,16 +1,19 @@
 package com.ultreon.mods.advanceddebug;
 
 import com.ultreon.mods.advanceddebug.api.IAdvancedDebug;
-import com.ultreon.mods.advanceddebug.client.menu.DebugGui;
 import com.ultreon.mods.advanceddebug.api.client.menu.IDebugGui;
-import com.ultreon.mods.advanceddebug.client.registry.FormatterRegistry;
 import com.ultreon.mods.advanceddebug.api.client.registry.IFormatterRegistry;
-import com.ultreon.mods.advanceddebug.extension.ExtensionLoader;
 import com.ultreon.mods.advanceddebug.api.init.ModDebugFormatters;
+import com.ultreon.mods.advanceddebug.client.menu.DebugGui;
+import com.ultreon.mods.advanceddebug.client.registry.FormatterRegistry;
+import com.ultreon.mods.advanceddebug.extension.ExtensionLoader;
+import com.ultreon.mods.advanceddebug.init.ModDebugPages;
 import com.ultreon.mods.advanceddebug.init.ModOverlays;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.data.loading.DatagenModLoader;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.IExtensionPoint.DisplayTest;
@@ -35,8 +38,13 @@ public class AdvancedDebug implements IAdvancedDebug {
         return instance;
     }
 
+    @SuppressWarnings("ConstantConditions")
     public AdvancedDebug() {
         instance = this;
+
+        if (DatagenModLoader.isRunningDataGen()) {
+            return;
+        }
 
         ModLoadingContext ctx = ModLoadingContext.get();
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -84,6 +92,10 @@ public class AdvancedDebug implements IAdvancedDebug {
     }
 
     private void setup(final FMLClientSetupEvent event) {
+        if (Minecraft.getInstance() == null) {
+            return;
+        }
+
         LOGGER.debug("Doing client side setup rn.");
         LOGGER.debug("Registering modded overlays...");
         ModOverlays.registerAll();
@@ -92,5 +104,7 @@ public class AdvancedDebug implements IAdvancedDebug {
         LOGGER.debug("Setting up extensions...");
         loader.makeSetup();
         LOGGER.debug("Client side setup done!");
+
+        ModDebugPages.init();
     }
 }
