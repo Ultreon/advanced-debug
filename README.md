@@ -1,2 +1,2 @@
 # Advanced Debug
- Advanced Debugging Mod for Minecraft
+Advanced Debugging Mod for Minecraft
