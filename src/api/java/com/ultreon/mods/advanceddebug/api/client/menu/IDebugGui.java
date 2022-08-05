@@ -1,10 +1,11 @@
 package com.ultreon.mods.advanceddebug.api.client.menu;
 
+import com.ultreon.mods.advanceddebug.api.client.formatter.IFormatterContext;
 import com.ultreon.mods.advanceddebug.api.common.IFormatter;
 
 import javax.annotation.Nullable;
 
-public interface IDebugGui extends IFormatter {
+public interface IDebugGui extends IFormatter<Object> {
     <T extends DebugPage> T registerPage(T page);
 
     @Nullable
@@ -20,7 +21,7 @@ public interface IDebugGui extends IFormatter {
 
     void prev();
 
-    String format(Object obj);
+    void format(Object obj, IFormatterContext context);
 
     Formatter<Object> getDefault();
 }

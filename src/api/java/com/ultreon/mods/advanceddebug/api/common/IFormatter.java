@@ -1,5 +1,7 @@
 package com.ultreon.mods.advanceddebug.api.common;
 
-public interface IFormatter {
-    String format(Object obj);
+import com.ultreon.mods.advanceddebug.api.client.formatter.IFormatterContext;
+
+public interface IFormatter<T> {
+    void format(T obj, IFormatterContext context);
 }

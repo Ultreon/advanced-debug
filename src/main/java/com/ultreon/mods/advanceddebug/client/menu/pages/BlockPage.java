@@ -35,24 +35,24 @@ public class BlockPage extends DebugPage {
             BlockState state = player.getLevel().getBlockState(pos);
             Block block = state.getBlock();
             ctx.left(GRAY + "-== BLOCK ==-");
-            ctx.left("type", block.getRegistryName());
-            ctx.left("translatedName", block.getName().getString());
-            ctx.left("blockHardness", state.getDestroySpeed(player.getLevel(), pos));
-            ctx.left("lightValue", state.getLightEmission(instance.level, player.blockPosition()));
-            ctx.left("opacity", state.getLightBlock(player.getLevel(), pos));
-            ctx.left("offset", state.getOffset(player.getLevel(), pos));
-            ctx.left("playerRelativeHardness", state.getDestroyProgress(player, player.getLevel(), pos));
-            ctx.left("requiresTool", state.requiresCorrectToolForDrops());
-            ctx.left("renderType", state.getRenderShape());
-            ctx.left("slipperiness", state.getFriction(player.getLevel(), pos, player));
-            ctx.left("jumpFactor", block.getJumpFactor());
-            ctx.left("enchantPowerBonus", state.getEnchantPowerBonus(player.getLevel(), pos));
-            ctx.left("target", block.getLootTable());
-            ctx.left("materialColor", block.defaultMaterialColor().id, getColor(block.defaultMaterialColor().col));
-            ctx.left("offsetType", block.getOffsetType());
-            ctx.left("registryName", block.getRegistryName());
-            ctx.left("defaultSlipperiness", block.getFriction());
-            ctx.left("speedFactor", getMultiplier(block.getSpeedFactor()));
+            ctx.left("Type", block.getRegistryName());
+            ctx.left("Translated Name", block.getName().getString());
+            ctx.left("Block Hardness", state.getDestroySpeed(player.getLevel(), pos));
+            ctx.left("Light Value", state.getLightEmission(instance.level, player.blockPosition()));
+            ctx.left("Opacity", state.getLightBlock(player.getLevel(), pos));
+            ctx.left("Offset", state.getOffset(player.getLevel(), pos));
+            ctx.left("Mining Efficiency", state.getDestroyProgress(player, player.getLevel(), pos));
+            ctx.left("Requires Tool", state.requiresCorrectToolForDrops());
+            ctx.left("Render Type", state.getRenderShape());
+            ctx.left("Slipperiness", state.getFriction(player.getLevel(), pos, player));
+            ctx.left("Jump Factor", block.getJumpFactor());
+            ctx.left("Enchant Power Bonus", state.getEnchantPowerBonus(player.getLevel(), pos));
+            ctx.left("Target", block.getLootTable());
+            ctx.left("Color", block.defaultMaterialColor().id, getColor(block.defaultMaterialColor().col));
+            ctx.left("Offset Type", block.getOffsetType());
+            ctx.left("Identifier", block.getRegistryName());
+            ctx.left("Default Slipperiness", block.getFriction());
+            ctx.left("Speed Factor", getMultiplier(block.getSpeedFactor()));
         } else {
             // not looking at a block, or too far away from one to tell
             ctx.top(RED + "<No Block Was Found>");
@@ -66,16 +66,16 @@ public class BlockPage extends DebugPage {
             FluidState state = player.getLevel().getBlockState(pos).getFluidState();
             if (!state.isEmpty()) {
                 ctx.right(GRAY + "-== Fluid ==-");
-                ctx.right("empty", state.isEmpty());
-                ctx.right("height", state.getOwnHeight());
-                ctx.right("level", state.getAmount());
-                ctx.right("actualHeight", state.getType().getHeight(state, player.getLevel(), pos));
+                ctx.right("Is Empty", state.isEmpty());
+                ctx.right("Height", state.getOwnHeight());
+                ctx.right("Amount", state.getAmount());
+                ctx.right("Actual Height", state.getType().getHeight(state, player.getLevel(), pos));
                 try {
-                    ctx.right("filledBucket", state.getType().getBucket());
+                    ctx.right("Filled Bucket", state.getType().getBucket());
                 } catch (Throwable ignored) {
 
                 }
-                ctx.right("tickRate", state.getType().getTickDelay(player.getLevel()));
+                ctx.right("Tick Rate", state.getType().getTickDelay(player.getLevel()));
             } else {
                 // not looking at a fluid, or too far away from one to tell
                 ctx.top(RED + "<No Fluid Was Found>");

@@ -5,6 +5,7 @@ import com.ultreon.mods.advanceddebug.api.client.menu.DebugPage;
 import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
 import com.ultreon.mods.advanceddebug.util.TargetUtils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -28,6 +29,7 @@ public class EntityPage extends DebugPage {
         if (entityHit != null) {
             Entity entity = entityHit.getEntity();
             EntityType<? extends Entity> type = entity.getType();
+            Component customName = entity.getCustomName();
 
             ctx.left(GRAY + "-== Entity Type ==-");
             ctx.left("Height", type.getHeight());
@@ -45,6 +47,19 @@ public class EntityPage extends DebugPage {
             ctx.left("Riding Offset", entity.getMyRidingOffset());
             ctx.left("Entity UUID", entity.getUUID());
             ctx.left("Entity ID", entity.getId());
+            ctx.left("Entity Name", entity.getName().getString());
+            ctx.left("Custom Name", customName == null ? null : customName.getString());
+            ctx.left("Nametag Visible", entity.isCustomNameVisible());
+            ctx.left("Silent", entity.isSilent());
+            ctx.left("Attackable", entity.isAttackable());
+            ctx.left("Invulnerable", entity.isInvulnerable());
+            ctx.left("Brightness", entity.getBrightness());
+            ctx.left("Invisible", entity.isInvisible());
+            ctx.left("Sneaking", entity.isCrouching());
+            ctx.left("Sprinting", entity.isSprinting());
+            ctx.left("Swimming", entity.isSwimming());
+            ctx.left("Pushable", entity.isPushable());
+            ctx.left("Pushed By Fluid", entity.isPushedByFluid());
 
             if (entity instanceof LivingEntity living) {
                 ctx.right(GRAY + "-== Living Entity ==-");

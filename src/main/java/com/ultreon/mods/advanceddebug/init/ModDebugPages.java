@@ -6,8 +6,7 @@ import com.ultreon.mods.advanceddebug.client.menu.pages.*;
 
 @SuppressWarnings("unused")
 public class ModDebugPages {
-    public static final PlayerPage1 PLAYER_PAGE1 = DebugGui.get().registerPage(new PlayerPage1(AdvancedDebug.MOD_ID, "player_1"));
-    public static final PlayerPage2 PLAYER_PAGE2 = DebugGui.get().registerPage(new PlayerPage2(AdvancedDebug.MOD_ID, "player_2"));
+    public static final PlayerPage PLAYER = DebugGui.get().registerPage(new PlayerPage(AdvancedDebug.MOD_ID, "player"));
     public static final BlockPage BLOCK = DebugGui.get().registerPage(new BlockPage(AdvancedDebug.MOD_ID, "block"));
     public static final FluidPage FLUID = DebugGui.get().registerPage(new FluidPage(AdvancedDebug.MOD_ID, "fluid"));
     public static final ItemPage ITEM = DebugGui.get().registerPage(new ItemPage(AdvancedDebug.MOD_ID, "item"));

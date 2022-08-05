@@ -4,6 +4,7 @@ import com.ultreon.mods.advanceddebug.api.IAdvancedDebug;
 import com.ultreon.mods.advanceddebug.api.client.menu.IDebugGui;
 import com.ultreon.mods.advanceddebug.api.client.registry.IFormatterRegistry;
 import com.ultreon.mods.advanceddebug.api.init.ModDebugFormatters;
+import com.ultreon.mods.advanceddebug.client.Config;
 import com.ultreon.mods.advanceddebug.client.menu.DebugGui;
 import com.ultreon.mods.advanceddebug.client.registry.FormatterRegistry;
 import com.ultreon.mods.advanceddebug.extension.ExtensionLoader;
@@ -21,15 +22,15 @@ import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Mod(AdvancedDebug.MOD_ID)
 public class AdvancedDebug implements IAdvancedDebug {
     public static final String MOD_ID = "advanced_debug";
 
     // Directly reference a log4j logger.
-    private static final Logger LOGGER = LogManager.getLogger();
+    public static final Logger LOGGER = LoggerFactory.getLogger("AdvancedDebug");
     private static AdvancedDebug instance;
 
     private static final ExtensionLoader loader = ExtensionLoader.get();
@@ -45,6 +46,8 @@ public class AdvancedDebug implements IAdvancedDebug {
         if (DatagenModLoader.isRunningDataGen()) {
             return;
         }
+
+        Config.register(ModLoadingContext.get());
 
         ModLoadingContext ctx = ModLoadingContext.get();
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();

@@ -3,11 +3,12 @@ package com.ultreon.mods.advanceddebug.client.menu.pages;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.ultreon.mods.advanceddebug.api.client.menu.DebugPage;
 import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
+import com.ultreon.mods.advanceddebug.api.common.Percentage;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.state.BlockState;
@@ -16,6 +17,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.scores.Team;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -23,49 +25,77 @@ import java.util.regex.Pattern;
 import static net.minecraft.ChatFormatting.GRAY;
 import static net.minecraft.ChatFormatting.RED;
 
-public class PlayerPage1 extends DebugPage {
-    public PlayerPage1(String modId, String name) {
+public class PlayerPage extends DebugPage {
+    private static final Pattern VALID_USERNAME = Pattern.compile("[a-zA-Z0-9_]*");
+
+    public PlayerPage(String modId, String name) {
         super(modId, name);
     }
 
     @Override
     public void render(PoseStack poseStack, IDebugRenderContext ctx) {
         if (Minecraft.getInstance().player != null) {
-            Player player = Minecraft.getInstance().player;
+            LocalPlayer player = Minecraft.getInstance().player;
+            Team team = player.getTeam();
+            Matcher matcher = VALID_USERNAME.matcher(player.getName().getString());
 
+            ctx.left();
+            ctx.left("General Info");
             ctx.left("Luck", player.getLuck());
             ctx.left("Speed", player.getSpeed());
             ctx.left("Score", player.getScore());
             ctx.left("Armor Value", player.getArmorValue());
-            ctx.left("Health", player.getHealth());
-            ctx.left("Absorption", player.getAbsorptionAmount());
-            ctx.left("Hunger", player.getFoodData().getFoodLevel());
-            ctx.left("Saturation", player.getFoodData().getSaturationLevel());
-            ctx.left("Air", player.getAirSupply());
+            ctx.left("Jumping", player.jumping);
+            ctx.left("Sneaking", player.isShiftKeyDown());
+            ctx.left("Swimming", player.isSwimming());
+            ctx.left("Sleeping", player.isSleeping());
+            ctx.left("Sprinting", player.isSprinting());
+            ctx.left("Silent", player.isSilent());
+
+            ctx.left();
+            ctx.left("Position / Rotation");
             ctx.left("Position Block", player.blockPosition());
             ctx.left("Position", player.position());
             ctx.left("Rotation (xy)", getDegrees(player.getRotationVector().x), getDegrees(player.getRotationVector().y));
-            ctx.left("Sleep Timer", player.getSleepTimer());
-            ctx.left("Fire Timer", player.getRemainingFireTicks());
+
+            ctx.left();
+            ctx.left("Misc");
+            ctx.left("Enchantment Seed", player.getEnchantmentSeed());
             ctx.left("Brightness", player.getBrightness());
             ctx.left("Bee Sting Count", player.getStingerCount());
+            ctx.left("Idle Time", player.getNoActionTime());
+            ctx.left("Motion", player.getDeltaMovement());
+            ctx.left("Team Name", (team != null ? team.getName() : ""));
+            ctx.left("Height Offset", player.getMyRidingOffset());
+            ctx.left("Eye Height", player.getEyeHeight());
+            ctx.left("Eye Height (real)", player.getEyeHeight(player.getPose()));
+            ctx.left("Bounding Box", player.getBoundingBox());
+            ctx.left("Bounding Box (real)", player.getArmorValue());
 
-            // String to be scanned to find the pattern.
-            String pattern = "[a-zA-Z0-9_]*";
+            // SWITCH TO: Right Sided Column
+            ctx.right();
+            ctx.right("XP Related");
+            ctx.right("Experience Progress", new Percentage(player.experienceProgress));
+            ctx.right("Experience Level", player.experienceLevel);
+            ctx.right("Experience Total", player.totalExperience);
 
-            // Create a Pattern object
-            Pattern r = Pattern.compile(pattern);
+            ctx.right();
+            ctx.right("Timers");
+            ctx.right("Sleep Timer", player.getSleepTimer());
+            ctx.right("Fire Timer", player.getRemainingFireTicks());
 
-            // Now create matcher object.
-            Matcher m = r.matcher(player.getName().getString());
+            ctx.right();
+            ctx.right("Food / Health values");
+            ctx.right("Health", player.getHealth());
+            ctx.right("Absorption", player.getAbsorptionAmount());
+            ctx.right("Armor Points", player.getArmorValue());
+            ctx.right("Hunger", player.getFoodData().getFoodLevel());
+            ctx.right("Saturation", player.getFoodData().getSaturationLevel());
+            ctx.right("Air", player.getAirSupply());
 
-            ctx.right("Legal Username", m.find());
-            ctx.right("Jumping", player.jumping);
-            ctx.right("Sneaking", player.isShiftKeyDown());
-            ctx.right("Swimming", player.isSwimming());
-            ctx.right("Sleeping", player.isSleeping());
-            ctx.right("Sprinting", player.isSprinting());
-            ctx.right("Silent", player.isSilent());
+            ctx.right();
+            ctx.right("Misc Flags");
+            ctx.right("Legal Username", matcher.find());
             ctx.right("Swing In Progress", player.swinging);
             ctx.right("User", player.isLocalPlayer());
             ctx.right("Alive", player.isAlive());
@@ -75,7 +105,12 @@ public class PlayerPage1 extends DebugPage {
             ctx.right("Invulnerable", player.isInvulnerable());
             ctx.right("Spectator", player.isSpectator());
             ctx.right("Allow Build", player.mayBuild());
+            ctx.right("Glowing", player.isCurrentlyGlowing());
+            ctx.right("Invisible", player.isInvisible());
+            ctx.right("On Ground", player.isOnGround());
+            ctx.right("On Ladder", player.onClimbable());
 
+            // SWITCH TO: Middle Column
             {
                 float f = player.getXRot();
                 float f1 = player.getYRot();

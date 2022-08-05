@@ -2,25 +2,32 @@ package com.ultreon.mods.advanceddebug.client.menu;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.ultreon.mods.advanceddebug.AdvancedDebug;
+import com.ultreon.mods.advanceddebug.api.client.formatter.IFormatterContext;
 import com.ultreon.mods.advanceddebug.api.client.menu.DebugPage;
 import com.ultreon.mods.advanceddebug.api.client.menu.Formatter;
 import com.ultreon.mods.advanceddebug.api.client.menu.IDebugGui;
 import com.ultreon.mods.advanceddebug.api.common.*;
 import com.ultreon.mods.advanceddebug.api.events.IInitPagesEvent;
+import com.ultreon.mods.advanceddebug.client.Config;
+import com.ultreon.mods.advanceddebug.client.formatter.FormatterContext;
 import com.ultreon.mods.advanceddebug.client.input.KeyBindingList;
 import com.ultreon.mods.advanceddebug.client.menu.pages.DefaultPage;
 import com.ultreon.mods.advanceddebug.client.registry.FormatterRegistry;
+import com.ultreon.mods.advanceddebug.text.ComponentBuilder;
 import com.ultreon.mods.advanceddebug.util.InputUtils;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.gui.ForgeIngameGui;
 import net.minecraftforge.client.gui.IIngameOverlay;
 import org.lwjgl.glfw.GLFW;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 import javax.annotation.Nullable;
 import java.awt.*;
@@ -32,8 +39,6 @@ import static net.minecraft.util.FastColor.ARGB32.*;
 
 /**
  * Client listener
- *
- * @author (partial) CoFH - https://github.com/CoFH
  */
 @SuppressWarnings("unused")
 public final class DebugGui implements IIngameOverlay, IDebugGui {
@@ -43,18 +48,16 @@ public final class DebugGui implements IIngameOverlay, IDebugGui {
     private static final FormatterRegistry FORMATTER_REGISTRY = FormatterRegistry.get();
     private static final Formatter<Object> DEFAULT_FORMATTER = new Formatter<>(Object.class, AdvancedDebug.res("object")) {
         @Override
-        public void format(Object obj, StringBuilder sb) {
+        public void format(Object obj, IFormatterContext context) {
             Class<?> c = obj.getClass();
-            sb.append(AQUA);
-            sb.append(c.getPackage().getName().replaceAll("\\.", GRAY + "." + AQUA));
-            sb.append(GRAY).append(".").append(AQUA);
-            sb.append(ChatFormatting.DARK_AQUA);
-            sb.append(c.getSimpleName());
-            sb.append(GRAY).append("@").append(YELLOW);
-            sb.append(Integer.toHexString(obj.hashCode()));
+
+            context.classValue(c);
+            context.identifier("@");
+            context.hexValue(obj.hashCode());
         }
     };
     private static final Map<ResourceLocation, DebugPage> PAGE_REGISTRY = new HashMap<>();
+    private static final Marker MARKER = MarkerFactory.getMarker("DebugGui");
     private Font font;
     private int page = 0;
 
@@ -73,22 +76,53 @@ public final class DebugGui implements IIngameOverlay, IDebugGui {
         DebugPage debugPage = getDebugPage();
         Minecraft mc = Minecraft.getInstance();
 
-        DebugRenderContext context = new DebugRenderContext(pose, width, height) {
+        double scale = mc.getWindow().getGuiScale();
+        double preferredScale = Config.USE_CUSTOM_SCALE.get() ? Config.CUSTOM_SCALE.get() : scale;
+        Boolean useCustomScale = Config.USE_CUSTOM_SCALE.get();
+
+        int rescaledWidth = (int) (((double) width * scale) / preferredScale);
+        int rescaledHeight = (int) (((double) height * scale) / preferredScale);
+
+        DebugRenderContext context = new DebugRenderContext(pose, rescaledWidth, rescaledHeight) {
             @Override
-            protected void drawLine(PoseStack pose, String text, int x, int y) {
+            protected void drawLine(PoseStack pose, Component text, int x, int y) {
                 DebugGui.this.drawLine(pose, text, x, y);
             }
         };
 
         if (debugPage != null) {
-            drawLine(pose, "Debug Page: " + debugPage.registryName().toString(), 6, height - 16);
-            debugPage.render(pose, context);
+            pose.pushPose();
+            {
+                pose.scale((float) ((1 * preferredScale) / scale), (float) ((1 * preferredScale) / scale), 1);
+                ResourceLocation resourceLocation = debugPage.registryName();
+                try {
+                    if (Config.SHOW_CURRENT_PAGE.get()) {
+                        drawLine(pose, new TextComponent("Debug Page: " + resourceLocation.toString()), 6, height - 16);
+                    }
+                    debugPage.render(pose, context);
+                } catch (Exception e) {
+                    if (resourceLocation != null)
+                        AdvancedDebug.LOGGER.error(MARKER, "Error rendering debug page {}", resourceLocation, e);
+                    else
+                        AdvancedDebug.LOGGER.error(MARKER, "Error rendering debug page", e);
+
+                    try {
+                        if (resourceLocation != null)
+                            context.left(new TextComponent("Error rendering debug page " + resourceLocation).withStyle(RED));
+                        else
+                            context.left(new TextComponent("Error rendering debug page").withStyle(RED));
+                    } catch (Exception e1) {
+                        AdvancedDebug.LOGGER.error(MARKER, "Error showing error on debug page", e1);
+                    }
+                }
+            }
+            pose.popPose();
         } else {
             DEFAULT.render(pose, context);
         }
     }
 
-    private void drawLine(PoseStack pose, String text, int x, int y) {
+    private void drawLine(PoseStack pose, Component text, int x, int y) {
         Screen.fill(pose, x, y, x + font.width(text) + 2, (y - 1) + font.lineHeight + 2, 0x5f000000);
         font.draw(pose, text, x + 1, y + 1, 0xffffff);
     }
@@ -204,116 +238,45 @@ public final class DebugGui implements IIngameOverlay, IDebugGui {
         return new Angle(angle);
     }
 
-    public String format(String text, Object obj, Object... objects) {
+    public Component format(String text, Object obj, Object... objects) {
         StringBuilder sb = new StringBuilder();
 
-//        sb.append(ChatFormatting.DARK_AQUA).append(text);
-        sb.append(WHITE).append(ITALIC).append(text);
-        sb.append(GRAY).append(": ");
-        sb.append(format(obj));
+        FormatterContext context = new FormatterContext();
+        format(obj, context);
+
+        ComponentBuilder builder = new ComponentBuilder();
+        builder.append(text, WHITE);
+        builder.append(": ", GRAY);
+        builder.append(context.build());
 
         for (Object object : objects) {
-            sb.append(GRAY).append(", ");
-            sb.append(format(object));
+            FormatterContext ctx = new FormatterContext();
+            format(object, ctx);
+
+            builder.append(", ", GRAY);
+            builder.append(ctx.build());
         }
 
-        return sb.toString();
+        return builder.build();
     }
 
     @Override
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public String format(Object obj) {
-        StringBuilder sb = new StringBuilder();
-
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public void format(Object obj, IFormatterContext context) {
         if (obj == null) {
-            sb.append(LIGHT_PURPLE);
-            sb.append("null");
+            context.keyword("null");
         } else if (obj instanceof Class<?> c) {
-            sb.append(AQUA);
-            sb.append(c.getPackage().getName().replaceAll("\\.", GRAY + "." + AQUA));
-            sb.append(GRAY).append(".").append(AQUA);
-            sb.append(ChatFormatting.DARK_AQUA);
-            sb.append(c.getSimpleName());
+            context.packageName(((Class<?>) obj).getPackage().getName() + ".");
+            context.className(((Class<?>) obj).getSimpleName());
         } else {
             Formatter identified = FORMATTER_REGISTRY.identify(obj.getClass());
             if (identified != null) {
-                identified.format(obj, sb);
-                return sb.toString();
+                identified.format(obj, context);
+                return;
             }
 
-            DEFAULT_FORMATTER.format(obj, sb);
+            DEFAULT_FORMATTER.format(obj, context);
         }
-        return sb.toString();
-    }
-
-    private void drawTopString(PoseStack matrixStack, String text, int line) {
-        // Declare local variables before draw.
-        Font fontRenderer = Minecraft.getInstance().font;
-        int width = Minecraft.getInstance().getWindow().getGuiScaledWidth();
-
-        // Draw text.
-        drawLine(matrixStack, text, (int) (width / 2f - fontRenderer.width(text) / 2f), (int) (12f + (line * 12)));
-    }
-
-    private void drawLeftTopString(PoseStack matrixStack, String text, int line, Object obj, Object... objects) {
-        // Declare local variables before draw.
-        Font fontRenderer = Minecraft.getInstance().font;
-        text = format(text, obj, objects);
-
-        // Draw text.
-        drawLine(matrixStack, text, (int) 12f, (int) (12f + (line * 12)));
-    }
-
-    private void drawRightTopString(PoseStack matrixStack, String text, int line, Object obj, Object... objects) {
-        // Declare local variables before draw.
-        Font fontRenderer = Minecraft.getInstance().font;
-        int width = Minecraft.getInstance().getWindow().getGuiScaledWidth();
-        text = format(text, obj, objects);
-
-        // Draw text.
-        drawLine(matrixStack, text, width - 12 - fontRenderer.width(text), (int) (12f + (line * 12)));
-    }
-
-    @SuppressWarnings("unused")
-    private void drawBottomString(PoseStack matrixStack, String text, int line) {
-        // Declare local variables before draw.
-        Font fontRenderer = Minecraft.getInstance().font;
-        int width = Minecraft.getInstance().getWindow().getGuiScaledWidth();
-        int height = Minecraft.getInstance().getWindow().getGuiScaledWidth();
-
-        // Draw text.
-        drawLine(matrixStack, text, (int) (width / 2f - fontRenderer.width(text) / 2f), (int) (height - 29f - (line * 12)));
-    }
-
-    @SuppressWarnings("unused")
-    private void drawLeftBottomString(PoseStack matrixStack, String text, int line) {
-        // Declare local variables before draw.
-        Font fontRenderer = Minecraft.getInstance().font;
-        int height = Minecraft.getInstance().getWindow().getGuiScaledWidth();
-
-        // Draw text.
-        drawLine(matrixStack, text, 12, (int) (height - 29f - (line * 12)));
-    }
-
-    @SuppressWarnings("unused")
-    private void drawRightBottomString(PoseStack matrixStack, String text, int line) {
-        // Declare local variables before draw.
-        Font fontRenderer = Minecraft.getInstance().font;
-        int width = Minecraft.getInstance().getWindow().getGuiScaledWidth();
-        int height = Minecraft.getInstance().getWindow().getGuiScaledWidth();
-
-        // Draw text.
-        drawLine(matrixStack, text, width - 12 - fontRenderer.width(text), (int) (height - 29f - (line * 12)));
-    }
-
-    @SuppressWarnings({"unused", "SameParameterValue"})
-    private void drawRightString(PoseStack matrixStack, String text, float mx, float y, int color) {
-        // Declare local variables before draw.
-        Font fontRenderer = Minecraft.getInstance().font;
-        int width = Minecraft.getInstance().getWindow().getGuiScaledWidth();
-
-        // Draw text.
-        drawLine(matrixStack, text, (int) (width - mx - fontRenderer.width(text)), (int) y);
     }
 
     @Override

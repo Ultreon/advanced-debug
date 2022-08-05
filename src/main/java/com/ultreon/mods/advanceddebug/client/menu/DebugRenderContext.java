@@ -2,8 +2,10 @@ package com.ultreon.mods.advanceddebug.client.menu;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 
 public abstract class DebugRenderContext implements IDebugRenderContext {
     private int left;
@@ -48,7 +50,7 @@ public abstract class DebugRenderContext implements IDebugRenderContext {
 
     @Override
     public void left(String text) {
-        drawLeft(pose, text, left++);
+        drawLeft(pose, ChatFormatting.GRAY + text, left++);
     }
 
     @Override
@@ -73,7 +75,7 @@ public abstract class DebugRenderContext implements IDebugRenderContext {
 
     @Override
     public void right(String text) {
-        drawRight(pose, text, right++);
+        drawRight(pose, ChatFormatting.GRAY + text, right++);
     }
 
     @Override
@@ -97,7 +99,7 @@ public abstract class DebugRenderContext implements IDebugRenderContext {
     }
 
     private void drawTop(PoseStack pose, String text, int line) {
-        drawLine(pose, text, (int) (this.width / 2f - mc.font.width(text) / 2f), VERTICAL_OFFSET + line * (mc.font.lineHeight + 2));
+        drawLine(pose, new TextComponent(text), (int) (this.width / 2f - mc.font.width(text) / 2f), VERTICAL_OFFSET + line * (mc.font.lineHeight + 2));
     }
 
     private void drawLeft(PoseStack pose, String text, int line, Object obj, Object... objects) {
@@ -105,17 +107,17 @@ public abstract class DebugRenderContext implements IDebugRenderContext {
     }
 
     private void drawLeft(PoseStack pose, String text, int line) {
-        drawLine(pose, text, HORIZONTAL_OFFSET, VERTICAL_OFFSET + line * (mc.font.lineHeight + 2));
+        drawLine(pose, new TextComponent(text), HORIZONTAL_OFFSET, VERTICAL_OFFSET + line * (mc.font.lineHeight + 2));
     }
 
     private void drawRight(PoseStack pose, String text, int line, Object obj, Object... objects) {
-        String format = DebugGui.get().format(text, obj, objects);
+        Component format = DebugGui.get().format(text, obj, objects);
         drawLine(pose, format, this.width - HORIZONTAL_OFFSET - mc.font.width(format), VERTICAL_OFFSET + line * (mc.font.lineHeight + 2));
     }
 
     private void drawRight(PoseStack pose, String text, int line) {
-        drawLine(pose, text, this.width - HORIZONTAL_OFFSET - mc.font.width(text), VERTICAL_OFFSET + line * (mc.font.lineHeight + 2));
+        drawLine(pose, new TextComponent(text), this.width - HORIZONTAL_OFFSET - mc.font.width(text), VERTICAL_OFFSET + line * (mc.font.lineHeight + 2));
     }
-    
-    protected abstract void drawLine(PoseStack pose, String text, int x, int y);
+
+    protected abstract void drawLine(PoseStack pose, Component text, int x, int y);
 }
