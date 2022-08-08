@@ -1,13 +1,11 @@
 package com.ultreon.mods.advanceddebug.api.common;
 
-import lombok.Getter;
-
 import java.util.Objects;
 
 import static net.minecraft.ChatFormatting.BLUE;
 import static net.minecraft.ChatFormatting.GRAY;
 
-public record Angle(@Getter double degrees) implements IFormattable {
+public record Angle(double degrees) implements IFormattable {
     public String toFormattedString() {
         return BLUE.toString() + this.degrees + GRAY + ((char) 0xb0);
     }

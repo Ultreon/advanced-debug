@@ -1,14 +1,17 @@
 package com.ultreon.mods.advanceddebug.api.common;
 
-import lombok.AllArgsConstructor;
 import net.minecraft.ChatFormatting;
 
 import java.util.Objects;
 
-@AllArgsConstructor
 public final class LongSize extends AbstractSize implements IFormattable {
     public double width;
     public double height;
+
+    public LongSize(double width, double height) {
+        this.width = width;
+        this.height = height;
+    }
 
     public Double getWidth() {
         return width;

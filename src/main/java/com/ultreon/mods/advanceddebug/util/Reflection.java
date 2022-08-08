@@ -1,12 +1,9 @@
 package com.ultreon.mods.advanceddebug.util;
 
-import lombok.SneakyThrows;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
 public class Reflection {
-    @SneakyThrows
     public static Object getField(Class<?> clazz, String name) {
         Field declaredField;
         try {
@@ -15,16 +12,19 @@ public class Reflection {
             try {
                 declaredField = clazz.getField(name);
             } catch (NoSuchFieldException f) {
-                throw new NoSuchFieldException("No static field named " + name + " was found for class " + clazz.getName());
+                throw new RuntimeException("No static field named " + name + " was found for class " + clazz.getName());
             }
         }
         if (Modifier.isStatic(declaredField.getModifiers())) {
-            return declaredField.get(null);
+            try {
+                return declaredField.get(null);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
         }
-        throw new NoSuchFieldException("No static field named " + name + " was found for class " + clazz.getName());
+        throw new RuntimeException("No static field named " + name + " was found for class " + clazz.getName());
     }
 
-    @SneakyThrows
     public static Object getField(Object o, String name) {
         Class<?> clazz = o.getClass();
         Field declaredField;
@@ -34,9 +34,13 @@ public class Reflection {
             try {
                 declaredField = clazz.getField(name);
             } catch (NoSuchFieldException f) {
-                throw new NoSuchFieldException("No field named " + name + " was found for class " + clazz.getName());
+                throw new RuntimeException("No field named " + name + " was found for class " + clazz.getName());
             }
         }
-        return declaredField.get(o);
+        try {
+            return declaredField.get(o);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

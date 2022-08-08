@@ -1,12 +1,13 @@
 package com.ultreon.mods.advanceddebug.util;
 
-import lombok.experimental.UtilityClass;
-
 import java.math.BigDecimal;
 
 @SuppressWarnings("unused")
-@UtilityClass
 public final class MathHelper {
+    private MathHelper() {
+        throw new UnsupportedOperationException("Cannot instantiate a utility class");
+    }
+
     public static int getDecimalPlaces(Float d) {
         String s = d.toString();
         if (s.endsWith(".0")) {

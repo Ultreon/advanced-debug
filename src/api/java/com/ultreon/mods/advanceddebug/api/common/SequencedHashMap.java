@@ -64,7 +64,6 @@ package com.ultreon.mods.advanceddebug.api.common;
  * Note: this is modified to use type parameters. - Qboi123
  *
  */
-import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -838,18 +837,26 @@ public final class SequencedHashMap<K, V> implements Map<K, V>, Cloneable, Exter
         // the case with SequencedHashMap)? It's impossible to know in the clone
         // when to stop cloning, and thus you end up in a recursive loop,
         // continuously cloning the "next" in the list.
-        @Getter
         private final K key;
         // package private to allow the SequencedHashMap to access and manipulate
         // them.
         Entry<K, V> next = null;
         Entry<K, V> prev = null;
-        @Getter
         private V value;
 
         public Entry(K key, V value) {
             this.key = key;
             this.value = value;
+        }
+
+        @Override
+        public K getKey() {
+            return key;
+        }
+
+        @Override
+        public V getValue() {
+            return value;
         }
 
         // per Map.Entry.setValue()

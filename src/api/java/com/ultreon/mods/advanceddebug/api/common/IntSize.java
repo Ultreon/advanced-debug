@@ -1,16 +1,18 @@
 package com.ultreon.mods.advanceddebug.api.common;
 
-import lombok.AllArgsConstructor;
-
 import java.util.Objects;
 
 import static net.minecraft.ChatFormatting.BLUE;
 import static net.minecraft.ChatFormatting.GRAY;
 
-@AllArgsConstructor
 public final class IntSize implements IFormattable {
     public int width;
     public int height;
+
+    public IntSize(int width, int height) {
+        this.width = width;
+        this.height = height;
+    }
 
     public int getWidth() {
         return width;

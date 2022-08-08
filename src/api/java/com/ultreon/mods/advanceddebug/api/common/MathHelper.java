@@ -1,13 +1,14 @@
 package com.ultreon.mods.advanceddebug.api.common;
 
-import lombok.experimental.UtilityClass;
-
 import java.math.BigDecimal;
 
 @SuppressWarnings("unused")
-@UtilityClass
 class MathHelper {
-    int getDecimalPlaces(Float d) {
+    private MathHelper() {
+        throw new UnsupportedOperationException("Cannot instantiate a utility class");
+    }
+
+    static int getDecimalPlaces(Float d) {
         String s = d.toString();
         if (s.endsWith(".0")) {
             return 0;
@@ -20,7 +21,7 @@ class MathHelper {
         return split[1].length();
     }
 
-    int getDecimalPlaces(Double d) {
+    static int getDecimalPlaces(Double d) {
         String s = d.toString();
         if (s.endsWith(".0")) {
             return 0;
@@ -33,7 +34,7 @@ class MathHelper {
         return split[1].length();
     }
 
-    int getDecimalPlaces(BigDecimal d) {
+    static int getDecimalPlaces(BigDecimal d) {
         String s = d.toString();
         if (s.endsWith(".0")) {
             return 0;

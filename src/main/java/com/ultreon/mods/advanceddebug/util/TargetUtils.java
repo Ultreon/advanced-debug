@@ -1,6 +1,5 @@
 package com.ultreon.mods.advanceddebug.util;
 
-import lombok.experimental.UtilityClass;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
@@ -13,8 +12,11 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-@UtilityClass
 public class TargetUtils {
+    private TargetUtils() {
+        throw new UnsupportedOperationException("Cannot instantiate a utility class");
+    }
+
     @Nullable
     public static BlockHitResult block() {
         if (Minecraft.getInstance().player != null) {

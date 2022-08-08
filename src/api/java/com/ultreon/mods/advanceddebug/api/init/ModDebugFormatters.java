@@ -10,7 +10,6 @@ import com.ultreon.mods.advanceddebug.api.client.registry.IFormatterRegistry;
 import com.ultreon.mods.advanceddebug.api.common.Angle;
 import com.ultreon.mods.advanceddebug.api.common.IFormattable;
 import com.ultreon.mods.advanceddebug.api.common.MoonPhase;
-import lombok.experimental.UtilityClass;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -52,11 +51,10 @@ import java.util.*;
 
 import static com.ultreon.mods.advanceddebug.api.util.MathUtil.roundTo;
 
-@UtilityClass
 @SuppressWarnings({"rawtypes", "unused"})
 public final class ModDebugFormatters {
     private static final IFormatterRegistry REGISTRY = IAdvancedDebug.get().getFormatterRegistry();
-    
+
     public static final Formatter<Number> NUMBER = REGISTRY.register(new Formatter<>(Number.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "java/number")) {
         @Override
         public void format(Number obj, IFormatterContext context) {
@@ -532,5 +530,9 @@ public final class ModDebugFormatters {
 
     public static void initClass() {
 
+    }
+
+    private ModDebugFormatters() {
+        throw new UnsupportedOperationException("Cannot instantiate a utility class");
     }
 }

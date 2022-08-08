@@ -1,12 +1,14 @@
 package com.ultreon.mods.advanceddebug.api.common;
 
-import lombok.Getter;
 import net.minecraft.ChatFormatting;
 
 @SuppressWarnings("unused")
 public final class Formatted implements IFormattable {
-    @Getter
     private final String string;
+
+    public String getString() {
+        return string;
+    }
 
     public Formatted(String string) {
         this.string = string;

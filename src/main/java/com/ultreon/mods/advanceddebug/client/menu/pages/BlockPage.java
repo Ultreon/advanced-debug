@@ -12,7 +12,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.BlockHitResult;
 
-import static net.minecraft.ChatFormatting.GRAY;
 import static net.minecraft.ChatFormatting.RED;
 
 public class BlockPage extends DebugPage {
@@ -34,7 +33,9 @@ public class BlockPage extends DebugPage {
             // now the coordinates you want are in pos. Example of use:
             BlockState state = player.getLevel().getBlockState(pos);
             Block block = state.getBlock();
-            ctx.left(GRAY + "-== BLOCK ==-");
+
+            ctx.left();
+            ctx.left("Block Related");
             ctx.left("Type", block.getRegistryName());
             ctx.left("Translated Name", block.getName().getString());
             ctx.left("Block Hardness", state.getDestroySpeed(player.getLevel(), pos));
@@ -53,6 +54,16 @@ public class BlockPage extends DebugPage {
             ctx.left("Identifier", block.getRegistryName());
             ctx.left("Default Slipperiness", block.getFriction());
             ctx.left("Speed Factor", getMultiplier(block.getSpeedFactor()));
+
+            ctx.right();
+            ctx.right("Properties");
+            state.getProperties().forEach((key) -> {
+                try {
+                    ctx.right(key.getName(), state.getValue(key));
+                } catch (Exception e) {
+                    ctx.right(key.getName(), RED + "Error");
+                }
+            });
         } else {
             // not looking at a block, or too far away from one to tell
             ctx.top(RED + "<No Block Was Found>");
@@ -65,7 +76,8 @@ public class BlockPage extends DebugPage {
             // now the coordinates you want are in pos. Example of use:
             FluidState state = player.getLevel().getBlockState(pos).getFluidState();
             if (!state.isEmpty()) {
-                ctx.right(GRAY + "-== Fluid ==-");
+                ctx.right();
+                ctx.right("Fluid Related");
                 ctx.right("Is Empty", state.isEmpty());
                 ctx.right("Height", state.getOwnHeight());
                 ctx.right("Amount", state.getAmount());

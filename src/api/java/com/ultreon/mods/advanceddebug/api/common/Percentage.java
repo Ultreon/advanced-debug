@@ -1,8 +1,5 @@
 package com.ultreon.mods.advanceddebug.api.common;
 
-import lombok.Data;
-import lombok.Getter;
-
 import java.util.Objects;
 
 import static net.minecraft.ChatFormatting.BLUE;
@@ -16,9 +13,7 @@ import static net.minecraft.ChatFormatting.GRAY;
  *
  * @author Qboi123
  */
-@Data
 public final class Percentage implements IFormattable {
-    @Getter
     private double percentage;
 
     public Percentage(double value) {
@@ -50,6 +45,10 @@ public final class Percentage implements IFormattable {
         return new Multiplier(this.percentage / 100);
     }
 
+    public double getPercentage() {
+        return percentage;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -61,5 +60,12 @@ public final class Percentage implements IFormattable {
     @Override
     public int hashCode() {
         return Objects.hash(percentage);
+    }
+
+    @Override
+    public String toString() {
+        return "Percentage{" +
+                "percentage=" + percentage +
+                '}';
     }
 }

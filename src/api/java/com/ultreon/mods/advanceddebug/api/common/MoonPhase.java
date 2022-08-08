@@ -1,9 +1,5 @@
 package com.ultreon.mods.advanceddebug.api.common;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
-@RequiredArgsConstructor
 public enum MoonPhase implements IIndexable {
     FULL(0),
     WANING_GIBBOUS(1),
@@ -14,8 +10,16 @@ public enum MoonPhase implements IIndexable {
     FIRST_QUARTER(6),
     WAXING_GIBBOUS(7);
 
-    @Getter
     private final int index;
+
+    MoonPhase(int index) {
+        this.index = index;
+    }
+
+    @Override
+    public int getIndex() {
+        return index;
+    }
 
     public static MoonPhase fromIndex(int index) {
         MoonPhase[] values = MoonPhase.values();
