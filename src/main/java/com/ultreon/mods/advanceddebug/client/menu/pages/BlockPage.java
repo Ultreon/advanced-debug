@@ -9,8 +9,11 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.BlockHitResult;
+
+import java.util.Collection;
 
 import static net.minecraft.ChatFormatting.RED;
 
@@ -55,15 +58,18 @@ public class BlockPage extends DebugPage {
             ctx.left("Default Slipperiness", block.getFriction());
             ctx.left("Speed Factor", getMultiplier(block.getSpeedFactor()));
 
-            ctx.right();
-            ctx.right("Properties");
-            state.getProperties().forEach((key) -> {
-                try {
-                    ctx.right(key.getName(), state.getValue(key));
-                } catch (Exception e) {
-                    ctx.right(key.getName(), RED + "Error");
-                }
-            });
+            Collection<Property<?>> properties = state.getProperties();
+            if (!properties.isEmpty()) {
+                ctx.right();
+                ctx.right("Properties");
+                properties.forEach((key) -> {
+                    try {
+                        ctx.right(key.getName(), state.getValue(key));
+                    } catch (Exception e) {
+                        ctx.right(key.getName(), RED + "Error");
+                    }
+                });
+            }
         } else {
             // not looking at a block, or too far away from one to tell
             ctx.top(RED + "<No Block Was Found>");

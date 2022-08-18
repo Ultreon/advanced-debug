@@ -79,6 +79,12 @@ public final class ModDebugFormatters {
             context.string("'").charsEscaped(obj.toString()).string("'");
         }
     });
+    public static final Formatter<Enum> ENUM = REGISTRY.register(new Formatter<>(Enum.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "java/enum")) {
+        @Override
+        public void format(Enum obj, IFormatterContext context) {
+            context.enumConstant(obj);
+        }
+    });
     public static final Formatter<List> LIST = REGISTRY.register(new Formatter<>(List.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "java/list")) {
         @Override
         public void format(List obj, IFormatterContext context) {
