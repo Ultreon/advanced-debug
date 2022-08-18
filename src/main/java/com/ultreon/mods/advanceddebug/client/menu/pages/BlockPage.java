@@ -37,7 +37,6 @@ public class BlockPage extends DebugPage {
             BlockState state = player.getLevel().getBlockState(pos);
             Block block = state.getBlock();
 
-            ctx.left();
             ctx.left("Block Related");
             ctx.left("Type", block.getRegistryName());
             ctx.left("Translated Name", block.getName().getString());
@@ -57,11 +56,11 @@ public class BlockPage extends DebugPage {
             ctx.left("Identifier", block.getRegistryName());
             ctx.left("Default Slipperiness", block.getFriction());
             ctx.left("Speed Factor", getMultiplier(block.getSpeedFactor()));
+            ctx.left();
 
             Collection<Property<?>> properties = state.getProperties();
             if (!properties.isEmpty()) {
-                ctx.right();
-                ctx.right("Properties");
+                ctx.right("Block Properties");
                 properties.forEach((key) -> {
                     try {
                         ctx.right(key.getName(), state.getValue(key));
@@ -69,6 +68,7 @@ public class BlockPage extends DebugPage {
                         ctx.right(key.getName(), RED + "Error");
                     }
                 });
+                ctx.right();
             }
         } else {
             // not looking at a block, or too far away from one to tell
@@ -81,9 +81,8 @@ public class BlockPage extends DebugPage {
 
             // now the coordinates you want are in pos. Example of use:
             FluidState state = player.getLevel().getBlockState(pos).getFluidState();
+            ctx.right("Fluid Related");
             if (!state.isEmpty()) {
-                ctx.right();
-                ctx.right("Fluid Related");
                 ctx.right("Is Empty", state.isEmpty());
                 ctx.right("Height", state.getOwnHeight());
                 ctx.right("Amount", state.getAmount());
@@ -96,8 +95,9 @@ public class BlockPage extends DebugPage {
                 ctx.right("Tick Rate", state.getType().getTickDelay(player.getLevel()));
             } else {
                 // not looking at a fluid, or too far away from one to tell
-                ctx.top(RED + "<No Fluid Was Found>");
+                ctx.right(RED + "<No Fluid Was Found>");
             }
+            ctx.right();
         }
     }
 }

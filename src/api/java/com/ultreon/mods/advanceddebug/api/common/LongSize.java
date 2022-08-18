@@ -1,6 +1,6 @@
 package com.ultreon.mods.advanceddebug.api.common;
 
-import net.minecraft.ChatFormatting;
+import com.ultreon.mods.advanceddebug.api.client.formatter.IFormatterContext;
 
 import java.util.Objects;
 
@@ -30,8 +30,8 @@ public final class LongSize extends AbstractSize implements IFormattable {
     }
 
     @Override
-    public String toFormattedString() {
-        return ChatFormatting.GOLD.toString() + this.width + ChatFormatting.GRAY + " x " + ChatFormatting.GOLD + this.height;
+    public void format(IFormatterContext ctx) {
+        ctx.number(width).operator(" \u00D7 ").number(height);
     }
 
     @Override

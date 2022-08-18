@@ -6,12 +6,12 @@ import com.ultreon.mods.advanceddebug.text.ComponentBuilder;
 import net.minecraft.network.chat.Component;
 
 import java.util.Locale;
+import java.util.function.Consumer;
 
-@SuppressWarnings("SpellCheckingInspection")
 public class FormatterContext implements IFormatterContext {
     public static final String KEYWORD_COLOR = "#EA32FF";
-    public static final String NUMBER_COLOR = "#FF9232";
-    public static final String ENUM_CONST = "#FF9232";
+    public static final String NUMBER_COLOR = "#FF7632";
+    public static final String ENUM_CONST_COLOR = "#FF7632";
     public static final String STRING_COLOR = "#5FFF32";
     public static final String STRING_ESCAPE_COLOR = "#32F4FF";
     public static final String METHOD_COLOR = "#32A3FF";
@@ -20,7 +20,7 @@ public class FormatterContext implements IFormatterContext {
     public static final String COMMENT_COLOR = "#687287";
     public static final String ANNOTATION_COLOR = "#FFC832";
     public static final String PACKAGE_COLOR = "#FFC832";
-    public static final String PARAMETER_COLOR = "#FF9232";
+    public static final String PARAMETER_COLOR = "#FF7632";
     public static final String IDENTIFIER_COLOR = "#32F4FF";
     public static final String OPERATOR_COLOR = "#999999";
     public static final String ERROR_COLOR = "#FF3251";
@@ -104,7 +104,7 @@ public class FormatterContext implements IFormatterContext {
 
     @Override
     public IFormatterContext enumConstant(String text) {
-        builder.colored(text, ENUM_CONST);
+        builder.colored(text, ENUM_CONST_COLOR);
         return this;
     }
 
@@ -212,9 +212,9 @@ public class FormatterContext implements IFormatterContext {
     }
 
     @Override
-    public IFormatterContext other(Object o) {
+    public IFormatterContext other(Object obj) {
         FormatterContext ctx = new FormatterContext();
-        DebugGui.get().format(o, ctx);
+        DebugGui.get().format(obj, ctx);
         builder.append(ctx.build());
         return this;
     }
@@ -311,6 +311,20 @@ public class FormatterContext implements IFormatterContext {
             }
         }
         return this;
+    }
+
+    @Deprecated
+    @Override
+    public IFormatterContext direct(String alreadyFormatted) {
+        builder.append(alreadyFormatted);
+        return this;
+    }
+
+    @Override
+    public void subFormat(Consumer<IFormatterContext> o) {
+        FormatterContext ctx = new FormatterContext();
+        o.accept(ctx);
+        builder.append(ctx.build());
     }
 
     public Component build() {

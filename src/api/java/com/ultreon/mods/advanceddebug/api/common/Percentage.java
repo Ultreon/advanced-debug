@@ -1,9 +1,8 @@
 package com.ultreon.mods.advanceddebug.api.common;
 
-import java.util.Objects;
+import com.ultreon.mods.advanceddebug.api.client.formatter.IFormatterContext;
 
-import static net.minecraft.ChatFormatting.BLUE;
-import static net.minecraft.ChatFormatting.GRAY;
+import java.util.Objects;
 
 /**
  * Percentage class, used for get percentage value or normalized value.<br>
@@ -25,8 +24,8 @@ public final class Percentage implements IFormattable {
     }
 
     @Override
-    public String toFormattedString() {
-        return BLUE.toString() + Math.round(percentage) + GRAY + "%";
+    public void format(IFormatterContext ctx) {
+        ctx.number(Math.round(percentage)).operator("%");
     }
 
     public double getValue() {

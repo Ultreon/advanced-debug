@@ -32,6 +32,7 @@ public class FluidPage extends DebugPage {
             // now the coordinates you want are in pos. Example of use:
             FluidState state = player.getLevel().getBlockState(pos).getFluidState();
             if (!state.isEmpty()) {
+                ctx.left("Fluid Related");
                 ctx.left("Height", state.getOwnHeight());
                 ctx.left("Amount", state.getAmount());
                 ctx.left("Actual Height", state.getType().getHeight(state, player.getLevel(), pos));
@@ -41,9 +42,12 @@ public class FluidPage extends DebugPage {
 
                 }
                 ctx.left("Tick Rate", state.getType().getTickDelay(player.getLevel()));
+                ctx.left();
 
+                ctx.right("Flags");
                 ctx.right("Is Empty", state.isEmpty());
                 ctx.right("Source", state.isSource());
+                ctx.right();
             } else {
                 // not looking at a fluid, or too far away from one to tell
                 ctx.top(RED + "<No Fluid Was Found>");

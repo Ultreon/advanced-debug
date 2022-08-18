@@ -1,9 +1,8 @@
 package com.ultreon.mods.advanceddebug.api.common;
 
-import java.util.Objects;
+import com.ultreon.mods.advanceddebug.api.client.formatter.IFormatterContext;
 
-import static net.minecraft.ChatFormatting.BLUE;
-import static net.minecraft.ChatFormatting.GRAY;
+import java.util.Objects;
 
 public final class FloatSize implements IFormattable {
     public float width;
@@ -31,8 +30,8 @@ public final class FloatSize implements IFormattable {
     }
 
     @Override
-    public String toFormattedString() {
-        return BLUE.toString() + this.width + GRAY + " x " + BLUE + this.height;
+    public void format(IFormatterContext ctx) {
+        ctx.number(width).operator(" \u00D7 ").number(height);
     }
 
     @Override

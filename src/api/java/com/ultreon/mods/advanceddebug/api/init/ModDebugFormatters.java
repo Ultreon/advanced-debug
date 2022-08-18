@@ -259,8 +259,9 @@ public final class ModDebugFormatters {
     public static final Formatter<ResourceLocation> RESOURCE_LOCATION = REGISTRY.register(new Formatter<>(ResourceLocation.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "minecraft/resource_location")) {
         @Override
         public void format(ResourceLocation obj, IFormatterContext context) {
-            context.className(obj.getNamespace())
-                    .operator(":")
+            context.operator("(")
+                    .className(obj.getNamespace())
+                    .operator(") ")
                     .identifier(obj.getPath());
         }
     });
@@ -524,7 +525,7 @@ public final class ModDebugFormatters {
     public static final Formatter<IFormattable> RT_FORMATTABLE = REGISTRY.register(new Formatter<>(IFormattable.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "formattable")) {
         @Override
         public void format(IFormattable obj, IFormatterContext context) {
-            context.normal(obj.toFormattedString());
+            context.subFormat(obj::format);
         }
     });
     public static final Formatter<Angle> RT_ANGLE = REGISTRY.register(new Formatter<>(Angle.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "angle")) {

@@ -1,10 +1,12 @@
 package com.ultreon.mods.advanceddebug.client.menu.pages;
 
 import com.mojang.blaze3d.platform.Monitor;
+import com.mojang.blaze3d.platform.VideoMode;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.ultreon.mods.advanceddebug.api.client.menu.DebugPage;
 import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
+import com.ultreon.mods.advanceddebug.api.common.IntSize;
 import net.minecraft.client.Minecraft;
 
 public class ComputerPage extends DebugPage {
@@ -22,9 +24,15 @@ public class ComputerPage extends DebugPage {
         int screenHeight = window.getScreenHeight();
 
         if (monitor != null) {
-            ctx.left("Screen Size", screenWidth, screenHeight);
+            VideoMode currentMode = monitor.getCurrentMode();
+            ctx.left("Monitor");
+            ctx.left("Screen Size", new IntSize(screenWidth, screenHeight));
+            ctx.left("Refresh Rate", currentMode.getRefreshRate());
+            ctx.left("Bits", currentMode.getRedBits(), currentMode.getGreenBits(), currentMode.getBlueBits());
+            ctx.left();
         }
 
+        ctx.left("System Info");
         try {
             ctx.left("OS Version", System.getProperty("os.version"));
         } catch (SecurityException | IllegalArgumentException | NullPointerException ignored) {

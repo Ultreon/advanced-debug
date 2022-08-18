@@ -30,18 +30,15 @@ public class ItemPage extends DebugPage {
                 return;
             }
 
+            ctx.left("Name");
             ctx.left("Internal Name", stack.getItem().getRegistryName());
             ctx.left("Item Type Name", stack.getItem().getDescription().getString());
             if (stack.hasCustomHoverName()) {
                 ctx.left("Custom name", stack.getHoverName().getString());
             }
-            if (food != null) {
-                ctx.left("Food Hunger Points", food.getNutrition());
-                ctx.left("Food Saturation", food.getSaturationModifier());
-            }
-            if (group != null) {
-                ctx.left("Creative Tab", group.getDisplayName().getString());
-            }
+            ctx.left();
+
+            ctx.left("Properties");
             ctx.left("Rarity", item.getRarity(stack));
             ctx.left("Enchantability", item.getItemEnchantability(stack));
             ctx.left("Stack Limit", item.getItemStackLimit(stack));
@@ -50,8 +47,23 @@ public class ItemPage extends DebugPage {
             ctx.left("Count", stack.getCount());
             ctx.left("Repair Cost", stack.getBaseRepairCost());
             ctx.left("Use Duration", stack.getUseDuration());
-            ctx.left("XP Repair Ration", stack.getXpRepairRatio());
+            ctx.left("XP Repair Ratio", stack.getXpRepairRatio());
+            ctx.left();
 
+            if (group != null) {
+                ctx.right("Misc");
+                ctx.right("Creative Tab", group.getDisplayName().getString());
+                ctx.right();
+            }
+
+            if (food != null) {
+                ctx.right("Food Properties");
+                ctx.right("Food Hunger Points", food.getNutrition());
+                ctx.right("Food Saturation", food.getSaturationModifier());
+                ctx.right();
+            }
+
+            ctx.right("Flags");
             ctx.right("Complex", item.isComplex());
             ctx.right("Immune To Fire", item.isFireResistant());
             ctx.right("Enchantable", item.isEnchantable(stack));
@@ -61,6 +73,7 @@ public class ItemPage extends DebugPage {
             ctx.right("Stackable", stack.isStackable());
             ctx.right("Damageable", item.canBeDepleted());
             ctx.right("Damaged", item.isDamaged(stack));
+            ctx.right();
         }
     }
 }

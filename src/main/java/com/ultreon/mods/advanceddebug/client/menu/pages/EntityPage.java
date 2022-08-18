@@ -31,13 +31,14 @@ public class EntityPage extends DebugPage {
             EntityType<? extends Entity> type = entity.getType();
             Component customName = entity.getCustomName();
 
-            ctx.left(GRAY + "-== Entity Type ==-");
+            ctx.left(GRAY + "Entity Type");
             ctx.left("Height", type.getHeight());
             ctx.left("Name", type.getDescription().getString());
             ctx.left("Size", getSize(type.getDimensions().width, type.getDimensions().height));
             ctx.left("Internal Name", type.getRegistryName());
             ctx.left();
-            ctx.left(GRAY + "-== Entity ==-");
+
+            ctx.left(GRAY + "Entity");
             ctx.left("Air", entity.getAirSupply());
             ctx.left("Max Air", entity.getMaxAirSupply());
             ctx.left("Brightness", entity.getBrightness());
@@ -62,7 +63,7 @@ public class EntityPage extends DebugPage {
             ctx.left("Pushed By Fluid", entity.isPushedByFluid());
 
             if (entity instanceof LivingEntity living) {
-                ctx.right(GRAY + "-== Living Entity ==-");
+                ctx.right(GRAY + "Living Entity");
                 ctx.right("Health", living.getHealth());
                 ctx.right("Max. Health", living.getMaxHealth());
                 ctx.right("Main Hand", living.getItemInHand(InteractionHand.MAIN_HAND));
@@ -79,7 +80,7 @@ public class EntityPage extends DebugPage {
                 ctx.right("Scale", living.getScale());
                 ctx.right("Armor Value", living.getArmorValue());
             } else if (entity instanceof ItemEntity itemEntity) {
-                ctx.right(GRAY + "-== Item Entity ==-");
+                ctx.right(GRAY + "Item Entity");
                 ctx.right("Age", itemEntity.getAge());
                 ctx.right("Item", itemEntity.getItem());
                 ctx.right("Owner", itemEntity.getOwner());

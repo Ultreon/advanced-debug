@@ -50,7 +50,7 @@ public abstract class DebugRenderContext implements IDebugRenderContext {
 
     @Override
     public void left(String text) {
-        drawLeft(pose, ChatFormatting.GRAY + text, left++);
+        drawLeft(pose, ChatFormatting.GRAY + "-== " + text + ChatFormatting.GRAY + " ==-", left++);
     }
 
     @Override
@@ -75,7 +75,7 @@ public abstract class DebugRenderContext implements IDebugRenderContext {
 
     @Override
     public void right(String text) {
-        drawRight(pose, ChatFormatting.GRAY + text, right++);
+        drawRight(pose, ChatFormatting.GRAY + "-== " + text + ChatFormatting.GRAY + " ==-", right++);
     }
 
     @Override

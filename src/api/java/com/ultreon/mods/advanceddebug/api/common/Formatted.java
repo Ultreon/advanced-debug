@@ -1,6 +1,6 @@
 package com.ultreon.mods.advanceddebug.api.common;
 
-import net.minecraft.ChatFormatting;
+import com.ultreon.mods.advanceddebug.api.client.formatter.IFormatterContext;
 
 @SuppressWarnings("unused")
 public final class Formatted implements IFormattable {
@@ -42,8 +42,9 @@ public final class Formatted implements IFormattable {
         this.string = Boolean.toString(b);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
-    public String toFormattedString() {
-        return ChatFormatting.WHITE + string;
+    public void format(IFormatterContext ctx) {
+        ctx.direct(string);
     }
 }

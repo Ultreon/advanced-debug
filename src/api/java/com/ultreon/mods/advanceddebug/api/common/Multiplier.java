@@ -1,17 +1,17 @@
 package com.ultreon.mods.advanceddebug.api.common;
 
-import net.minecraft.ChatFormatting;
+import com.ultreon.mods.advanceddebug.api.client.formatter.IFormatterContext;
 
 import java.util.Objects;
 
 public record Multiplier(double value) implements IFormattable {
     @Override
-    public String toFormattedString() {
+    public void format(IFormatterContext ctx) {
         if (MathHelper.getDecimalPlaces(value) == 0) {
-            return ChatFormatting.BLUE.toString() + Math.round(value) + ChatFormatting.GRAY + "x";
+            ctx.number(Math.round(value)).operator("\u00D7");
+        } else {
+            ctx.number(value).operator("\u00D7");
         }
-
-        return ChatFormatting.BLUE.toString() + value + ChatFormatting.GRAY + "x";
     }
 
     public Percentage percentage() {
