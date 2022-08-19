@@ -5,9 +5,6 @@ import com.ultreon.mods.advanceddebug.api.client.menu.DebugPage;
 import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
 import com.ultreon.mods.advanceddebug.util.InputUtils;
 
-import static net.minecraft.ChatFormatting.BLUE;
-import static net.minecraft.ChatFormatting.WHITE;
-
 public class WindowPage extends DebugPage {
     public WindowPage(String modId, String name) {
         super(modId, name);
@@ -23,8 +20,8 @@ public class WindowPage extends DebugPage {
         ctx.left();
 
         ctx.right("Misc");
-        ctx.right("Refresh Rate", getFormatted("" + BLUE + mainWindow.getRefreshRate() + WHITE + " fps"));
-        ctx.right("Framerate Limit", getFormatted("" + BLUE + mainWindow.getFramerateLimit() + WHITE + " fps"));
+        ctx.right("Refresh Rate", mainWindow.getRefreshRate());
+        ctx.right("Framerate Limit", mainWindow.getFramerateLimit());
         ctx.right("Fullscreen Mode", mainWindow.isFullscreen());
         ctx.right("Vsync", mc.options.enableVsync);
 

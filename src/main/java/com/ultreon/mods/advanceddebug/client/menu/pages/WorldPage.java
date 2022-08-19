@@ -40,8 +40,9 @@ public class WorldPage extends DebugPage {
             ctx.left();
 
             ctx.right("Time & Weather");
-            ctx.right("Day Time", dimension.getDayTime());
-            ctx.right("Game Time", dimension.getGameTime());
+            ctx.right("Day Time", dimension.getDayTime() % 24000);
+            ctx.right("Game Time", dimension.getDayTime());
+            ctx.right("Days Played", dimension.getDayTime() / 24000);
             ctx.right("Daytime Now", dimension.isDay());
             ctx.right("Nighttime Now", dimension.isNight());
             ctx.right("Raining", dimension.isRaining());

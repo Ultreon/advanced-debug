@@ -3,7 +3,7 @@ package com.ultreon.mods.advanceddebug.api.common;
 import java.math.BigDecimal;
 
 @SuppressWarnings("unused")
-class MathHelper {
+public class MathHelper {
     private MathHelper() {
         throw new UnsupportedOperationException("Cannot instantiate a utility class");
     }

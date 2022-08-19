@@ -25,8 +25,15 @@ public abstract class DebugPage {
 
     public abstract void render(PoseStack poseStack, IDebugRenderContext ctx);
 
+    @Deprecated(forRemoval = true, since = "1.2.0")
     protected static IFormattable getFormatted(String s) {
-        return () -> s;
+        return new IFormattable() {
+            @SuppressWarnings("removal")
+            @Override
+            public String toFormattedString() {
+                return s;
+            }
+        };
     }
 
     protected static IFormattable getMultiplier(double multiplier) {

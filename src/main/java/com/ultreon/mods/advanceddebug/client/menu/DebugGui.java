@@ -198,8 +198,15 @@ public final class DebugGui implements IIngameOverlay, IDebugGui {
         }
     }
 
+    @Deprecated(forRemoval = true)
     private IFormattable getFormatted(String s) {
-        return () -> s;
+        return new IFormattable() {
+            @SuppressWarnings("removal")
+            @Override
+            public String toFormattedString() {
+                return s;
+            }
+        };
     }
 
     private IFormattable getMultiplier(double multiplier) {

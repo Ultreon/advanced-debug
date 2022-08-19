@@ -531,7 +531,7 @@ public final class ModDebugFormatters {
     public static final Formatter<Angle> RT_ANGLE = REGISTRY.register(new Formatter<>(Angle.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "angle")) {
         @Override
         public void format(Angle obj, IFormatterContext context) {
-            context.normal(obj.toFormattedString());
+            context.subFormat(obj::format);
         }
     });
 
