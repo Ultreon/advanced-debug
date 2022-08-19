@@ -30,7 +30,6 @@ public class WorldInfoPage extends DebugPage {
 
             ctx.left("Misc");
             ctx.left("Spawn Angle", dimensionInfo.getSpawnAngle());
-            ctx.left("Spawn Angle", dimensionInfo.getSpawnAngle());
             ctx.left("Difficulty", dimensionInfo.getDifficulty());
             ctx.left("Spawn", new Vec3i(dimensionInfo.getXSpawn(), dimensionInfo.getYSpawn(), dimensionInfo.getZSpawn()));
             ctx.left("Weather", new Formatted(GOLD + (dimensionInfo.isRaining() ? (dimensionInfo.isThundering() ? "storm" : "rain") : "clear")));

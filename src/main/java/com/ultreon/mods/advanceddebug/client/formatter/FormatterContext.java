@@ -263,6 +263,8 @@ public class FormatterContext implements IFormatterContext {
                 default -> current.append(c);
             }
         }
+
+        builder.colored(current.toString(), STRING_COLOR);
         return this;
     }
 

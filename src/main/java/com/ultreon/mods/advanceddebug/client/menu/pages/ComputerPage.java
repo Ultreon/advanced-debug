@@ -8,6 +8,7 @@ import com.ultreon.mods.advanceddebug.api.client.menu.DebugPage;
 import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
 import com.ultreon.mods.advanceddebug.api.common.IntSize;
 import net.minecraft.client.Minecraft;
+import org.lwjgl.glfw.GLFW;
 
 public class ComputerPage extends DebugPage {
     private final Minecraft mc = Minecraft.getInstance();
@@ -20,15 +21,16 @@ public class ComputerPage extends DebugPage {
     @Override
     public void render(PoseStack poseStack, IDebugRenderContext ctx) {
         Monitor monitor = window.findBestMonitor();
-        int screenWidth = window.getScreenWidth();
-        int screenHeight = window.getScreenHeight();
 
         if (monitor != null) {
+            long l = GLFW.glfwGetWindowMonitor(window.getWindow());
             VideoMode currentMode = monitor.getCurrentMode();
             ctx.left("Monitor");
-            ctx.left("Screen Size", new IntSize(screenWidth, screenHeight));
+            ctx.left("Screen Size", new IntSize(currentMode.getWidth(), currentMode.getHeight()));
+            ctx.left("Screen Pos", new IntSize(monitor.getX(), monitor.getY()));
             ctx.left("Refresh Rate", currentMode.getRefreshRate());
-            ctx.left("Bits", currentMode.getRedBits(), currentMode.getGreenBits(), currentMode.getBlueBits());
+            ctx.left("RGB Bits", currentMode.getRedBits(), currentMode.getGreenBits(), currentMode.getBlueBits());
+            ctx.left("Bits", currentMode.getRedBits() + currentMode.getGreenBits() + currentMode.getBlueBits());
             ctx.left();
         }
 

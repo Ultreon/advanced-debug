@@ -17,11 +17,15 @@ public class ItemEntityPage extends EntityPage {
     public void render(PoseStack poseStack, IDebugRenderContext ctx) {
         EntityHitResult entityHit = TargetUtils.entity();
         if (entityHit != null && entityHit.getEntity() instanceof ItemEntity entity) {
+            ctx.left("Generic");
             ctx.left("Thrower", entity.getThrower());
             ctx.left("Owner", entity.getOwner());
             ctx.left("Item", entity.getItem());
+            ctx.left();
 
+            ctx.right("Flags");
             ctx.right("Attackable", entity.isAttackable());
+            ctx.right();
         } else {
             // not looking at a block, or too far away from one to tell
             ctx.top(RED + "<No Item Entity Was Found>");
