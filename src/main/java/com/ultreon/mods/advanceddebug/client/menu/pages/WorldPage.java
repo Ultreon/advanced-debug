@@ -34,17 +34,19 @@ public class WorldPage extends DebugPage {
             }
             ctx.left();
 
+            float skyDarken = dimension.getSkyDarken(mc.getFrameTime());
+
             ctx.left("Brightness");
             ctx.left("Star Brightness", getPercentage(dimension.getStarBrightness(mc.getFrameTime())));
-            ctx.left("Sun Brightness", getPercentage(dimension.getSkyDarken(mc.getFrameTime())));
+            ctx.left("Sun Brightness", getPercentage(skyDarken));
             ctx.left();
 
             ctx.right("Time & Weather");
             ctx.right("Day Time", dimension.getDayTime() % 24000);
             ctx.right("Game Time", dimension.getDayTime());
             ctx.right("Days Played", dimension.getDayTime() / 24000);
-            ctx.right("Daytime Now", dimension.isDay());
-            ctx.right("Nighttime Now", dimension.isNight());
+            ctx.right("Is Day", skyDarken >= 0.7f);
+            ctx.right("Is Night", skyDarken < 0.7f);
             ctx.right("Raining", dimension.isRaining());
             ctx.right("Thundering", dimension.isThundering());
             ctx.right();

@@ -9,7 +9,8 @@ public interface IAdvancedDebug {
     static IAdvancedDebug get() {
         try {
             return (IAdvancedDebug) Class.forName("com.ultreon.mods.advanceddebug.AdvancedDebug").getDeclaredMethod("getInstance").invoke(null);
-        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | ClassNotFoundException e) {
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException |
+                 ClassNotFoundException e) {
             throw new IllegalStateException("Can't get instance object of the Advanced Debug Mod.");
         }
     }
@@ -19,4 +20,10 @@ public interface IAdvancedDebug {
     IFormatterRegistry getFormatterRegistry();
 
     String getModId();
+
+    boolean isSpacedNamespace();
+
+    boolean isSpacedEnumConstants();
+
+    boolean enableBubbleBlasterID();
 }

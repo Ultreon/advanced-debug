@@ -110,4 +110,19 @@ public class AdvancedDebug implements IAdvancedDebug {
 
         ModDebugPages.init();
     }
+
+    @Override
+    public boolean isSpacedNamespace() {
+        return Config.SPACED_NAMESPACES.get();
+    }
+
+    @Override
+    public boolean isSpacedEnumConstants() {
+        return Config.SPACED_ENUM_CONSTANTS.get();
+    }
+
+    @Override
+    public boolean enableBubbleBlasterID() {
+        return Config.ENABLE_BUBBLE_BLASTER_ID.get();
+    }
 }

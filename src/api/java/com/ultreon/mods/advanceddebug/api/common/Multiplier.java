@@ -1,6 +1,7 @@
 package com.ultreon.mods.advanceddebug.api.common;
 
 import com.ultreon.mods.advanceddebug.api.client.formatter.IFormatterContext;
+import com.ultreon.mods.advanceddebug.api.util.MathUtil;
 
 import java.util.Objects;
 
@@ -10,7 +11,7 @@ public record Multiplier(double value) implements IFormattable {
         if (MathHelper.getDecimalPlaces(value) == 0) {
             ctx.number(Math.round(value)).operator("\u00D7");
         } else {
-            ctx.number(value).operator("\u00D7");
+            ctx.number(MathUtil.roundTo(value, 5)).operator("\u00D7");
         }
     }
 

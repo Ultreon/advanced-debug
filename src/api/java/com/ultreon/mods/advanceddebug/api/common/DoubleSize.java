@@ -1,6 +1,7 @@
 package com.ultreon.mods.advanceddebug.api.common;
 
 import com.ultreon.mods.advanceddebug.api.client.formatter.IFormatterContext;
+import com.ultreon.mods.advanceddebug.api.util.MathUtil;
 
 import java.util.Objects;
 
@@ -31,7 +32,7 @@ public final class DoubleSize implements IFormattable {
 
     @Override
     public void format(IFormatterContext ctx) {
-        ctx.number(width).operator(" \u00D7 ").number(height);
+        ctx.number(MathUtil.roundTo(width, 5)).operator(" \u00D7 ").number(MathUtil.roundTo(height, 5));
     }
 
     @Override

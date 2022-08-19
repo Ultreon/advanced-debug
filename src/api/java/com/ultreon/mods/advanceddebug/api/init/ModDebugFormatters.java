@@ -259,17 +259,29 @@ public final class ModDebugFormatters {
     public static final Formatter<ResourceLocation> RESOURCE_LOCATION = REGISTRY.register(new Formatter<>(ResourceLocation.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "minecraft/resource_location")) {
         @Override
         public void format(ResourceLocation obj, IFormatterContext context) {
-            context.operator("(")
-                    .className(obj.getNamespace())
-                    .operator(") ")
-                    .identifier(obj.getPath());
+            if (IAdvancedDebug.get().isSpacedNamespace()) {
+                context.operator("(")
+                        .className(obj.getNamespace().replaceAll("_", " "))
+                        .operator(") ")
+                        .identifier(obj.getPath().replaceAll("_", " ").replaceAll("/", " -> "));
+            } else if (IAdvancedDebug.get().enableBubbleBlasterID()) {
+                String namespace = obj.getNamespace();
+                if (namespace.equals(ResourceLocation.DEFAULT_NAMESPACE)) namespace = "bubbles";
+                context.identifier(obj.getPath())
+                        .operator("@")
+                        .className(namespace.replaceAll("_", "."));
+            } else {
+                context.className(obj.getNamespace())
+                        .operator(":")
+                        .identifier(obj.getPath());
+            }
         }
     });
     public static final Formatter<ItemStack> ITEM_STACK = REGISTRY.register(new Formatter<>(ItemStack.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "minecraft/item_stack")) {
         @Override
         public void format(ItemStack obj, IFormatterContext context) {
             context.intValue(obj.getCount())
-                    .operator("x ");
+                    .operator("\u00D7 ");
             context.other(obj.getItem().getRegistryName());
         }
     });
@@ -277,20 +289,24 @@ public final class ModDebugFormatters {
         @Override
         public void format(Component obj, IFormatterContext context) {
             context.className(obj.getClass().getSimpleName())
-                    .space();
-            context.stringEscaped(obj.getString());
+                    .space()
+                    .string("\"")
+                    .stringEscaped(obj.getString())
+                    .string("\"");
         }
     });
+
     public static final Formatter<TranslatableComponent> TRANSLATABLE_COMPONENT = REGISTRY.register(new Formatter<>(TranslatableComponent.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "minecraft/chat/component")) {
         @Override
         public void format(TranslatableComponent obj, IFormatterContext context) {
-            context.className("Translation")
-                    .space();
-            context.stringEscaped(obj.getKey())
+            context.className("translation")
                     .space()
-                    .other(List.of(obj.getArgs()));
+                    .other(obj.getKey())
+                    .operator(" -> ")
+                    .other(obj.getString());
         }
     });
+
     public static final Formatter<Vec2> VEC2 = REGISTRY.register(new Formatter<>(Vec2.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "minecraft/chat/component")) {
         @Override
         public void format(Vec2 obj, IFormatterContext context) {

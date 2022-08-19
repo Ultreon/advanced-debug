@@ -20,10 +20,10 @@ public class ComputerPage extends DebugPage {
 
     @Override
     public void render(PoseStack poseStack, IDebugRenderContext ctx) {
-        Monitor monitor = window.findBestMonitor();
+        long l = GLFW.glfwGetWindowMonitor(window.getWindow());
+        Monitor monitor = window.screenManager.getMonitor(l);
 
         if (monitor != null) {
-            long l = GLFW.glfwGetWindowMonitor(window.getWindow());
             VideoMode currentMode = monitor.getCurrentMode();
             ctx.left("Monitor");
             ctx.left("Screen Size", new IntSize(currentMode.getWidth(), currentMode.getHeight()));

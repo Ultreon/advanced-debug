@@ -1,6 +1,7 @@
 package com.ultreon.mods.advanceddebug.client.formatter;
 
 import com.ultreon.mods.advanceddebug.api.client.formatter.IFormatterContext;
+import com.ultreon.mods.advanceddebug.client.Config;
 import com.ultreon.mods.advanceddebug.client.menu.DebugGui;
 import com.ultreon.mods.advanceddebug.text.ComponentBuilder;
 import net.minecraft.network.chat.Component;
@@ -152,7 +153,11 @@ public class FormatterContext implements IFormatterContext {
 
     @Override
     public IFormatterContext enumConstant(Enum<?> enumValue) {
-        enumConstant(enumValue.name().toLowerCase(Locale.ROOT).replaceAll("_", " "));
+        if (Config.SPACED_ENUM_CONSTANTS.get()) {
+            enumConstant(enumValue.name().toLowerCase(Locale.ROOT).replaceAll("_", " "));
+        } else {
+            enumConstant(enumValue.name().toLowerCase(Locale.ROOT).replaceAll("_", "-"));
+        }
         return this;
     }
 
