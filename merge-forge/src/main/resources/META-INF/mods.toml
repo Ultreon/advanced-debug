@@ -1,0 +1,12 @@
+modLoader = "javafml"
+loaderVersion = "*"
+license = "GPL-3.0"
+
+# The main mod, and all sub-mods.
+[[mods]]
+modId = "advanced_debug_forge"
+displayName = "Advanced Debug Wrapper"
+description = '''
+Forge wrapper for advanced debug
+'''
+itemIcon = "minecraft:string"

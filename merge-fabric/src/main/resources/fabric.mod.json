@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "advanced-debug-fabric",
+  "name": "Advanced Debug Wrapper",
+  "version": "1.0.0",
+  "custom": {
+    "modmenu": {
+      "badges": [
+        "library"
+      ],
+      "parent": "advanced_debug"
+    }
+  }
+}

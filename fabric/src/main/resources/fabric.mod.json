@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "advanced_debug",
+  "version": "${version}",
+  "name": "Advanced Debug",
+  "description": "${description}",
+  "authors": [
+    "Qboi123"
+  ],
+  "contributors": [
+
+  ],
+  "contact": {
+    "website": "https://ultreon.github.io/web/",
+    "repo": "https://github.com/Ultreon/advanced-debug",
+    "issues": "https://github.com/Ultreon/advanced-debug/issues"
+  },
+  "license": "LGPL-3.0",
+  "icon": "advanced_debug.png",
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "com.ultreon.mods.advanceddebug.fabric.AdvancedDebugFabric"
+    ]
+  },
+  "mixins": [
+    "advanced-debug.mixins.json",
+    "advanced-debug-common.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loaderVersion}",
+    "minecraft": ">=${minecraftVersion} <1.19.3",
+    "architectury": ">=6.3.43 <7.0",
+    "forgeconfigapiport": ">=4.2.3 <5.0"
+  }
+}
