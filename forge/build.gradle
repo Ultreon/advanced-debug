@@ -38,13 +38,13 @@ dependencies {
 }
 
 processResources {
-    inputs.property "version", rootProject.getViewVersion()
+    inputs.property "version", rootProject.version
     inputs.property "description", rootProject.getModDescription()
     System.out.println(inputs.getProperties())
 
     filesMatching("META-INF/mods.toml") {
         HashMap<String, ?> p = new HashMap<>()
-        p.put("version", rootProject.getViewVersion())
+        p.put("version", rootProject.version)
         p.put("description", rootProject.getModDescription())
         p.put("loaderVersion", rootProject.forge_version.split("\\.")[0])
         p.put("forgeVersion", rootProject.forge_version)

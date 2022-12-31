@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Generate Runs" type="GradleRunConfiguration" factoryName="Gradle">
+  <configuration default="false" name="Idea Sync" type="GradleRunConfiguration" factoryName="Gradle">
     <ExternalSystemSettings>
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$" />
@@ -10,9 +10,7 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value="genIntellijRuns" />
-          <option value="genEclipseRuns" />
-          <option value="genVSCodeRuns" />
+          <option value="ideaSyncTask" />
         </list>
       </option>
       <option name="vmOptions" />

@@ -2,7 +2,12 @@
   "schemaVersion": 1,
   "id": "advanced-debug-fabric",
   "name": "Advanced Debug Wrapper",
-  "version": "1.0.0",
+  "version": "1",
+  "license": "GPL-v3.0",
+  "authors": [
+    "Qboi123",
+    "Jab125"
+  ],
   "custom": {
     "modmenu": {
       "badges": [

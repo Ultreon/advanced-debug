@@ -12,17 +12,13 @@ repositories {
 architectury {
     minecraft = rootProject.minecraft_version
 }
-version = "${mod_version}-${System.getenv("GITHUB_BUILD_NUMBER") == null ? "local" : System.getenv("GITHUB_BUILD_NUMBER")}"
-
-@SuppressWarnings('unused')
-Object getViewVersion() {
-    return "${mod_version}+${System.getenv("GITHUB_BUILD_NUMBER") == null ? "local" : System.getenv("GITHUB_BUILD_NUMBER")}"
-}
+version = mod_version
 
 @SuppressWarnings('unused')
 Object getModDescription() {
     return "${mod_description}"
 }
+
 forgix {
     group = "com.ultreon.mods"
     mergedJarName = "advanced-debug-${version}.jar"
@@ -55,10 +51,6 @@ subprojects {
             officialMojangMappings()
             parchment("org.parchmentmc.data:parchment-1.19.2:2022.08.10@zip")
         }
-
-//        layered
-        // The following line declares the yarn mappings you may select this one as well.
-        // mappings "net.fabricmc:yarn:@YARN_MAPPINGS@:v2"
     }
 }
 

@@ -59,9 +59,3 @@ jobs:
         with:
           name: Forge
           path: forge/build/libs/
-      - name: Update Storer
-        run: java -jar updater/updater.jar
-        env:
-          STORER_TYPE: build
-          JAB125_COM_API_KEY: ${{ secrets.JAB125_COM_API_KEY }}
-          GITHUB_BUILD_NUMBER: ${{ github.run_number }}

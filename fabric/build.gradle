@@ -61,11 +61,11 @@ dependencies {
 }
 
 processResources {
-    inputs.property "version", rootProject.getViewVersion()
+    inputs.property "version", rootProject.version
 
     filesMatching("fabric.mod.json") {
         HashMap<String, ?> p = new HashMap<>()
-        p.put("version", rootProject.getViewVersion())
+        p.put("version", rootProject.version)
         p.put("description", rootProject.getModDescription())
         p.put("loaderVersion", rootProject.fabric_loader_version)
         p.put("minecraftVersion", rootProject.architectury.minecraft)
