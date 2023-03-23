@@ -1,3 +1,7 @@
+//file:noinspection GrDeprecatedAPIUsage
+//file:noinspection GroovyAssignabilityCheck
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 //file:noinspection GroovyAssignabilityCheck
 //file:noinspection GrDeprecatedAPIUsage
 plugins {
@@ -26,6 +30,39 @@ loom {
     }
 }
 
+kotlin {
+    jvmToolchain 17
+}
+
+compileKotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_17
+    }
+}
+
+classes {
+    finalizedBy("copyKotlinClasses")
+}
+
+tasks.register("copyKotlinClasses") {
+    doLast {
+        copy {
+            from fileTree("$projectDir/build/classes/kotlin/main")
+            into file("$projectDir/build/classes/java/main")
+        }
+    }
+}
+
+jar.mustRunAfter("copyKotlinClasses")
+
+jar {
+    duplicatesStrategy DuplicatesStrategy.EXCLUDE
+}
+
+compileKotlin {
+    outputs.dir("$projectDir/build/classes/java/main")
+}
+
 repositories {
     maven { url = "https://cursemaven.com" }
     maven { url "https://maven.terraformersmc.com/releases" }
@@ -46,18 +83,24 @@ dependencies {
     // Remove the next line if you don't want to depend on the API
     modApi "dev.architectury:architectury-fabric:${rootProject.architectury_version}"
 
-    modImplementation "curse.maven:forgeapiportfabric-547434:3946675"
-    modImplementation 'com.electronwill.night-config:core:3.6.5'
-    modImplementation 'com.electronwill.night-config:toml:3.6.5'
+    // Kotlin Libraries & mods
+    modImplementation("net.fabricmc:fabric-language-kotlin:1.9.0+kotlin.$kotlin_version")
 
+    // Mod dependencies
+    modImplementation "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:$forge_config_api_port_version"
+    modImplementation "com.electronwill.night-config:core:$night_config_version"
+    modImplementation "com.electronwill.night-config:toml:$night_config_version"
+
+    // Common subproject.
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
 
-    modImplementation "com.terraformersmc:modmenu:4.0.6", {
+    // Essential mods.
+    modImplementation "com.terraformersmc:modmenu:$modmenu_version", {
         exclude module: "fabric-api"
     }
 
-    modRuntimeOnly "me.shedaniel:RoughlyEnoughItems-fabric:9.1.568"
+    modRuntimeOnly "me.shedaniel:RoughlyEnoughItems-fabric:$rei_version"
 }
 
 processResources {

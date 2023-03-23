@@ -1,10 +1,16 @@
 //file:noinspection GroovyAssignabilityCheck
 //file:noinspection GroovyAccessibility
 plugins {
+    // Adds the Kotlin Gradle plugin
+    id 'org.jetbrains.kotlin.jvm' version '1.8.0'
+    // OPTIONAL Kotlin Serialization plugin
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.8.0'
+
     id "architectury-plugin" version "3.4-SNAPSHOT"
-    id "dev.architectury.loom" version "0.12.0-SNAPSHOT" apply false
+    id "dev.architectury.loom" version "1.0-SNAPSHOT" apply false
     id "io.github.pacifistmc.forgix" version "1.2.6"
 }
+
 repositories {
     gradlePluginPortal()
 }
@@ -39,6 +45,8 @@ println "forgix.outputDir = $forgix.outputDir"
 
 subprojects {
     apply plugin: "dev.architectury.loom"
+    apply plugin: "org.jetbrains.kotlin.jvm"
+    apply plugin: "org.jetbrains.kotlin.plugin.serialization"
 
     loom {
         silentMojangMappingsLicense()
@@ -73,6 +81,18 @@ allprojects {
 
         flatDir {
             dir "${rootProject.projectDir}/libs"
+        }
+
+        maven {
+            url "https://cursemaven.com"
+            content {
+                includeGroup "curse.maven"
+            }
+        }
+
+        maven {
+            name = "Fuzs Mod Resources"
+            url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/"
         }
     }
 

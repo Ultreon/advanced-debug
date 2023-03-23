@@ -11,3 +11,25 @@ description = '''
 Forge wrapper for advanced debug
 '''
 itemIcon = "minecraft:string"
+
+# Dependencies for the main mod.
+[[dependencies.advanced_debug_forge]]
+modId = "forge"
+mandatory = true
+versionRange = "[${forgeVersion},)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.advanced_debug_forge]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[${minecraftVersion},1.20)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.advanced_debug_forge]]
+modId = "architectury"
+mandatory = true
+versionRange = "[8.1,9.0)"
+ordering = "NONE"
+side = "BOTH"

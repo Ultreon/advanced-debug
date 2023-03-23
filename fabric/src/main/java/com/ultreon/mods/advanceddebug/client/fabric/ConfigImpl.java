@@ -5,8 +5,9 @@ import com.ultreon.mods.advanceddebug.client.Config;
 import net.minecraftforge.api.ModLoadingContext;
 import net.minecraftforge.fml.config.ModConfig;
 
+@SuppressWarnings("removal")
 public class ConfigImpl {
     public static void register(Object context) {
-        ModLoadingContext.registerConfig(AdvancedDebug.MOD_ID, ModConfig.Type.CLIENT, Config.build());
+        ModLoadingContext.registerConfig(AdvancedDebug.modId, ModConfig.Type.CLIENT, Config.build());
     }
 }

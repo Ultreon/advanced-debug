@@ -1,3 +1,6 @@
+//file:noinspection GroovyAssignabilityCheck
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 //file:noinspection GradlePackageUpdate
 architectury {
     common()
@@ -7,8 +10,37 @@ loom {
     accessWidenerPath = file("src/main/resources/advanced-debug.accesswidener")
 }
 
-repositories {
-    maven { url = "https://cursemaven.com" }
+kotlin {
+    jvmToolchain 17
+}
+
+compileKotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_17
+    }
+}
+
+classes {
+    finalizedBy("copyKotlinClasses")
+}
+
+tasks.register("copyKotlinClasses") {
+    doLast {
+        copy {
+            from fileTree("$projectDir/build/classes/kotlin/main")
+            into file("$projectDir/build/classes/java/main")
+        }
+    }
+}
+
+jar.mustRunAfter("copyKotlinClasses")
+
+jar {
+    duplicatesStrategy DuplicatesStrategy.EXCLUDE
+}
+
+compileKotlin {
+    outputs.dir("$projectDir/build/classes/java/main")
 }
 
 dependencies {
@@ -18,7 +50,13 @@ dependencies {
     // Remove the next line if you don't want to depend on the API
     modApi "dev.architectury:architectury:${rootProject.architectury_version}"
 
-    modCompileOnly "curse.maven:forgeapiportfabric-547434:3671141"
+    // Kotlin Libraries
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.4.1"
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.4.1"
+
+    modImplementation "fuzs.forgeconfigapiport:forgeconfigapiport-common:$forge_config_api_port_version"
     modCompileOnly 'com.electronwill.night-config:core:3.6.3'
     modCompileOnly 'com.electronwill.night-config:toml:3.6.3'
 

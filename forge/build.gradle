@@ -1,5 +1,9 @@
 //file:noinspection GrDeprecatedAPIUsage
 //file:noinspection GroovyAssignabilityCheck
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
+//file:noinspection GrDeprecatedAPIUsage
+//file:noinspection GroovyAssignabilityCheck
 plugins {
     id "com.github.johnrengelman.shadow" version "7.1.2"
 }
@@ -20,6 +24,43 @@ loom {
     }
 }
 
+kotlin {
+    jvmToolchain 17
+}
+
+compileKotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_17
+    }
+}
+
+classes {
+    finalizedBy("copyKotlinClasses")
+}
+
+tasks.register("copyKotlinClasses") {
+    doLast {
+        copy {
+            from fileTree("$projectDir/build/classes/kotlin/main")
+            into file("$projectDir/build/classes/java/main")
+        }
+    }
+}
+
+jar.mustRunAfter("copyKotlinClasses")
+
+jar {
+    duplicatesStrategy DuplicatesStrategy.EXCLUDE
+}
+
+repositories {
+    // Add KFF Maven repository
+    maven {
+        name = 'Kotlin for Forge'
+        url = 'https://thedarkcolour.github.io/KotlinForForge/'
+    }
+}
+
 configurations {
     common
     shadowCommon // Don't use shadow from the shadow plugin because we don't want IDEA to index this.
@@ -35,6 +76,9 @@ dependencies {
 
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionForge")) { transitive = false }
+
+    // Adds KFF as dependency and Kotlin libs
+    implementation(modApi 'thedarkcolour:kotlinforforge:3.9.1')
 }
 
 processResources {
@@ -46,12 +90,15 @@ processResources {
         HashMap<String, ?> p = new HashMap<>()
         p.put("version", rootProject.version)
         p.put("description", rootProject.getModDescription())
-        p.put("loaderVersion", rootProject.forge_version.split("\\.")[0])
-        p.put("forgeVersion", rootProject.forge_version)
+        p.put("loaderVersion", kotlin_for_forge_loader_version)
+        p.put("forgeVersion", forge_version)
         p.put("minecraftVersion", rootProject.architectury.minecraft)
         expand(p)
     }
 }
+
+// Include assets and data from data generators
+sourceSets.main.resources { srcDirs 'src/generated/resources/' }
 
 shadowJar {
     exclude "fabric.mod.json"

@@ -1,4 +1,5 @@
-modLoader = "javafml"
+modLoader="kotlinforforge"
+# Change this if you require a certain version of KotlinForForge
 loaderVersion = "[${loaderVersion},)"
 license = "LGPL-3.0"
 issueTrackerURL = "https://github.com/Ultreon/advanced-debug/issues"
@@ -28,6 +29,13 @@ side = "BOTH"
 [[dependencies.advanced_debug]]
 modId = "minecraft"
 mandatory = true
-versionRange = "[${minecraftVersion},1.19.3)"
+versionRange = "[${minecraftVersion},1.20)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.advanced_debug]]
+modId = "architectury"
+mandatory = true
+versionRange = "[8.1,9.0)"
 ordering = "NONE"
 side = "BOTH"

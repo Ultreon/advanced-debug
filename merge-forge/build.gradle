@@ -30,10 +30,21 @@ configurations {
     developmentForge.extendsFrom common
 }
 
+repositories {
+    // Add KFF Maven repository
+    maven {
+        name = 'Kotlin for Forge'
+        url = 'https://thedarkcolour.github.io/KotlinForForge/'
+    }
+}
+
 dependencies {
     forge "net.minecraftforge:forge:${rootProject.architectury.minecraft}-${rootProject.forge_version}"
     forgeRuntimeLibrary project(":forge")
-     /*modRuntimeOnly*/ include(project(":forge"))
+    include(project(":forge"))
+
+    // Adds KFF as dependency and Kotlin libs
+    modApi 'thedarkcolour:kotlinforforge:3.9.1'
 }
 
 processResources {
