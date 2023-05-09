@@ -10,8 +10,7 @@ import net.minecraft.world.phys.EntityHitResult;
 import static net.minecraft.ChatFormatting.RED;
 
 public class LivingEntityPage extends EntityPage {
-    public LivingEntityPage(String modId, String name) {
-        super(modId, name);
+    public LivingEntityPage() {
     }
 
     @Override

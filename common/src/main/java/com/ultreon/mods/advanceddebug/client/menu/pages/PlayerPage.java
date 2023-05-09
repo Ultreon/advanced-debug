@@ -30,8 +30,7 @@ import static net.minecraft.ChatFormatting.RED;
 public class PlayerPage extends DebugPage {
     private static final Pattern VALID_USERNAME = Pattern.compile("[a-zA-Z0-9_]*");
 
-    public PlayerPage(String modId, String name) {
-        super(modId, name);
+    public PlayerPage() {
     }
 
     @Override

@@ -13,7 +13,7 @@ public class DefaultPage extends DebugPage {
     private final Minecraft mc = Minecraft.getInstance();
 
     public DefaultPage() {
-        super(AdvancedDebug.MOD_ID, "default");
+        super();
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.ultreon.mods.advanceddebug.client;
 
+import com.ultreon.libs.commons.v0.Identifier;
 import com.ultreon.mods.advanceddebug.api.client.menu.DebugPage;
 import com.ultreon.mods.advanceddebug.client.menu.DebugGui;
 import dev.architectury.injectables.annotations.ExpectPlatform;
@@ -28,7 +29,7 @@ public class Config {
         USE_CUSTOM_SCALE = CLIENT_BUILDER.comment("Use scale other than in options").define("use_custom_scale", false);
         CUSTOM_SCALE = CLIENT_BUILDER.comment("Custom scale to set").defineInRange("custom_scale", 2, 1, 4);
 
-        List<String> pages = DebugGui.get().getPages().stream().map(DebugPage::registryName).map(ResourceLocation::toString).toList();
+        List<String> pages = DebugGui.get().getPages().stream().map(DebugPage::getId).map(Identifier::toString).toList();
         ENABLED_PAGES = CLIENT_BUILDER.comment("Enabled pages").defineList("enabled_pages", new ArrayList<>(pages), page -> page instanceof String pageName && pages.contains(pageName));
 
         CLIENT_BUILDER.push("formatting");

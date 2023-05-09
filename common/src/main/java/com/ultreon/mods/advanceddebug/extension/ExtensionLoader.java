@@ -7,10 +7,8 @@ import com.ultreon.mods.advanceddebug.client.menu.DebugGui;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.ServiceLoader;
+import java.util.*;
+import java.util.function.Consumer;
 
 import static com.ultreon.mods.advanceddebug.AdvancedDebug.LOGGER;
 
@@ -28,9 +26,21 @@ public final class ExtensionLoader {
         return instance;
     }
 
+    public static void invoke(Consumer<Extension> consumer) {
+        EXTENSIONS.values().forEach(consumer);
+    }
+
     public void scan() {
         ServiceLoader<Extension> load = ServiceLoader.load(Extension.class);
         providers = load.stream().toList();
+    }
+
+    public static Extension getExtensionById(String id) {
+        return EXTENSIONS.get(id);
+    }
+
+    public static Collection<Extension> getExtensions() {
+        return EXTENSIONS.values();
     }
 
     public void construct() {

@@ -2,27 +2,25 @@ package com.ultreon.mods.advanceddebug.client.menu.pages;
 
 import com.mojang.blaze3d.platform.Monitor;
 import com.mojang.blaze3d.platform.VideoMode;
-import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.ultreon.mods.advanceddebug.api.client.menu.DebugPage;
 import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
 import com.ultreon.mods.advanceddebug.api.common.IntSize;
 import com.ultreon.mods.advanceddebug.mixin.common.WindowAccessor;
+import com.ultreon.mods.advanceddebug.util.FileSize;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.glfw.GLFW;
 
 public class ComputerPage extends DebugPage {
     private final Minecraft mc = Minecraft.getInstance();
-    private final Window window = mc.getWindow();
 
-    public ComputerPage(String modId, String name) {
-        super(modId, name);
+    public ComputerPage() {
     }
 
     @Override
     public void render(PoseStack poseStack, IDebugRenderContext ctx) {
-        long l = GLFW.glfwGetWindowMonitor(window.getWindow());
-        Monitor monitor = ((WindowAccessor)(Object)window).getScreenManager().getMonitor(l);
+        long l = GLFW.glfwGetWindowMonitor(getMainWindow().getWindow());
+        Monitor monitor = ((WindowAccessor)(Object) getMainWindow()).getScreenManager().getMonitor(l);
 
         if (monitor != null) {
             VideoMode currentMode = monitor.getCurrentMode();
@@ -88,5 +86,9 @@ public class ComputerPage extends DebugPage {
         }
 
         ctx.right("Is Java 64-bit", (mc.is64Bit() ? "yes" : "no"));
+
+        ctx.right("Total RAM", new FileSize(Runtime.getRuntime().totalMemory()));
+        ctx.right("Max RAM", new FileSize(Runtime.getRuntime().maxMemory()));
+        ctx.right("Free RAM", new FileSize(Runtime.getRuntime().freeMemory()));
     }
 }

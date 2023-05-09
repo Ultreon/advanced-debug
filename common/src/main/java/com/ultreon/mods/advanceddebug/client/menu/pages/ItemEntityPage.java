@@ -9,8 +9,7 @@ import net.minecraft.world.phys.EntityHitResult;
 import static net.minecraft.ChatFormatting.RED;
 
 public class ItemEntityPage extends EntityPage {
-    public ItemEntityPage(String modId, String name) {
-        super(modId, name);
+    public ItemEntityPage() {
     }
 
     @Override

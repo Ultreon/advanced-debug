@@ -19,8 +19,7 @@ import static net.minecraft.ChatFormatting.RED;
 public class EntityPage extends DebugPage {
     private final Minecraft mc = Minecraft.getInstance();
 
-    public EntityPage(String modId, String name) {
-        super(modId, name);
+    public EntityPage() {
     }
 
     @Override

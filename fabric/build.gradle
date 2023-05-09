@@ -13,21 +13,9 @@ architectury {
 
 loom {
     accessWidenerPath = project(":common").loom.accessWidenerPath
-    runs {
-        data {
-            inherit client
-            name "Data Generation"
-            vmArg "-Dfabric-api.datagen"
-            vmArg "-Dfabric-api.datagen.output-dir=${file("../common/src/main/generated/resources")}"
-            vmArg "-Dfabric-api.datagen.modid=advanced_debug"
-   //         vmArg "-Dfabric-api.datagen.strict-validation"
-            runDir "build/datagen"
-        }
-    }
 }
 
 repositories {
-    maven { url = "https://cursemaven.com" }
     maven { url "https://maven.terraformersmc.com/releases" }
     mavenCentral()
 }
@@ -46,6 +34,8 @@ dependencies {
     // Remove the next line if you don't want to depend on the API
     modApi "dev.architectury:architectury-fabric:${rootProject.architectury_version}"
 
+    modApi "com.github.Ultreon.ultreonlib:ultreon-lib-fabric:$ultreonlib_version"
+
     modImplementation "curse.maven:forgeapiportfabric-547434:3946675"
     modImplementation 'com.electronwill.night-config:core:3.6.5'
     modImplementation 'com.electronwill.night-config:toml:3.6.5'
@@ -57,7 +47,13 @@ dependencies {
         exclude module: "fabric-api"
     }
 
-    modRuntimeOnly "me.shedaniel:RoughlyEnoughItems-fabric:9.1.568"
+    modRuntimeOnly "me.shedaniel:RoughlyEnoughItems-fabric:10.0.596"
+
+    include implementation("io.github.spair:imgui-java-binding:$imgui_version")
+    include implementation("io.github.spair:imgui-java-lwjgl3:$imgui_version")
+    include implementation("io.github.spair:imgui-java-natives-linux:$imgui_version")
+    include implementation("io.github.spair:imgui-java-natives-macos:$imgui_version")
+    include implementation("io.github.spair:imgui-java-natives-windows:$imgui_version")
 }
 
 processResources {

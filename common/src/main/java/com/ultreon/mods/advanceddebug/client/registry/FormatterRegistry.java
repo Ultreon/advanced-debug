@@ -1,14 +1,14 @@
 package com.ultreon.mods.advanceddebug.client.registry;
 
+import com.ultreon.libs.collections.v0.maps.OrderedHashMap;
 import com.ultreon.mods.advanceddebug.api.client.menu.Formatter;
 import com.ultreon.mods.advanceddebug.api.client.registry.IFormatterRegistry;
 
 import javax.annotation.Nullable;
-import java.util.HashMap;
 import java.util.Map;
 
 public class FormatterRegistry implements IFormatterRegistry {
-    private static final Map<String, Formatter<?>> FORMATTERS = new HashMap<>();
+    private static final Map<String, Formatter<?>> FORMATTERS = new OrderedHashMap<>();
     private static final FormatterRegistry INSTANCE = new FormatterRegistry();
 
     private FormatterRegistry() {

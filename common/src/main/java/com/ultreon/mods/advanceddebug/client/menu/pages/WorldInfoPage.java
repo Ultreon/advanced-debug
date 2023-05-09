@@ -12,8 +12,7 @@ import net.minecraft.core.Vec3i;
 import static net.minecraft.ChatFormatting.GOLD;
 
 public class WorldInfoPage extends DebugPage {
-    public WorldInfoPage(String modId, String name) {
-        super(modId, name);
+    public WorldInfoPage() {
     }
 
     @Override

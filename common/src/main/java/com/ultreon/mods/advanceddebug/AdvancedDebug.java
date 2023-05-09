@@ -11,11 +11,21 @@ import com.ultreon.mods.advanceddebug.client.registry.FormatterRegistry;
 import com.ultreon.mods.advanceddebug.extension.ExtensionLoader;
 import com.ultreon.mods.advanceddebug.init.ModDebugPages;
 import com.ultreon.mods.advanceddebug.init.ModOverlays;
+import com.ultreon.mods.advanceddebug.util.SelectedBlock;
+import com.ultreon.mods.advanceddebug.util.TargetUtils;
+import com.ultreon.mods.lib.util.KeyboardHelper;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.client.ClientLifecycleEvent;
 import dev.architectury.event.events.client.ClientRawInputEvent;
+import dev.architectury.event.events.client.ClientTickEvent;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,6 +64,20 @@ public class AdvancedDebug implements IAdvancedDebug {
         if (System.getenv("RT_DEBUG_FORMATTER_DUMP") != null) {
             FormatterRegistry.get().dump();
         }
+
+        ClientTickEvent.CLIENT_POST.register(minecraft -> {
+            if (KeyBindingList.SELECT_ENTITY.consumeClick() && KeyboardHelper.isCtrlDown()) {
+                EntityHitResult hit = TargetUtils.entity();
+                DebugGui.selectedEntity = hit != null ? hit.getEntity() : null;
+            }
+            if (KeyBindingList.SELECT_BLOCK.consumeClick() && KeyboardHelper.isCtrlDown()) {
+                @Nullable BlockHitResult hit = TargetUtils.block();
+                ClientLevel level = minecraft.level;
+                if (level != null) {
+                    DebugGui.SELECTED_BLOCKS.set(level, hit != null ? hit.getBlockPos() : null);
+                }
+            }
+        });
 
         loader.scan();
         loader.construct();
