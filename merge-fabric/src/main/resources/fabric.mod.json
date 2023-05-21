@@ -1,12 +1,11 @@
 {
   "schemaVersion": 1,
   "id": "advanced-debug-fabric",
-  "name": "Advanced Debug Wrapper",
+  "name": "(Wrapper) Advanced Debug",
   "version": "1",
   "license": "GPL-v3.0",
   "authors": [
-    "Qboi123",
-    "Jab125"
+    "Qboi123"
   ],
   "custom": {
     "modmenu": {

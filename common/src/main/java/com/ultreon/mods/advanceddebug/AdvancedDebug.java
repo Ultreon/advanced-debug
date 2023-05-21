@@ -11,7 +11,6 @@ import com.ultreon.mods.advanceddebug.client.registry.FormatterRegistry;
 import com.ultreon.mods.advanceddebug.extension.ExtensionLoader;
 import com.ultreon.mods.advanceddebug.init.ModDebugPages;
 import com.ultreon.mods.advanceddebug.init.ModOverlays;
-import com.ultreon.mods.advanceddebug.util.SelectedBlock;
 import com.ultreon.mods.advanceddebug.util.TargetUtils;
 import com.ultreon.mods.lib.util.KeyboardHelper;
 import dev.architectury.event.EventResult;
@@ -20,9 +19,10 @@ import dev.architectury.event.events.client.ClientRawInputEvent;
 import dev.architectury.event.events.client.ClientTickEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.core.BlockPos;
+import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import org.jetbrains.annotations.Nullable;
@@ -69,12 +69,31 @@ public class AdvancedDebug implements IAdvancedDebug {
             if (KeyBindingList.SELECT_ENTITY.consumeClick() && KeyboardHelper.isCtrlDown()) {
                 EntityHitResult hit = TargetUtils.entity();
                 DebugGui.selectedEntity = hit != null ? hit.getEntity() : null;
+                Entity entity = DebugGui.selectedEntity;
+                if (entity == null) {
+                    DebugGui.selectedServerEntity = null;
+                } else {
+                    IntegratedServer server = minecraft.getSingleplayerServer();
+                    if (server != null) {
+                        ServerLevel level = server.getLevel(entity.level.dimension());
+                        if (level != null) {
+                            DebugGui.selectedServerEntity = level.getEntity(entity.getId());
+                        }
+                    }
+                }
             }
             if (KeyBindingList.SELECT_BLOCK.consumeClick() && KeyboardHelper.isCtrlDown()) {
                 @Nullable BlockHitResult hit = TargetUtils.block();
                 ClientLevel level = minecraft.level;
                 if (level != null) {
                     DebugGui.SELECTED_BLOCKS.set(level, hit != null ? hit.getBlockPos() : null);
+                    IntegratedServer server = minecraft.getSingleplayerServer();
+                    if (server != null) {
+                        ServerLevel serverLevel = server.getLevel(level.dimension());
+                        if (serverLevel != null) {
+                            DebugGui.SELECTED_BLOCKS.set(serverLevel, hit != null ? hit.getBlockPos() : null);
+                        }
+                    }
                 }
             }
         });

@@ -1,5 +1,6 @@
 package com.ultreon.mods.advanceddebug.client.menu;
 
+import com.google.common.collect.Lists;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.ultreon.libs.commons.v0.Identifier;
 import com.ultreon.mods.advanceddebug.AdvancedDebug;
@@ -20,18 +21,14 @@ import com.ultreon.mods.advanceddebug.mixin.common.ImageButtonAccessor;
 import com.ultreon.mods.advanceddebug.mixin.common.KeyMappingAccessor;
 import com.ultreon.mods.advanceddebug.registry.ModPreRegistries;
 import com.ultreon.mods.advanceddebug.text.ComponentBuilder;
-import com.ultreon.mods.advanceddebug.util.ImGuiHandler;
-import com.ultreon.mods.advanceddebug.util.InputUtils;
-import com.ultreon.mods.advanceddebug.util.SelectedBlocks;
+import com.ultreon.mods.advanceddebug.util.*;
 import dev.architectury.platform.Platform;
 import imgui.ImGui;
-import imgui.extension.imguifiledialog.ImGuiFileDialog;
-import imgui.extension.imguifiledialog.callback.ImGuiFileDialogPaneFun;
-import imgui.extension.imguifiledialog.flag.ImGuiFileDialogFlags;
 import imgui.flag.*;
 import imgui.gl3.ImGuiImplGl3;
 import imgui.glfw.ImGuiImplGlfw;
 import imgui.type.ImBoolean;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
 import net.minecraft.client.gui.Font;
@@ -44,13 +41,16 @@ import net.minecraft.client.gui.screens.worldselection.WorldSelectionList;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.server.IntegratedServer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtIo;
-import net.minecraft.nbt.StringTagVisitor;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.CombatEntry;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffectUtil;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -63,8 +63,16 @@ import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.Team;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Marker;
@@ -72,13 +80,8 @@ import org.slf4j.MarkerFactory;
 
 import javax.annotation.Nullable;
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.function.BooleanSupplier;
-import java.util.function.Supplier;
+import java.util.*;
 
 import static net.minecraft.ChatFormatting.*;
 import static net.minecraft.util.FastColor.ARGB32.*;
@@ -101,14 +104,12 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
             context.hexValue(obj.hashCode());
         }
     };
-    private static final ImGuiFileDialogPaneFun DUMP_NBT_CALLBACK = new ImGuiFileDialogPaneFun() {
-        @Override
-        public void paneFun(String filter, long userDatas, boolean canContinue) {
-            ImGui.text("Filter: " + filter);
-        }
-    };
     private static final Marker MARKER = MarkerFactory.getMarker("DebugGui");
-    public static final ImBoolean SHOW_INFO_WINDOW = new ImBoolean(false);
+    public static final ImBoolean SHOW_PLAYER_INFO = new ImBoolean(false);
+    public static final ImBoolean SHOW_CLIENT_LEVEL_INFO = new ImBoolean(false);
+    public static final ImBoolean SHOW_SERVER_LEVEL_INFO = new ImBoolean(false);
+    public static final ImBoolean SHOW_WINDOW_INFO = new ImBoolean(false);
+    public static final ImBoolean SHOW_SCREEN_INFO = new ImBoolean(false);
     public static final ImBoolean SHOW_UTILS = new ImBoolean(false);
     private static final ImBoolean DI_SHOW_PLAYER = new ImBoolean(false);
     private static final ImBoolean DI_SHOW_LEVEL = new ImBoolean(false);
@@ -124,6 +125,7 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
     public static final ImBoolean SHOW_IM_GUI = new ImBoolean(false);
 
     public static Entity selectedEntity;
+    public static Entity selectedServerEntity;
     public static final SelectedBlocks SELECTED_BLOCKS = new SelectedBlocks();
 
     private DebugGui() {
@@ -218,7 +220,11 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
                     ImGuiInputTextFlags.AllowTabInput)) {
                 if (ImGui.beginMenuBar()) {
                     if (ImGui.beginMenu("View")) {
-                        ImGui.menuItem("Show Info Window", null, SHOW_INFO_WINDOW);
+                        ImGui.menuItem("Show Player Info", null, SHOW_PLAYER_INFO);
+                        ImGui.menuItem("Show Client Level Info", null, SHOW_CLIENT_LEVEL_INFO);
+                        ImGui.menuItem("Show Server Level Info", null, SHOW_SERVER_LEVEL_INFO);
+                        ImGui.menuItem("Show Window Info", null, SHOW_WINDOW_INFO);
+                        ImGui.menuItem("Show Screen Info", null, SHOW_SCREEN_INFO);
                         ImGui.endMenu();
                     }
                     ExtensionLoader.invoke(Extension::handleImGuiMenuBar);
@@ -227,7 +233,14 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
                 ImGui.end();
             }
 
-            if (SHOW_INFO_WINDOW.get()) showInfoWindow();
+            if (SHOW_PLAYER_INFO.get()) showPlayerInfoWindow();
+            if (SHOW_CLIENT_LEVEL_INFO.get()) showClientLevelInfoWindow();
+            if (SHOW_SERVER_LEVEL_INFO.get()) showServerLevelInfoWindow();
+            if (SHOW_WINDOW_INFO.get()) showWindowInfoWindow();
+            if (SHOW_SCREEN_INFO.get()) showScreenInfoWindow();
+
+            imGuiHovered = ImGui.isAnyItemHovered() || ImGui.isWindowHovered(ImGuiHoveredFlags.AnyWindow);
+            imGuiFocused = ImGui.isWindowFocused(ImGuiHoveredFlags.AnyWindow);
 
             ImGui.render();
             gl3.renderDrawData(ImGui.getDrawData());
@@ -236,7 +249,7 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
         renderingImGui = false;
     }
 
-    private static void showInfoWindow() {
+    private static void showPlayerInfoWindow() {
 //		Screen currentScreen = getCurrentScreen();
         ImGui.setNextWindowSize(400, 200, ImGuiCond.Once);
         ImGui.setNextWindowPos(ImGui.getMainViewport().getPosX() + 100, ImGui.getMainViewport().getPosY() + 100, ImGuiCond.Once);
@@ -245,31 +258,78 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
         var level = minecraft.level;
         var window = minecraft.getWindow();
         var screen = minecraft.screen;
-        if (ImGui.begin("Debug Info", getDefaultFlags())) {
+        if (ImGui.begin("Player Info", getDefaultFlags())) {
             if (player != null) {
-                if (ImGui.collapsingHeader("Player")) {
-                    ImGui.treePush();
-                    showLocalPlayer(player);
-                    ImGui.treePop();
-                }
+                showLocalPlayer(player);
             }
+        }
+        ImGui.end();
+    }
+
+    private static void showClientLevelInfoWindow() {
+//		Screen currentScreen = getCurrentScreen();
+        ImGui.setNextWindowSize(400, 200, ImGuiCond.Once);
+        ImGui.setNextWindowPos(ImGui.getMainViewport().getPosX() + 100, ImGui.getMainViewport().getPosY() + 100, ImGuiCond.Once);
+        var minecraft = Minecraft.getInstance();
+        var player = minecraft.player;
+        var level = minecraft.level;
+        var window = minecraft.getWindow();
+        var screen = minecraft.screen;
+        if (ImGui.begin("Client Level Info", getDefaultFlags())) {
             if (level != null) {
-                if (ImGui.collapsingHeader("Level")) {
-                    ImGui.treePush();
-                    showLevelInfo(level);
-                    ImGui.treePop();
-                }
+                showClientLevelInfo(level);
             }
-            if (ImGui.collapsingHeader("Window")) {
-                ImGui.treePush();
-                showWindowInfo(window);
-                ImGui.treePop();
+        }
+        imGuiHovered = ImGui.isAnyItemHovered() || ImGui.isWindowHovered(ImGuiHoveredFlags.AnyWindow);
+        imGuiFocused = ImGui.isWindowFocused(ImGuiHoveredFlags.AnyWindow);
+        ImGui.end();
+    }
+
+    private static void showServerLevelInfoWindow() {
+//		Screen currentScreen = getCurrentScreen();
+        ImGui.setNextWindowSize(400, 200, ImGuiCond.Once);
+        ImGui.setNextWindowPos(ImGui.getMainViewport().getPosX() + 100, ImGui.getMainViewport().getPosY() + 100, ImGuiCond.Once);
+        var server = Minecraft.getInstance().getSingleplayerServer();
+        if (ImGui.begin("Server Level Info", getDefaultFlags())) {
+            var clientLevel = Minecraft.getInstance().level;
+            var serverLevel = server == null || clientLevel == null ? null : server.getLevel(Minecraft.getInstance().level.dimension());
+            if (serverLevel != null) {
+                showServerLevelInfo(serverLevel);
             }
-            if (ImGui.collapsingHeader("Screen")) {
-                ImGui.treePush();
-                showScreenInfo(screen);
-                ImGui.treePop();
-            }
+        }
+        imGuiHovered = ImGui.isAnyItemHovered() || ImGui.isWindowHovered(ImGuiHoveredFlags.AnyWindow);
+        imGuiFocused = ImGui.isWindowFocused(ImGuiHoveredFlags.AnyWindow);
+        ImGui.end();
+    }
+
+    private static void showWindowInfoWindow() {
+//		Screen currentScreen = getCurrentScreen();
+        ImGui.setNextWindowSize(400, 200, ImGuiCond.Once);
+        ImGui.setNextWindowPos(ImGui.getMainViewport().getPosX() + 100, ImGui.getMainViewport().getPosY() + 100, ImGuiCond.Once);
+        var minecraft = Minecraft.getInstance();
+        var player = minecraft.player;
+        var level = minecraft.level;
+        var window = minecraft.getWindow();
+        var screen = minecraft.screen;
+        if (ImGui.begin("Window Info", getDefaultFlags())) {
+            showWindowInfo(window);
+        }
+        imGuiHovered = ImGui.isAnyItemHovered() || ImGui.isWindowHovered(ImGuiHoveredFlags.AnyWindow);
+        imGuiFocused = ImGui.isWindowFocused(ImGuiHoveredFlags.AnyWindow);
+        ImGui.end();
+    }
+
+    private static void showScreenInfoWindow() {
+//		Screen currentScreen = getCurrentScreen();
+        ImGui.setNextWindowSize(400, 200, ImGuiCond.Once);
+        ImGui.setNextWindowPos(ImGui.getMainViewport().getPosX() + 100, ImGui.getMainViewport().getPosY() + 100, ImGuiCond.Once);
+        var minecraft = Minecraft.getInstance();
+        var player = minecraft.player;
+        var level = minecraft.level;
+        var window = minecraft.getWindow();
+        var screen = minecraft.screen;
+        if (ImGui.begin("Screen Info", getDefaultFlags())) {
+            showScreenInfo(screen);
         }
         imGuiHovered = ImGui.isAnyItemHovered() || ImGui.isWindowHovered(ImGuiHoveredFlags.AnyWindow);
         imGuiFocused = ImGui.isWindowFocused(ImGuiHoveredFlags.AnyWindow);
@@ -279,24 +339,24 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
     private static int getDefaultFlags() {
         boolean mouseGrabbed = Minecraft.getInstance().mouseHandler.isMouseGrabbed();
         var flags = ImGuiWindowFlags.None;
-        if (mouseGrabbed) flags |= ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove;
+        if (mouseGrabbed) flags |= ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoInputs;
         return flags;
     }
 
-    private static void showLocalPlayer(LocalPlayer player) {
-        imGuiText("Server Brand:", player::getServerBrand);
-        imGuiText("Water Vision:", player::getWaterVision);
+    public static void showLocalPlayer(LocalPlayer player) {
+        ImGuiEx.text("Server Brand:", player::getServerBrand);
+        ImGuiEx.text("Water Vision:", player::getWaterVision);
         showEntity(player);
     }
 
-    private static void showScreenInfo(Screen screen) {
-        imGuiText("Classname:", () -> screen == null ? "null" : screen.getClass().getName());
+    public static void showScreenInfo(Screen screen) {
+        ImGuiEx.text("Classname:", () -> screen == null ? "null" : screen.getClass().getName());
         if (screen != null) {
-            imGuiText("Title:", screen::getTitle);
-            imGuiText("Is Pause:", screen::isPauseScreen);
-            imGuiText("Closeable:", screen::shouldCloseOnEsc);
-            imGuiText("Narration:", screen::getNarrationMessage);
-            imGuiText("Widget Count:", () -> screen.children().size());
+            ImGuiEx.text("Title:", screen::getTitle);
+            ImGuiEx.text("Is Pause:", screen::isPauseScreen);
+            ImGuiEx.text("Closeable:", screen::shouldCloseOnEsc);
+            ImGuiEx.text("Narration:", screen::getNarrationMessage);
+            ImGuiEx.text("Widget Count:", () -> screen.children().size());
 
             List<? extends GuiEventListener> children = screen.children();
             showChildren(children);
@@ -306,41 +366,249 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
         }
     }
 
-    private static void showWindowInfo(com.mojang.blaze3d.platform.Window window) {
-        imGuiText("Size:", () -> window.getWidth() + " × " + window.getHeight());
-        imGuiText("Scaled Size:", () -> window.getGuiScaledWidth() + " × " + window.getGuiScaledHeight());
-        imGuiText("GUI Scale:", window::getGuiScale);
+    public static void showWindowInfo(com.mojang.blaze3d.platform.Window window) {
+        ImGuiEx.text("Size:", () -> window.getWidth() + " × " + window.getHeight());
+        ImGuiEx.text("Scaled Size:", () -> window.getGuiScaledWidth() + " × " + window.getGuiScaledHeight());
+        ImGuiEx.text("GUI Scale:", window::getGuiScale);
     }
 
-    private static void showLevelInfo(ClientLevel level) {
-        imGuiText("Chunk SS:", level::gatherChunkSourceStats);
-        imGuiText("Entity Count:", level::getEntityCount);
+    public static void showClientLevelInfo(ClientLevel level) {
+        Minecraft instance = Minecraft.getInstance();
+        float frameTime = instance.getFrameTime();
+
+        ImGuiEx.text("Entity Count:", level::getEntityCount);
+        ImGuiEx.text("Sky Flash Time:", level::getSkyFlashTime);
+        ImGuiEx.text("Star Brightness:", () -> level.getStarBrightness(frameTime));
+
+        showLevelInfo(level, frameTime);
+
         Entity entity = selectedEntity;
         if (entity != null) {
-            if (ImGui.collapsingHeader("[" + entity.getId() + "] Entity " + entity.getStringUUID())) {
+            if (ImGui.collapsingHeader("(Client) [" + entity.getId() + "] Entity " + entity.getStringUUID())) {
                 ImGui.treePush();
                 showEntity(entity);
                 ImGui.treePop();
             }
         }
+
+        SelectedBlock block = SELECTED_BLOCKS.get(level);
+        if (block != null) {
+            if (ImGui.collapsingHeader("(Client) [" + block.getPos().toShortString() + "] Block " + block.getBlockState().getBlock().arch$registryName())) {
+                ImGui.treePush();
+                showSelectedBlock(block);
+                ImGui.treePop();
+            }
+        }
     }
 
-    private static void showEntity(Entity entity) {
-        imGuiText("Pos:", () -> entity.blockPosition().toShortString());
-        imGuiText("Rot:", () -> entity.getXRot() + ", " + entity.getYRot());
-        imGuiText("Dim:", () -> entity.level.dimension().location());
-        imGuiText("Name:", entity::getName);
-        imGuiText("UUID:", entity::getStringUUID);
-        imGuiText("Custom Name:", entity::getCustomName);
-        imGuiText("Display Name:", entity::getDisplayName);
-        imGuiText("Scoreboard Name:", entity::getScoreboardName);
-        imGuiBool("Is In Powder Snow:", () -> entity.isInPowderSnow);
-        imGuiBool("No Physics:", () -> entity.noPhysics);
-        imGuiBool("No Culling:", () -> entity.noCulling);
-        imGuiBool("No Gravity:", entity::isNoGravity);
+    public static void showServerLevelInfo(ServerLevel level) {
+        Minecraft minecraft = Minecraft.getInstance();
+        LocalPlayer player = minecraft.player;
+        MinecraftServer server = level.getServer();
+        float frameTime = minecraft.getFrameTime();
+
+        ImGuiEx.text("Logical Height:", level::getLogicalHeight);
+        ImGuiEx.text("Seed:", level::getSeed);
+        if (player != null) {
+            BlockPos blockPos = player.blockPosition();
+            Vec3 position = player.position();
+            ImGuiEx.text("Structure:", () -> {
+                Map<Structure, LongSet> allStructuresAt = level.structureManager().getAllStructuresAt(blockPos);
+                Optional<ResourceLocation> structure = Lists.newArrayList(allStructuresAt.keySet())
+                        .stream()
+                        .map(o -> BuiltInRegistries.STRUCTURE_TYPE.getKey(o.type()))
+                        .min((o1, o2) -> Objects.compare(o1, o2, (a, b) -> {
+                            int i = a.getNamespace().compareTo(b.getNamespace());
+                            if (i == 0) {
+                                return a.getPath().compareTo(b.getPath());
+                            }
+                            return i;
+                        }));
+                return structure.orElse(null);
+            });
+        }
+        ImGuiEx.bool("No Save:", () -> level.noSave);
+        ImGuiEx.bool("Flat:", level::isFlat);
+
+        showLevelInfo(level, frameTime);
+
+        Entity serverEntity = selectedServerEntity;
+        if (serverEntity != null) {
+            if (ImGui.collapsingHeader("(Server) [" + serverEntity.getId() + "] Entity " + serverEntity.getStringUUID())) {
+                ImGui.treePush();
+                showEntity(serverEntity);
+                ImGui.treePop();
+            }
+        }
+
+        SelectedBlock serverBlock = SELECTED_BLOCKS.get(level);
+        if (serverBlock != null) {
+            if (ImGui.collapsingHeader("(Server) [" + serverBlock.getPos().toShortString() + "] Block " + serverBlock.getBlockState().getBlock().arch$registryName())) {
+                ImGui.treePush();
+                showSelectedBlock(serverBlock);
+                ImGui.treePop();
+            }
+        }
+    }
+
+    public static void showLevelInfo(Level level) {
+        showLevelInfo(level, 0.0F);
+    }
+
+    public static void showLevelInfo(Level level, float frameTime) {
+        ImGuiEx.text("Chunk SS:", level::gatherChunkSourceStats);
+        ImGuiEx.text("Thunder Level:", () -> level.getThunderLevel(frameTime));
+        ImGuiEx.text("Rain Level:", () -> level.getRainLevel(frameTime));
+        ImGuiEx.text("Day Time:", level::getDayTime);
+        ImGuiEx.text("Game Time:", level::getGameTime);
+        ImGuiEx.text("Moon Brightness:", level::getMoonBrightness);
+        ImGuiEx.text("Moon Phase:", level::getMoonPhase);
+        ImGuiEx.text("Time of Day:", () -> level.getTimeOfDay(frameTime));
+        ImGuiEx.text("Min. Build Height:", level::getMinBuildHeight);
+        ImGuiEx.text("Max. Build Height:", level::getMaxBuildHeight);
+        ImGuiEx.text("Sky Darken:", level::getSkyDarken);
+        ImGuiEx.text("Sea Level:", level::getSeaLevel);
+        ImGuiEx.text("Difficulty:", () -> level.getDifficulty().name());
+        ImGuiEx.bool("Debug:", level::isDebug);
+        ImGuiEx.bool("Day:", level::isDay);
+        ImGuiEx.bool("Night:", level::isNight);
+        ImGuiEx.bool("Raining:", level::isRaining);
+        ImGuiEx.bool("Thundering:", level::isThundering);
+    }
+
+    @org.jetbrains.annotations.Nullable
+    private static ServerLevel getServerLevel(MinecraftServer server) {
+        ClientLevel clientLevel = Minecraft.getInstance().level;
+        return clientLevel == null ? null : server.getLevel(clientLevel.dimension());
+    }
+
+    @ApiStatus.Internal
+    public static void dispose() {
+
+    }
+
+    private static void showSelectedBlock(SelectedBlock block) {
+        BlockEntity blockEntity = block.getBlockEntity();
+        BlockState blockState = block.getBlockState();
+
+        ImGuiEx.text("Position:", () -> block.getPos().toShortString());
+        ImGuiEx.text("Light:", () -> block.getBlockState().getLightBlock(block.getLevel(), block.getPos()));
+        ImGuiEx.text("Offset:", () -> block.getBlockState().getOffset(block.getLevel(), block.getPos()));
+        ImGuiEx.text("Map Color:", () -> block.getBlockState().getMapColor(block.getLevel(), block.getPos()));
+        ImGuiEx.text("Destroy Speed:", () -> block.getBlockState().getDestroySpeed(block.getLevel(), block.getPos()));
+        ImGuiEx.text("Block Seed:", () -> block.getBlockState().getSeed(block.getPos()));
+
+        if (blockEntity != null) {
+            if (ImGui.collapsingHeader("Block Entity Info")) {
+                ImGui.treePush();
+                showBlockEntity(blockEntity);
+                ImGui.treePop();
+            }
+        }
+        if (blockState != null) {
+            if (ImGui.collapsingHeader("Block State Info")) {
+                ImGui.treePush();
+                showBlockState(blockState);
+                ImGui.treePop();
+            }
+        }
+    }
+
+    private static void showBlockState(BlockState blockState) {
+        ImGuiEx.text("Light Emission:", blockState::getLightEmission);
+        ImGuiEx.text("Offset Type:", () -> blockState.getOffsetType().name());
+        ImGuiEx.text("Render Shape:", () -> blockState.getRenderShape().name());
+        ImGuiEx.bool("Air:", blockState::isAir);
+        ImGuiEx.bool("Signal Source:", blockState::isSignalSource);
+        ImGuiEx.bool("Randomly Ticking:", blockState::isRandomlyTicking);
+
+        Material material = blockState.getMaterial();
+        if (ImGui.collapsingHeader("Material Info")) {
+            ImGui.treePush();
+            ImGuiEx.text("Color:", () -> "#%08x".formatted(material.getColor().col));
+            ImGuiEx.text("Color ID:", () -> material.getColor().id);
+            ImGuiEx.text("Push Reaction:", () -> material.getPushReaction().name());
+            ImGuiEx.bool("Flammable:", material::isFlammable);
+            ImGuiEx.bool("Liquid:", material::isLiquid);
+            ImGuiEx.bool("Replaceable:", material::isReplaceable);
+            ImGuiEx.bool("Solid Blocking:", material::isSolidBlocking);
+            ImGuiEx.bool("Solid:", material::isSolid);
+            ImGui.treePop();
+        }
+        SoundType soundType = blockState.getSoundType();
+        if (ImGui.collapsingHeader("Sound Type Info")) {
+            ImGui.treePush();
+            ImGuiEx.text("Pitch:", () -> soundType.pitch);
+            ImGuiEx.text("Volume:", () -> soundType.volume);
+            ImGuiEx.text("Place Sound:", () -> soundType.getPlaceSound().getLocation());
+            ImGuiEx.text("Break Sound:", () -> soundType.getBreakSound().getLocation());
+            ImGuiEx.text("Fall Sound:", () -> soundType.getFallSound().getLocation());
+            ImGuiEx.text("Step Sound:", () -> soundType.getStepSound().getLocation());
+            ImGuiEx.text("Hit Sound:", () -> soundType.getHitSound().getLocation());
+            ImGui.treePop();
+        }
+        Collection<Property<?>> properties = blockState.getProperties();
+        if (ImGui.collapsingHeader("Properties")) {
+            ImGui.treePush();
+            for (var property : properties) {
+                ImGuiEx.text(property.getName() + ":", () -> blockState.getValue(property));
+            }
+            ImGui.treePop();
+        }
+    }
+
+    @SuppressWarnings("ConstantValue")
+    private static void showBlockEntity(BlockEntity blockEntity) {
+        ResourceLocation key = BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(blockEntity.getType());
+
+        ImGuiEx.text("Id:", () -> key);
         IntegratedServer server = Minecraft.getInstance().getSingleplayerServer();
-        if (Minecraft.getInstance().isSingleplayer() && server != null) {
-            imGuiNbt("NBT:", () -> {
+        if (server != null) {
+            ImGuiEx.nbt("NBT:", () -> {
+                Level blockEntityLevel = blockEntity.getLevel();
+                CompoundTag compoundTag = new CompoundTag();
+                if (blockEntityLevel == null) return compoundTag;
+                ServerLevel level = server.getLevel(blockEntityLevel.dimension());
+                if (level != null) {
+                    BlockEntity serverEntity = level.getBlockEntity(blockEntity.getBlockPos());
+                    if (serverEntity != null) {
+                        compoundTag = serverEntity.saveWithoutMetadata();
+                        AdvancedDebug.LOGGER.info("Saved data for %s @ %s".formatted(BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(serverEntity.getType()), serverEntity.getBlockPos().toShortString()));
+                    }
+                }
+                return compoundTag == null ? new CompoundTag() : compoundTag;
+            });
+        }
+
+        if (ImGui.collapsingHeader("Extensions")) {
+            ImGui.treePush();
+            ExtensionLoader.invoke(extension -> {
+                if (ImGui.collapsingHeader("Extension [%s]".formatted(ExtensionLoader.get(extension)))) {
+                    ImGui.treePush();
+                    extension.handleBlockEntity(blockEntity);
+                    ImGui.treePop();
+                }
+            });
+            ImGui.treePop();
+        }
+    }
+
+    public static void showEntity(Entity entity) {
+        ImGuiEx.text("Pos:", () -> entity.blockPosition().toShortString());
+        ImGuiEx.text("Rot:", () -> entity.getXRot() + ", " + entity.getYRot());
+        ImGuiEx.text("Dim:", () -> entity.level.dimension().location());
+        ImGuiEx.text("Name:", entity::getName);
+        ImGuiEx.text("UUID:", entity::getStringUUID);
+        ImGuiEx.text("Custom Name:", entity::getCustomName);
+        ImGuiEx.text("Display Name:", entity::getDisplayName);
+        ImGuiEx.text("Scoreboard Name:", entity::getScoreboardName);
+        ImGuiEx.bool("Is In Powder Snow:", () -> entity.isInPowderSnow);
+        ImGuiEx.bool("No Physics:", () -> entity.noPhysics);
+        ImGuiEx.bool("No Culling:", () -> entity.noCulling);
+        ImGuiEx.bool("No Gravity:", entity::isNoGravity);
+        IntegratedServer server = Minecraft.getInstance().getSingleplayerServer();
+        if (server != null) {
+            ImGuiEx.nbt("NBT:", () -> {
                 ServerLevel level = server.getLevel(entity.level.dimension());
                 CompoundTag compoundTag = new CompoundTag();
                 if (level != null) {
@@ -370,180 +638,234 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
         if (entity instanceof LivingEntity livingEntity) {
             if (ImGui.collapsingHeader("Living Info")) {
                 ImGui.treePush();
-                imGuiText("Health:", livingEntity::getHealth);
-                imGuiText("Max Health:", livingEntity::getMaxHealth);
-                imGuiText("Used Hand:", () -> livingEntity.getUsedItemHand().name());
-                imGuiText("Death Time:", () -> livingEntity.deathTime);
-                imGuiText("Attack Anim.:", () -> livingEntity.attackAnim);
-                imGuiText("Anim. Speed:", () -> livingEntity.animationSpeed);
-                imGuiText("Anim. Position:", () -> livingEntity.animationPosition);
-                imGuiBool("Attackable:", livingEntity::attackable);
-
-                if (ImGui.collapsingHeader("Combat Tracker")) {
-                    ImGui.treePush();
-                    imGuiText("Combat Duration:", () -> livingEntity.getCombatTracker().getCombatDuration());
-                    imGuiText("Cur. Death Message:", () -> livingEntity.getCombatTracker().getDeathMessage());
-                    imGuiBool("In Combat:", () -> livingEntity.getCombatTracker().isInCombat());
-                    imGuiBool("Taking Damage:", () -> livingEntity.getCombatTracker().isTakingDamage());
-                    LivingEntity killer = livingEntity.getCombatTracker().getKiller();
-                    if (ImGui.collapsingHeader("Killer Info") && killer != null) {
-                        ImGui.treePush();
-                        showEntity(killer);
-                        ImGui.treePop();
-                    }
-                    CombatEntry entry = livingEntity.getCombatTracker().getLastEntry();
-                    if (ImGui.collapsingHeader("Last Attack Info") && entry != null) {
-                        ImGui.treePush();
-                        imGuiText("Age (ticks):", entry::getTime);
-                        imGuiText("Age (seconds):", () -> entry.getTime() / 20);
-                        imGuiText("Age (minutes):", () -> entry.getTime() / 20 / 60);
-                        imGuiText("Age (hours):", () -> entry.getTime() / 20 / 60 / 60);
-                        imGuiText("Location:", entry::getLocation);
-                        imGuiText("Damage:", entry::getDamage);
-                        imGuiText("Damage Source:", () -> entry.getSource().msgId);
-                        imGuiText("Attacker Name:", entry::getAttackerName);
-                        imGuiText("Health Before:", entry::getHealthBeforeDamage);
-                        imGuiText("Health After:", entry::getHealthAfterDamage);
-                        imGuiText("Fall Distance:", entry::getFallDistance);
-                        Entity attacker = entry.getAttacker();
-                        if (ImGui.collapsingHeader("Attacker Info") && attacker != null) {
-                            ImGui.treePush();
-                            showEntity(attacker);
-                            ImGui.treePop();
-                        }
-                        ImGui.treePop();
-                    }
-                    ImGui.treePop();
-                }
-                if (ImGui.collapsingHeader("Main Hand Info")) {
-                    ImGui.treePush();
-                    showItem(livingEntity.getMainHandItem());
-                    ImGui.treePop();
-                }
-                if (ImGui.collapsingHeader("Off Hand Info")) {
-                    ImGui.treePush();
-                    showItem(livingEntity.getOffhandItem());
-                    ImGui.treePop();
-                }
+                showLivingInfo(livingEntity);
                 ImGui.treePop();
             }
         }
         if (entity instanceof Mob mob) {
-            if (ImGui.collapsingHeader("Living Info")) {
+            if (ImGui.collapsingHeader("Mob Info")) {
                 ImGui.treePush();
-                imGuiText("Ambient Sound Interval:", mob::getAmbientSoundInterval);
-                imGuiText("Max Head X-Rot:", mob::getMaxHeadXRot);
-                imGuiText("Max Head Y-Rot:", mob::getMaxHeadYRot);
-                imGuiText("Head Rot Speed:", mob::getHeadRotSpeed);
-                imGuiText("Restrict Center:", () -> mob.getRestrictCenter().toShortString());
-                imGuiText("Restrict Radius:", mob::getRestrictRadius);
-                imGuiBool("Is Leashed:", mob::isLeashed);
-                imGuiBool("Is Aggressive:", mob::isAggressive);
-                imGuiBool("Is Left Handed:", mob::isLeftHanded);
-                imGuiBool("Has No AI:", mob::isNoAi);
-                imGuiBool("Restricted:", mob::isWithinRestriction);
-                imGuiBool("Persistent:", mob::isPersistenceRequired);
-
-                LivingEntity target = mob.getTarget();
-                if (ImGui.collapsingHeader("Target Info") && target != null) {
-                    ImGui.treePush();
-                    showItem(mob.getMainHandItem());
-                    ImGui.treePop();
-                }
-                if (ImGui.collapsingHeader("Off Hand Info")) {
-                    ImGui.treePush();
-                    showItem(mob.getOffhandItem());
-                    ImGui.treePop();
-                }
+                showMobInfo(mob);
                 ImGui.treePop();
             }
         }
         if (entity instanceof AbstractVillager villager) {
             if (ImGui.collapsingHeader("Base Villager Info")) {
                 ImGui.treePush();
-                imGuiText("Villager XP:", villager::getVillagerXp);
-                imGuiText("Unhappy Counter:", villager::getUnhappyCounter);
-
-                Player tradingPlayer = villager.getTradingPlayer();
-                if (ImGui.collapsingHeader("Trading Player Info") && tradingPlayer != null) {
-                    ImGui.treePush();
-                    showItem(villager.getMainHandItem());
-                    ImGui.treePop();
-                }
-                if (ImGui.collapsingHeader("Offers Info")) {
-                    ImGui.treePush();
-                    MerchantOffers offers = villager.getOffers();
-                    for (int i = 0, offersSize = offers.size(); i < offersSize; i++) {
-                        var offer = offers.get(i);
-                        if (ImGui.collapsingHeader("[%d]".formatted(i))) {
-                            ImGui.treePush();
-                            showOffer(offer);
-                            ImGui.treePop();
-                        }
-                    }
-                    ImGui.treePop();
-                }
+                showBaseVillagerInfo(villager);
                 ImGui.treePop();
             }
         }
         if (entity instanceof ItemEntity itemEntity) {
             if (ImGui.collapsingHeader("Item Info")) {
                 ImGui.treePush();
-                imGuiText("Age:", itemEntity::getAge);
-                imGuiText("Owner:", itemEntity::getOwner);
-                imGuiText("Thrower:", itemEntity::getThrower);
-                if (ImGui.collapsingHeader("Item")) {
-                    ImGui.treePush();
-                    showItem(itemEntity.getItem());
-                    ImGui.treePop();
-                }
+                showItemEntityInfo(itemEntity);
                 ImGui.treePop();
             }
         }
         if (entity instanceof Projectile projectile) {
             if (ImGui.collapsingHeader("Projectile Info")) {
                 ImGui.treePush();
-                Entity fishing = projectile.getOwner();
-                if (ImGui.collapsingHeader("Owner Info")) {
-                    ImGui.treePush();
-                    if (fishing != null) {
-                        showEntity(fishing);
-                    }
-                    ImGui.treePop();
-                }
+                showProjectileInfo(projectile);
                 ImGui.treePop();
             }
         }
         if (entity instanceof Player player) {
             if (ImGui.collapsingHeader("Player Info")) {
                 ImGui.treePush();
-                imGuiText("Absorption:", player::getAbsorptionAmount);
-                imGuiText("Luck:", player::getLuck);
-                imGuiText("Used Inv Slots:", () -> player.getInventory().items.stream().filter(stack -> !stack.isEmpty()).count());
-                imGuiBool("Is Hurt:", player::isHurt);
-                imGuiBool("Is Affected By Fluids:", player::isAffectedByFluids);
-                imGuiBool("Is Creative:", player::isCreative);
-                imGuiBool("Is Spectator:", player::isSpectator);
-                FishingHook fishing = player.fishing;
-                if (ImGui.collapsingHeader("Fishing Hook")) {
+                showPlayerInfo(player);
+                ImGui.treePop();
+            }
+        }
+        if (ImGui.collapsingHeader("Extensions")) {
+            ImGui.treePush();
+            ExtensionLoader.invoke(extension -> {
+                if (ImGui.collapsingHeader("Extension [%s]".formatted(ExtensionLoader.get(extension)))) {
                     ImGui.treePush();
-                    if (fishing != null) {
-                        showEntity(fishing);
-                    }
+                    extension.handleEntity(entity);
+                    ImGui.treePop();
+                }
+            });
+            ImGui.treePop();
+        }
+    }
+
+    private static void showPlayerInfo(Player player) {
+        ImGuiEx.text("Absorption:", player::getAbsorptionAmount);
+        ImGuiEx.text("Luck:", player::getLuck);
+        ImGuiEx.text("Used Inv Slots:", () -> player.getInventory().items.stream().filter(stack -> !stack.isEmpty()).count());
+        ImGuiEx.bool("Is Hurt:", player::isHurt);
+        ImGuiEx.bool("Is Affected By Fluids:", player::isAffectedByFluids);
+        ImGuiEx.bool("Is Creative:", player::isCreative);
+        ImGuiEx.bool("Is Spectator:", player::isSpectator);
+        FishingHook fishing = player.fishing;
+        if (ImGui.collapsingHeader("Fishing Hook")) {
+            ImGui.treePush();
+            if (fishing != null) {
+                showEntity(fishing);
+            }
+            ImGui.treePop();
+        }
+    }
+
+    private static void showProjectileInfo(Projectile projectile) {
+        Entity fishing = projectile.getOwner();
+        if (ImGui.collapsingHeader("Owner Info")) {
+            ImGui.treePush();
+            if (fishing != null) {
+                showEntity(fishing);
+            }
+            ImGui.treePop();
+        }
+    }
+
+    private static void showItemEntityInfo(ItemEntity itemEntity) {
+        ImGuiEx.text("Age:", itemEntity::getAge);
+        ImGuiEx.text("Owner:", itemEntity::getOwner);
+        ImGuiEx.text("Thrower:", itemEntity::getThrower);
+        if (ImGui.collapsingHeader("Item")) {
+            ImGui.treePush();
+            showItem(itemEntity.getItem());
+            ImGui.treePop();
+        }
+    }
+
+    private static void showBaseVillagerInfo(AbstractVillager villager) {
+        ImGuiEx.text("Villager XP:", villager::getVillagerXp);
+        ImGuiEx.text("Unhappy Counter:", villager::getUnhappyCounter);
+
+        Player tradingPlayer = villager.getTradingPlayer();
+        if (ImGui.collapsingHeader("Trading Player Info") && tradingPlayer != null) {
+            ImGui.treePush();
+            showItem(villager.getMainHandItem());
+            ImGui.treePop();
+        }
+        if (ImGui.collapsingHeader("Offers Info")) {
+            ImGui.treePush();
+            MerchantOffers offers = villager.getOffers();
+            for (int i = 0, offersSize = offers.size(); i < offersSize; i++) {
+                var offer = offers.get(i);
+                if (ImGui.collapsingHeader("[%d]".formatted(i))) {
+                    ImGui.treePush();
+                    showOffer(offer);
+                    ImGui.treePop();
+                }
+            }
+            ImGui.treePop();
+        }
+    }
+
+    private static void showMobInfo(Mob mob) {
+        ImGuiEx.text("Ambient Sound Interval:", mob::getAmbientSoundInterval);
+        ImGuiEx.text("Max Head X-Rot:", mob::getMaxHeadXRot);
+        ImGuiEx.text("Max Head Y-Rot:", mob::getMaxHeadYRot);
+        ImGuiEx.text("Head Rot Speed:", mob::getHeadRotSpeed);
+        ImGuiEx.text("Restrict Center:", () -> mob.getRestrictCenter().toShortString());
+        ImGuiEx.text("Restrict Radius:", mob::getRestrictRadius);
+        ImGuiEx.bool("Is Leashed:", mob::isLeashed);
+        ImGuiEx.bool("Is Aggressive:", mob::isAggressive);
+        ImGuiEx.bool("Is Left Handed:", mob::isLeftHanded);
+        ImGuiEx.bool("Has No AI:", mob::isNoAi);
+        ImGuiEx.bool("Restricted:", mob::isWithinRestriction);
+        ImGuiEx.bool("Persistent:", mob::isPersistenceRequired);
+
+        LivingEntity target = mob.getTarget();
+        if (ImGui.collapsingHeader("Target Info") && target != null) {
+            ImGui.treePush();
+            showItem(mob.getMainHandItem());
+            ImGui.treePop();
+        }
+        if (ImGui.collapsingHeader("Off Hand Info")) {
+            ImGui.treePush();
+            showItem(mob.getOffhandItem());
+            ImGui.treePop();
+        }
+    }
+
+    private static void showLivingInfo(LivingEntity livingEntity) {
+        ImGuiEx.text("Health:", livingEntity::getHealth);
+        ImGuiEx.text("Max Health:", livingEntity::getMaxHealth);
+        ImGuiEx.text("Used Hand:", () -> livingEntity.getUsedItemHand().name());
+        ImGuiEx.text("Death Time:", () -> livingEntity.deathTime);
+        ImGuiEx.text("Attack Anim.:", () -> livingEntity.attackAnim);
+        ImGuiEx.text("Anim. Speed:", () -> livingEntity.animationSpeed);
+        ImGuiEx.text("Anim. Position:", () -> livingEntity.animationPosition);
+        ImGuiEx.bool("Attackable:", livingEntity::attackable);
+
+        if (ImGui.collapsingHeader("Combat Tracker")) {
+            ImGui.treePush();
+            ImGuiEx.text("Combat Duration:", () -> livingEntity.getCombatTracker().getCombatDuration());
+            ImGuiEx.text("Cur. Death Message:", () -> livingEntity.getCombatTracker().getDeathMessage());
+            ImGuiEx.bool("In Combat:", () -> livingEntity.getCombatTracker().isInCombat());
+            ImGuiEx.bool("Taking Damage:", () -> livingEntity.getCombatTracker().isTakingDamage());
+            LivingEntity killer = livingEntity.getCombatTracker().getKiller();
+            if (ImGui.collapsingHeader("Killer Info") && killer != null) {
+                ImGui.treePush();
+                showEntity(killer);
+                ImGui.treePop();
+            }
+            CombatEntry entry = livingEntity.getCombatTracker().getLastEntry();
+            if (ImGui.collapsingHeader("Last Attack Info") && entry != null) {
+                ImGui.treePush();
+                ImGuiEx.text("Age (ticks):", entry::getTime);
+                ImGuiEx.text("Age (seconds):", () -> entry.getTime() / 20);
+                ImGuiEx.text("Age (minutes):", () -> entry.getTime() / 20 / 60);
+                ImGuiEx.text("Age (hours):", () -> entry.getTime() / 20 / 60 / 60);
+                ImGuiEx.text("Location:", entry::getLocation);
+                ImGuiEx.text("Damage:", entry::getDamage);
+                ImGuiEx.text("Damage Source:", () -> entry.getSource().msgId);
+                ImGuiEx.text("Attacker Name:", entry::getAttackerName);
+                ImGuiEx.text("Health Before:", entry::getHealthBeforeDamage);
+                ImGuiEx.text("Health After:", entry::getHealthAfterDamage);
+                ImGuiEx.text("Fall Distance:", entry::getFallDistance);
+                Entity attacker = entry.getAttacker();
+                if (ImGui.collapsingHeader("Attacker Info") && attacker != null) {
+                    ImGui.treePush();
+                    showEntity(attacker);
                     ImGui.treePop();
                 }
                 ImGui.treePop();
             }
+            ImGui.treePop();
+        }
+        if (ImGui.collapsingHeader("Main Hand Info")) {
+            ImGui.treePush();
+            showItem(livingEntity.getMainHandItem());
+            ImGui.treePop();
+        }
+        if (ImGui.collapsingHeader("Off Hand Info")) {
+            ImGui.treePush();
+            showItem(livingEntity.getOffhandItem());
+            ImGui.treePop();
+        }
+        if (ImGui.collapsingHeader("Active Effects")) {
+            ImGui.treePush();
+            List<MobEffectInstance> activeEffects = Lists.newArrayList(livingEntity.getActiveEffects());
+            for (int i = 0, activeEffectsSize = activeEffects.size(); i < activeEffectsSize; i++) {
+                MobEffectInstance activeEffect = activeEffects.get(i);
+                if (ImGui.collapsingHeader("[%d] Effect Instance".formatted(i))) {
+                    ImGui.treePush();
+                    showEffectInstance(activeEffect);
+                    ImGui.treePop();
+                }
+            }
+            ImGui.treePop();
         }
     }
 
-    private static void showOffer(MerchantOffer offer) {
-        imGuiText("Uses:", () -> "%d / %d".formatted(offer.getUses(), offer.getMaxUses()));
-        imGuiText("Demand:", offer::getDemand);
-        imGuiText("Price Multiplier:", offer::getPriceMultiplier);
-        imGuiText("XP:", offer::getXp);
-        imGuiText("Special Price Diff.:", offer::getSpecialPriceDiff);
-        imGuiBool("Out of Stock:", offer::isOutOfStock);
+    public static void showEffectInstance(MobEffectInstance instance) {
+        ImGuiEx.text("Id:", () -> BuiltInRegistries.MOB_EFFECT.getKey(instance.getEffect()));
+        ImGuiEx.text("Duration:", () -> MobEffectUtil.formatDuration(instance, 1.0f));
+        ImGuiEx.text("Duration:", () -> instance.getFactorData().orElse(null));
+    }
+
+    public static void showOffer(MerchantOffer offer) {
+        ImGuiEx.text("Uses:", () -> "%d / %d".formatted(offer.getUses(), offer.getMaxUses()));
+        ImGuiEx.text("Demand:", offer::getDemand);
+        ImGuiEx.text("Price Multiplier:", offer::getPriceMultiplier);
+        ImGuiEx.text("XP:", offer::getXp);
+        ImGuiEx.text("Special Price Diff.:", offer::getSpecialPriceDiff);
+        ImGuiEx.bool("Out of Stock:", offer::isOutOfStock);
         ItemStack baseCostA = offer.getBaseCostA();
         if (ImGui.collapsingHeader("Base Cost A")) {
             ImGui.treePush();
@@ -570,26 +892,26 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
         }
     }
 
-    private static void showTeam(Team team) {
-        imGuiText("Name:", team::getName);
-        imGuiText("Color:", () -> "#%06x".formatted(team.getColor().getColor()));
-        imGuiText("Collision Rule:", () -> team.getCollisionRule().getDisplayName());
-        imGuiText("Death Msg Visibility:", () -> team.getDeathMessageVisibility().getDisplayName());
-        imGuiText("Name Tag Visibility:", () -> team.getNameTagVisibility().getDisplayName());
+    public static void showTeam(Team team) {
+        ImGuiEx.text("Name:", team::getName);
+        ImGuiEx.text("Color:", () -> "#%06x".formatted(team.getColor().getColor()));
+        ImGuiEx.text("Collision Rule:", () -> team.getCollisionRule().getDisplayName());
+        ImGuiEx.text("Death Msg Visibility:", () -> team.getDeathMessageVisibility().getDisplayName());
+        ImGuiEx.text("Name Tag Visibility:", () -> team.getNameTagVisibility().getDisplayName());
     }
 
-    private static void showItem(ItemStack stack) {
-        imGuiText("Count:", stack::getCount);
-        imGuiText("Registry Name:", () -> stack.getItem().arch$registryName());
-        imGuiText("Bar Color:", () -> "#%08x".formatted(stack.getBarColor()));
-        imGuiText("Bar Width:", stack::getBarWidth);
-        imGuiText("Damage Value:", stack::getDamageValue);
-        imGuiText("Display Name:", stack::getDisplayName);
-        imGuiText("Hover Name:", stack::getHoverName);
-        imGuiText("Tag:", stack::getTag);
+    public static void showItem(ItemStack stack) {
+        ImGuiEx.text("Count:", stack::getCount);
+        ImGuiEx.text("Registry Name:", () -> stack.getItem().arch$registryName());
+        ImGuiEx.text("Bar Color:", () -> "#%08x".formatted(stack.getBarColor()));
+        ImGuiEx.text("Bar Width:", stack::getBarWidth);
+        ImGuiEx.text("Damage Value:", stack::getDamageValue);
+        ImGuiEx.text("Display Name:", stack::getDisplayName);
+        ImGuiEx.text("Hover Name:", stack::getHoverName);
+        ImGuiEx.text("Tag:", stack::getTag);
     }
 
-    private static void showChildren(List<? extends GuiEventListener> children) {
+    public static void showChildren(List<? extends GuiEventListener> children) {
         if (children != null && ImGui.collapsingHeader("Widgets")) {
             ImGui.treePush();
             for (int i = 0, childrenSize = children.size(); i < childrenSize; i++) {
@@ -602,17 +924,17 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
                         handler.handleImGui();
                     }
                     if (child instanceof AbstractWidget widget) {
-                        imGuiText("Message:", widget::getMessage);
-                        imGuiText("Bounds:", () -> widget.getX() + ", " + widget.getY() + " (" + widget.getWidth() + " × " + widget.getHeight() + ")");
-                        imGuiText("Focused:", widget::isFocused);
-                        imGuiText("Active:", () -> widget.active);
-                        imGuiText("Visible:", () -> widget.visible);
+                        ImGuiEx.text("Message:", widget::getMessage);
+                        ImGuiEx.text("Bounds:", () -> widget.getX() + ", " + widget.getY() + " (" + widget.getWidth() + " × " + widget.getHeight() + ")");
+                        ImGuiEx.text("Focused:", widget::isFocused);
+                        ImGuiEx.text("Active:", () -> widget.active);
+                        ImGuiEx.text("Visible:", () -> widget.visible);
                     }
                     if (child instanceof CycleButton<?> button) {
-                        imGuiText("Value:", button::getValue);
+                        ImGuiEx.text("Value:", button::getValue);
                     }
                     if (child instanceof ImageButton button) {
-                        imGuiText("Image:", () -> ((ImageButtonAccessor) button).getResourceLocation());
+                        ImGuiEx.text("Image:", () -> ((ImageButtonAccessor) button).getResourceLocation());
                     }
                     if (child instanceof AbstractButton button) {
                         ImGui.button("Click Button");
@@ -621,17 +943,17 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
                         }
                     }
                     if (child instanceof EditBox editBox) {
-                        imGuiText("Value:", editBox::getValue);
+                        ImGuiEx.text("Value:", editBox::getValue);
                     }
                     if (child instanceof WorldSelectionList.WorldListEntry entry) {
-                        imGuiText("World Name:", entry::getLevelName);
+                        ImGuiEx.text("World Name:", entry::getLevelName);
                         ImGui.button("Join World");
                         if (ImGui.isItemClicked()) {
                             entry.joinWorld();
                         }
                     }
                     if (child instanceof WorldSelectionList list) {
-                        imGuiText("World Count:", () -> list.children().size());
+                        ImGuiEx.text("World Count:", () -> list.children().size());
                     }
                     if (child instanceof ContainerEventHandler container) {
                         showChildren(container.children());
@@ -640,96 +962,6 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
                 }
             }
             ImGui.treePop();
-        }
-    }
-
-    private static void imGuiBool(String label, BooleanSupplier value) {
-        ImGui.text(label);
-        ImGui.sameLine();
-        try {
-            ImGui.checkbox("", value.getAsBoolean());
-        } catch (Throwable t) {
-            ImGui.text("~@# " + t.getClass().getName() + " #@~");
-        }
-    }
-
-    private static void imGuiNbt(String label, Supplier<Tag> o) {
-        ImGui.text(label);
-
-        ImGui.sameLine();
-
-        ImGui.button("Copy NBT");
-        if (ImGui.isItemClicked()) {
-            Tag nbt = o.get();
-            String visit = new StringTagVisitor().visit(nbt);
-            Minecraft.getInstance().keyboardHandler.setClipboard(visit);
-        }
-
-        ImGui.sameLine();
-
-        if (ImGui.button("Dump NBT")) {
-            ImGuiFileDialog.openModal("browse-key", "Choose File", ".dat", ".", DUMP_NBT_CALLBACK, 250, 1, 42, ImGuiFileDialogFlags.ConfirmOverwrite);
-        }
-
-        if (ImGuiFileDialog.display("browse-key", ImGuiFileDialogFlags.None, 200, 400, 800, 600)) {
-            if (ImGuiFileDialog.isOk()) {
-                Tag nbt = o.get();
-                CompoundTag compoundTag;
-                if (nbt instanceof CompoundTag) {
-                    compoundTag = (CompoundTag) nbt;
-                } else {
-                    compoundTag = new CompoundTag();
-                    compoundTag.put("Data", nbt);
-                }
-
-                String filePathName = ImGuiFileDialog.getFilePathName();
-                try {
-                    NbtIo.writeCompressed(compoundTag, new File(filePathName));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            ImGuiFileDialog.close();
-        }
-    }
-
-    private static void imGuiText(String label, Supplier<Object> value) {
-        ImGui.text(label);
-        ImGui.sameLine();
-        Object o;
-        try {
-            o = value.get();
-        } catch (Throwable t) {
-            o = "~@# " + t.getClass().getName() + " #@~";
-        }
-        if (o instanceof Component component) {
-            ImGui.text(component.getString());
-        } else if (o instanceof Tag nbt) {
-            ImGui.button("Copy NBT");
-            if (ImGui.isItemClicked()) {
-                String visit = new StringTagVisitor().visit(nbt);
-                Minecraft.getInstance().keyboardHandler.setClipboard(visit);
-            }
-            ImGui.sameLine();
-            if (nbt instanceof CompoundTag compoundTag) {
-                if (ImGui.button("Dump NBT")) {
-                    ImGuiFileDialog.openModal("browse-key", "Choose File", ".dat", ".", DUMP_NBT_CALLBACK, 250, 1, 42, ImGuiFileDialogFlags.ConfirmOverwrite);
-                }
-
-                if (ImGuiFileDialog.display("browse-key", ImGuiFileDialogFlags.None, 200, 400, 800, 600)) {
-                    if (ImGuiFileDialog.isOk()) {
-                        String filePathName = ImGuiFileDialog.getFilePathName();
-                        try {
-                            NbtIo.writeCompressed(compoundTag, new File(filePathName));
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    ImGuiFileDialog.close();
-                }
-            }
-        } else {
-            ImGui.text(String.valueOf(o));
         }
     }
 

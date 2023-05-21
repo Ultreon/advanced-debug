@@ -28,9 +28,9 @@ import static org.lwjgl.glfw.GLFW.*;
 public class GameRendererMixin {
     @Shadow @Final
     Minecraft minecraft;
+    private boolean wasTogglePressed = false;
     private static final ImGuiImplGlfw imGuiGlfw = new ImGuiImplGlfw();
     private static final ImGuiImplGl3 imGuiGl3 = new ImGuiImplGl3();
-    private boolean wasTogglePressed = false;
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void advancedDebug$injectImGuiInit(Minecraft minecraft, ItemInHandRenderer itemInHandRenderer, ResourceManager resourceManager, RenderBuffers renderBuffers, CallbackInfo ci) {
@@ -47,6 +47,13 @@ public class GameRendererMixin {
 
         imGuiGlfw.init(windowHandle, true);
         imGuiGl3.init("#version 150");
+    }
+
+    @Inject(method = "close", at = @At("TAIL"))
+    private void advancedDebug$injectImGuiDispose(CallbackInfo ci) {
+        imGuiGl3.dispose();
+        imGuiGlfw.dispose();
+        ImGui.destroyContext();
     }
 
     @Inject(method = "render", at = @At("RETURN"))
