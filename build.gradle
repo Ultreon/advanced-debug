@@ -71,6 +71,11 @@ allprojects {
         // for more information about repositories.
         maven { url = "https://maven.parchmentmc.org" }
 
+        maven {
+            name "Fuzs Mod Resources"
+            url "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/"
+        }
+
         flatDir {
             dir "${rootProject.projectDir}/libs"
         }
