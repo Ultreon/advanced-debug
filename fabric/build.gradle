@@ -46,18 +46,18 @@ dependencies {
     // Remove the next line if you don't want to depend on the API
     modApi "dev.architectury:architectury-fabric:${rootProject.architectury_version}"
 
-    modImplementation "curse.maven:forgeapiportfabric-547434:3946675"
+    modImplementation "curse.maven:forgeapiportfabric-547434:4451341"
     modImplementation 'com.electronwill.night-config:core:3.6.5'
     modImplementation 'com.electronwill.night-config:toml:3.6.5'
 
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
 
-    modImplementation "com.terraformersmc:modmenu:4.0.6", {
+    modImplementation "com.terraformersmc:modmenu:5.0.0", {
         exclude module: "fabric-api"
     }
 
-    modRuntimeOnly "me.shedaniel:RoughlyEnoughItems-fabric:9.1.568"
+    modRuntimeOnly "me.shedaniel:RoughlyEnoughItems-fabric:10.0.596"
 }
 
 processResources {

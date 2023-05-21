@@ -19,7 +19,7 @@ import com.ultreon.mods.advanceddebug.util.InputUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiComponent;
-import net.minecraft.client.gui.components.Widget;
+import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -41,7 +41,7 @@ import static net.minecraft.util.FastColor.ARGB32.*;
  * Client listener
  */
 @SuppressWarnings("unused")
-public final class DebugGui extends GuiComponent implements Widget, IDebugGui {
+public final class DebugGui extends GuiComponent implements Renderable, IDebugGui {
     private static final DebugGui INSTANCE = new DebugGui();
     private static final List<DebugPage> pages = new ArrayList<>();
     private static final DebugPage DEFAULT = new DefaultPage();

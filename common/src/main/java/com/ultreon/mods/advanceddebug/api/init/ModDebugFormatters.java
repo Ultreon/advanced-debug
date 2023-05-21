@@ -1,8 +1,5 @@
 package com.ultreon.mods.advanceddebug.api.init;
 
-import com.mojang.math.Vector3d;
-import com.mojang.math.Vector3f;
-import com.mojang.math.Vector4f;
 import com.ultreon.mods.advanceddebug.api.IAdvancedDebug;
 import com.ultreon.mods.advanceddebug.api.client.formatter.IFormatterContext;
 import com.ultreon.mods.advanceddebug.api.client.menu.Formatter;
@@ -16,6 +13,7 @@ import net.minecraft.core.*;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.core.Direction.AxisDirection;
 import net.minecraft.core.Direction.Plane;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
@@ -41,6 +39,9 @@ import net.minecraft.world.level.material.MaterialColor;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3d;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 import java.awt.*;
 import java.util.List;
@@ -399,7 +400,7 @@ public final class ModDebugFormatters {
         public void format(BlockEntityType obj, IFormatterContext context) {
             context.className("block-entity-type")
                     .space()
-                    .other(Registry.BLOCK_ENTITY_TYPE.getKey(obj));
+                    .other(BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(obj));
         }
     });
     public static final Formatter<Advancement> ADVANCEMENT = REGISTRY.register(new Formatter<>(Advancement.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "minecraft/advancement")) {
@@ -423,7 +424,7 @@ public final class ModDebugFormatters {
         public void format(StatType obj, IFormatterContext context) {
             context.className("stat-type")
                     .space()
-                    .other(Registry.STAT_TYPE.getKey(obj));
+                    .other(BuiltInRegistries.STAT_TYPE.getKey(obj));
         }
     });
     public static final Formatter<VillagerProfession> VILLAGER_PROFESSION = REGISTRY.register(new Formatter<>(VillagerProfession.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "minecraft/stat")) {

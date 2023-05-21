@@ -6,7 +6,7 @@ license = "GPL-3.0"
 [[mods]]
 modId = "advanced_debug_forge"
 version = "1"
-displayName = "Advanced Debug Wrapper"
+displayName = "(Wrapper) Advanced Debug"
 description = '''
 Forge wrapper for advanced debug
 '''

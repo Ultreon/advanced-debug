@@ -6,7 +6,6 @@ import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
-import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
@@ -22,7 +21,6 @@ public class ItemPage extends DebugPage {
             ItemStack stack = player.getMainHandItem();
             Item item = stack.getItem();
             FoodProperties food = item.getFoodProperties();
-            CreativeModeTab group = item.getItemCategory();
 
             //noinspection ConstantConditions
             if (stack == null) {
@@ -49,12 +47,6 @@ public class ItemPage extends DebugPage {
             ctx.left("Use Duration", stack.getUseDuration());
             ctx.left("XP Repair Ratio", stack.getBaseRepairCost());
             ctx.left();
-
-            if (group != null) {
-                ctx.right("Misc");
-                ctx.right("Creative Tab", group.getDisplayName().getString());
-                ctx.right();
-            }
 
             if (food != null) {
                 ctx.right("Food Properties");
