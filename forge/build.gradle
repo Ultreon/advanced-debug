@@ -51,6 +51,8 @@ processResources {
         p.put("minecraftVersion", rootProject.architectury.minecraft)
         expand(p)
     }
+
+    from "$rootProject.projectDir/LICENSE"
 }
 
 shadowJar {

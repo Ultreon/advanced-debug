@@ -1,6 +1,6 @@
 modLoader = "javafml"
 loaderVersion = "[${loaderVersion},)"
-license = "LGPL-3.0"
+license = "Ultreon API 1.0"
 issueTrackerURL = "https://github.com/Ultreon/advanced-debug/issues"
 
 # The main mod, and all sub-mods.
@@ -11,8 +11,8 @@ displayName = "Advanced Debug"
 #updateJSONURL="http://myurl.me/"
 displayURL = "https://github.com/Ultreon/advanced-debug"
 logoFile="advanced_debug.png"
-credits = "..."
-authors = "Qboi123"
+credits = "Qboi"
+authors = "Ultreon Team"
 description = """
 ${description}
 """
