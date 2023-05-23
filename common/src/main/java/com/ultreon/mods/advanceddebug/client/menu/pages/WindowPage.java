@@ -27,7 +27,7 @@ public class WindowPage extends DebugPage {
         ctx.right("Refresh Rate", window.getRefreshRate());
         ctx.right("Framerate Limit", window.getFramerateLimit());
         ctx.right("Fullscreen Mode", window.isFullscreen());
-        ctx.right("Vsync", ((OptionsAccessor) minecraft.options).getEnableVsync());
+        ctx.right("Vsync", ((OptionsAccessor) minecraft.options).getEnableVsync().get());
 
         if (InputUtils.isAltDown()) {
             ctx.top("Please don't press Alt+F4"); // Just don't.

@@ -16,6 +16,7 @@ authors = "Ultreon Team"
 description = """
 ${description}
 """
+displayTest = "IGNORE_ALL_VERSION"
 
 # Dependencies for the main mod.
 [[dependencies.advanced_debug]]
@@ -23,11 +24,11 @@ modId = "forge"
 mandatory = true
 versionRange = "[${forgeVersion},)"
 ordering = "NONE"
-side = "BOTH"
+side = "CLIENT"
 
 [[dependencies.advanced_debug]]
 modId = "minecraft"
 mandatory = true
 versionRange = "[${minecraftVersion},1.19.4)"
 ordering = "NONE"
-side = "BOTH"
+side = "CLIENT"

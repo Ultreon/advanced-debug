@@ -6,6 +6,7 @@ import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
 import com.ultreon.mods.advanceddebug.api.common.Formatted;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.core.Vec3i;
 
@@ -22,9 +23,16 @@ public class WorldInfoPage extends DebugPage {
             ClientLevel.ClientLevelData dimensionInfo = Minecraft.getInstance().level.getLevelData();
 
             IntegratedServer server = Minecraft.getInstance().getSingleplayerServer();
+            ServerData currentServer = Minecraft.getInstance().getCurrentServer();
             if (server != null) {
                 ctx.left("Singleplayer");
                 ctx.left("World Name", server.getWorldData().getLevelName());
+                ctx.left();
+            }
+
+            if (currentServer != null) {
+                ctx.left("Multiplayer");
+                ctx.left("Server Name", currentServer.name);
                 ctx.left();
             }
 

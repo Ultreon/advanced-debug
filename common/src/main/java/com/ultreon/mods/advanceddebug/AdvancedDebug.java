@@ -45,6 +45,8 @@ public class AdvancedDebug implements IAdvancedDebug {
     }
 
     public void init() {
+        ModOverlays.registerAll();
+
         ClientLifecycleEvent.CLIENT_SETUP.register(this::setup);
 
         ClientRawInputEvent.KEY_PRESSED.register(AdvancedDebug::keyPressed);
@@ -84,7 +86,6 @@ public class AdvancedDebug implements IAdvancedDebug {
 
         LOGGER.debug("Doing client side setup rn.");
         LOGGER.debug("Registering modded overlays...");
-        ModOverlays.registerAll();
         ModDebugFormatters.initClass();
 
         LOGGER.debug("Setting up extensions...");

@@ -7,7 +7,8 @@ public class ModOverlaysImpl {
     @SuppressWarnings("CodeBlock2Expr")
     public static void registerTop(String name, Renderable overlay) {
         ForgeOverlays.listen(event -> {
-            event.registerAboveAll(AdvancedDebug.MOD_ID + ":" + name, (forgeGui, poseStack, tickDelta, x, y) -> {
+            AdvancedDebug.LOGGER.info("Registering mod overlay: " + name);
+            event.registerAboveAll(name, (forgeGui, poseStack, tickDelta, x, y) -> {
                 overlay.render(poseStack, Integer.MAX_VALUE, Integer.MAX_VALUE, tickDelta);
             });
         });
