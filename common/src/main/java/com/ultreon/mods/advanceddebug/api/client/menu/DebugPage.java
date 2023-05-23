@@ -13,8 +13,7 @@ import java.awt.*;
 
 @SuppressWarnings("unused")
 public abstract class DebugPage {
-    protected final Minecraft mc = Minecraft.getInstance();
-    protected final Window mainWindow;
+    protected final Minecraft minecraft = Minecraft.getInstance();
     private final ResourceLocation resourceLocation;
 
     public DebugPage(String modId, String name) {
@@ -23,7 +22,6 @@ public abstract class DebugPage {
         if (mod == null) {
             throw new IllegalArgumentException("Mod not found with id: " + modId);
         }
-        this.mainWindow = this.mc.getWindow();
         this.resourceLocation = new ResourceLocation(modId, name);
     }
 
@@ -77,10 +75,14 @@ public abstract class DebugPage {
     }
 
     public Minecraft getMinecraft() {
-        return mc;
+        return minecraft;
     }
 
     public ResourceLocation registryName() {
         return resourceLocation;
+    }
+
+    protected Window getWindow() {
+        return this.minecraft.getWindow();
     }
 }

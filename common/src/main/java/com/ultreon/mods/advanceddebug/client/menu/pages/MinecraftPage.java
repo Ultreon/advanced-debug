@@ -12,40 +12,40 @@ public class MinecraftPage extends DebugPage {
 
     @Override
     public void render(PoseStack poseStack, IDebugRenderContext ctx) {
-        Screen screen = mc.screen;
+        Screen screen = minecraft.screen;
 
         ctx.left("Version");
-        ctx.left("Version", mc.getLaunchedVersion());
-        ctx.left("Version Type", mc.getVersionType());
+        ctx.left("Version", minecraft.getLaunchedVersion());
+        ctx.left("Version Type", minecraft.getVersionType());
         ctx.left();
 
         ctx.left("Partial Ticking");
-        ctx.left("Frame Time", mc.getFrameTime());
-        ctx.left("Delta Frame Time", mc.getDeltaFrameTime());
+        ctx.left("Frame Time", minecraft.getFrameTime());
+        ctx.left("Delta Frame Time", minecraft.getDeltaFrameTime());
         ctx.left();
 
         ctx.left("Game Renderer");
-        ctx.left("Render Distance", mc.gameRenderer.getRenderDistance());
-        ctx.left("Depth Far", mc.gameRenderer.getDepthFar());
-        ctx.left("Panoramic", mc.gameRenderer.isPanoramicMode());
+        ctx.left("Render Distance", minecraft.gameRenderer.getRenderDistance());
+        ctx.left("Depth Far", minecraft.gameRenderer.getDepthFar());
+        ctx.left("Panoramic", minecraft.gameRenderer.isPanoramicMode());
         ctx.left();
 
         ctx.right("Misc");
-        ctx.right("Name", mc.name());
-        ctx.right("Pending Tasks", mc.getPendingTasksCount());
+        ctx.right("Name", minecraft.name());
+        ctx.right("Pending Tasks", minecraft.getPendingTasksCount());
         ctx.right("Open Screen", screen == null ? null : screen.getClass());
-        ctx.right("Language", mc.getGame().getSelectedLanguage().getCode());
+        ctx.right("Language", minecraft.getGame().getSelectedLanguage().getCode());
         ctx.right();
 
         ctx.right("Flags");
-        ctx.right("64-Bit", mc.is64Bit());
-        ctx.right("Enforce Unicode", mc.isEnforceUnicode());
-        ctx.right("Demo Mode", mc.isDemo());
-        ctx.right("Game Focused", mc.isWindowActive());
-        ctx.right("Game Paused", mc.isPaused());
-        ctx.right("Local Server", mc.isLocalServer());
-        ctx.right("Singleplayer", mc.hasSingleplayerServer());
-        ctx.right("Connected to Realms", mc.isConnectedToRealms());
+        ctx.right("64-Bit", minecraft.is64Bit());
+        ctx.right("Enforce Unicode", minecraft.isEnforceUnicode());
+        ctx.right("Demo Mode", minecraft.isDemo());
+        ctx.right("Game Focused", minecraft.isWindowActive());
+        ctx.right("Game Paused", minecraft.isPaused());
+        ctx.right("Local Server", minecraft.isLocalServer());
+        ctx.right("Singleplayer", minecraft.hasSingleplayerServer());
+        ctx.right("Connected to Realms", minecraft.isConnectedToRealms());
         ctx.right();
     }
 }
