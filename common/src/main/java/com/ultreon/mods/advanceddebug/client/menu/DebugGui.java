@@ -13,9 +13,9 @@ import com.ultreon.mods.advanceddebug.client.formatter.FormatterContext;
 import com.ultreon.mods.advanceddebug.client.input.KeyBindingList;
 import com.ultreon.mods.advanceddebug.client.menu.pages.DefaultPage;
 import com.ultreon.mods.advanceddebug.client.registry.FormatterRegistry;
-import com.ultreon.mods.advanceddebug.mixin.common.KeyMappingAccessor;
 import com.ultreon.mods.advanceddebug.text.ComponentBuilder;
 import com.ultreon.mods.advanceddebug.util.InputUtils;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiComponent;
@@ -25,7 +25,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.glfw.GLFW;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 
@@ -201,13 +200,11 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
         setPage(getPage() - 1);
     }
 
-    public boolean onKeyReleased(int keyCode, int scanCode, int action, int modifiers) {
-        if (action == GLFW.GLFW_RELEASE && keyCode == ((KeyMappingAccessor)KeyBindingList.DEBUG_SCREEN).getKey().getValue()) {
+    public void tick() {
+        if (KeyBindingList.DEBUG_SCREEN.consumeClick()) {
             if (InputUtils.isShiftDown()) prev();
             else next();
-            return true;
         }
-        return false;
     }
 
     @Deprecated(forRemoval = true)

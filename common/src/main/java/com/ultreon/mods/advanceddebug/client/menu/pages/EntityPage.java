@@ -79,11 +79,10 @@ public class EntityPage extends DebugPage {
                 ctx.right("Armor Value", living.getArmorValue());
             } else if (entity instanceof ItemEntity itemEntity) {
                 ctx.right(GRAY + "Item Entity");
-                ctx.right("Age", itemEntity.getAge());
-                ctx.right("Item", itemEntity.getItem());
                 ctx.right("Owner", itemEntity.getOwner());
-                ctx.right("Thrower", itemEntity.getThrower());
-                ctx.right("Pose", itemEntity.getPose());
+                ctx.right("Item", itemEntity.getItem());
+                ctx.right("Spin", itemEntity.getSpin(minecraft.getFrameTime()));
+                ctx.right("Age", itemEntity.getAge());
             }
         } else {
             // not looking at a block, or too far away from one to tell

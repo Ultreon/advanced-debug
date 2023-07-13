@@ -34,7 +34,7 @@ public class MinecraftPage extends DebugPage {
         ctx.right("Name", minecraft.name());
         ctx.right("Pending Tasks", minecraft.getPendingTasksCount());
         ctx.right("Open Screen", screen == null ? null : screen.getClass());
-        ctx.right("Language", minecraft.getGame().getSelectedLanguage().getCode());
+        ctx.right("Language", minecraft.getLanguageManager().getSelected());
         ctx.right();
 
         ctx.right("Flags");

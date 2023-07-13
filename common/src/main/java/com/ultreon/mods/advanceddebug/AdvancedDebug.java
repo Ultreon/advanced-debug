@@ -11,9 +11,8 @@ import com.ultreon.mods.advanceddebug.client.registry.FormatterRegistry;
 import com.ultreon.mods.advanceddebug.extension.ExtensionLoader;
 import com.ultreon.mods.advanceddebug.init.ModDebugPages;
 import com.ultreon.mods.advanceddebug.init.ModOverlays;
-import dev.architectury.event.EventResult;
 import dev.architectury.event.events.client.ClientLifecycleEvent;
-import dev.architectury.event.events.client.ClientRawInputEvent;
+import dev.architectury.event.events.client.ClientTickEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;
@@ -37,11 +36,8 @@ public class AdvancedDebug implements IAdvancedDebug {
         instance = this;
     }
 
-    private static EventResult keyPressed(Minecraft client, int keyCode, int scanCode, int action, int modifiers) {
-        if (DebugGui.get().onKeyReleased(keyCode, scanCode, action, modifiers)) {
-            return EventResult.interruptTrue();
-        }
-        return EventResult.pass();
+    private static void tick(Minecraft minecraft) {
+        DebugGui.get().tick();
     }
 
     public void init() {
@@ -49,7 +45,7 @@ public class AdvancedDebug implements IAdvancedDebug {
 
         ClientLifecycleEvent.CLIENT_SETUP.register(this::setup);
 
-        ClientRawInputEvent.KEY_PRESSED.register(AdvancedDebug::keyPressed);
+        ClientTickEvent.CLIENT_POST.register(AdvancedDebug::tick);
 
         KeyBindingList.register();
 

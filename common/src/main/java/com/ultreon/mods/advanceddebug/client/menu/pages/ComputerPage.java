@@ -1,19 +1,25 @@
 package com.ultreon.mods.advanceddebug.client.menu.pages;
 
+import com.google.common.collect.Lists;
 import com.mojang.blaze3d.platform.Monitor;
 import com.mojang.blaze3d.platform.VideoMode;
-import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.ultreon.mods.advanceddebug.api.client.menu.DebugPage;
 import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
 import com.ultreon.mods.advanceddebug.api.common.IntSize;
 import com.ultreon.mods.advanceddebug.mixin.common.WindowAccessor;
-import net.minecraft.client.Minecraft;
 import org.lwjgl.glfw.GLFW;
+import oshi.SystemInfo;
+import oshi.hardware.CentralProcessor;
+import oshi.hardware.GlobalMemory;
+import oshi.hardware.GraphicsCard;
+import oshi.hardware.PhysicalMemory;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class ComputerPage extends DebugPage {
-    private final Minecraft mc = Minecraft.getInstance();
-    private final Window window = mc.getWindow();
+    private static final SystemInfo SYSTEM_INFO = new SystemInfo();
 
     public ComputerPage(String modId, String name) {
         super(modId, name);
@@ -21,8 +27,8 @@ public class ComputerPage extends DebugPage {
 
     @Override
     public void render(PoseStack poseStack, IDebugRenderContext ctx) {
-        long l = GLFW.glfwGetWindowMonitor(window.getWindow());
-        Monitor monitor = ((WindowAccessor)(Object)window).getScreenManager().getMonitor(l);
+        long l = GLFW.glfwGetWindowMonitor(getWindow().getWindow());
+        Monitor monitor = ((WindowAccessor)(Object)getWindow()).getScreenManager().getMonitor(l);
 
         if (monitor != null) {
             VideoMode currentMode = monitor.getCurrentMode();
@@ -87,6 +93,25 @@ public class ComputerPage extends DebugPage {
 
         }
 
-        ctx.right("Is Java 64-bit", (mc.is64Bit() ? "yes" : "no"));
+        ctx.right("System");
+        ctx.right("Is Java 64-bit", (minecraft.is64Bit() ? "yes" : "no"));
+        ctx.right("Platform", SystemInfo.getCurrentPlatform());
+
+        CentralProcessor processor = SYSTEM_INFO.getHardware().getProcessor();
+        ctx.right("Processor");
+//        ctx.right("CPU Frequencies", Arrays.stream(processor.getCurrentFreq()).boxed().toList());
+        ctx.right("CPU Max Frequency", Lists.newArrayList(processor.getMaxFreq()));
+        ctx.right("CPU Phys. Processor Count", processor.getPhysicalProcessorCount());
+        ctx.right("CPU Logic. Processor Count", processor.getLogicalProcessorCount());
+        ctx.right("CPU Interrupts", processor.getInterrupts());
+        ctx.right("CPU Load", processor.getProcessorCpuLoad(1000000000L));
+
+        GlobalMemory memory = SYSTEM_INFO.getHardware().getMemory();
+        ctx.right("Memory");
+        ctx.right("Physical Memory", memory.getPhysicalMemory().stream().mapToLong(PhysicalMemory::getCapacity).sum());
+        ctx.right("Virtual Memory", memory.getVirtualMemory().getVirtualMax());
+        ctx.right("Swap Memory", memory.getVirtualMemory().getSwapTotal());
+        ctx.right("Total Memory", memory.getTotal());
+        ctx.right("Memory Available", memory.getAvailable());
     }
 }
