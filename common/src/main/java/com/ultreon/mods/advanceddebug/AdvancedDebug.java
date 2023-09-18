@@ -15,7 +15,7 @@ import com.ultreon.mods.advanceddebug.util.TargetUtils;
 import com.ultreon.mods.lib.util.KeyboardHelper;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.client.ClientLifecycleEvent;
-import dev.architectury.event.events.client.ClientRawInputEvent;
+import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.event.events.client.ClientTickEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -47,17 +47,16 @@ public class AdvancedDebug implements IAdvancedDebug {
         instance = this;
     }
 
-    private static EventResult keyPressed(Minecraft client, int keyCode, int scanCode, int action, int modifiers) {
-        if (DebugGui.get().onKeyReleased(keyCode, scanCode, action, modifiers)) {
-            return EventResult.interruptTrue();
-        }
-        return EventResult.pass();
+    private static void tick(Minecraft minecraft) {
+        DebugGui.get().tick();
     }
 
     public void init() {
+        ModOverlays.registerAll();
+
         ClientLifecycleEvent.CLIENT_SETUP.register(this::setup);
 
-        ClientRawInputEvent.KEY_PRESSED.register(AdvancedDebug::keyPressed);
+        ClientTickEvent.CLIENT_POST.register(AdvancedDebug::tick);
 
         KeyBindingList.register();
 
@@ -127,7 +126,6 @@ public class AdvancedDebug implements IAdvancedDebug {
 
         LOGGER.debug("Doing client side setup rn.");
         LOGGER.debug("Registering modded overlays...");
-        ModOverlays.registerAll();
         ModDebugFormatters.initClass();
 
         LOGGER.debug("Setting up extensions...");

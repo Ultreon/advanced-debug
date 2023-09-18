@@ -3,7 +3,6 @@
 plugins {
     id "architectury-plugin" version "3.4-SNAPSHOT"
     id "dev.architectury.loom" version "0.12.0-SNAPSHOT" apply false
-    id "io.github.pacifistmc.forgix" version "1.2.6"
 }
 repositories {
     gradlePluginPortal()
@@ -12,30 +11,13 @@ repositories {
 architectury {
     minecraft = rootProject.minecraft_version
 }
+
 version = mod_version
 
 @SuppressWarnings('unused')
 Object getModDescription() {
     return "${mod_description}"
 }
-
-forgix {
-    group = "com.ultreon.mods"
-    mergedJarName = "advanced-debug-${version}.jar"
-    outputDir = "build/libs/merged"
-
-    forge {
-        projectName = "merge-forge"
-        jarLocation = "build/libs/advanced-debug-${version}.jar"
-    }
-
-    fabric {
-        projectName = "merge-fabric"
-        jarLocation = "build/libs/advanced-debug-${version}.jar"
-    }
-}
-
-println "forgix.outputDir = $forgix.outputDir"
 
 subprojects {
     apply plugin: "dev.architectury.loom"
@@ -74,6 +56,11 @@ allprojects {
         maven { url "https://cursemaven.com" }
         maven { url "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/" }
 
+        maven {
+            name "Fuzs Mod Resources"
+            url "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/"
+        }
+
         flatDir {
             dir "${rootProject.projectDir}/libs"
         }
@@ -90,6 +77,3 @@ allprojects {
         withSourcesJar()
     }
 }
-
-mergeJars.mustRunAfter build
-//build.dependsOn mergeJars

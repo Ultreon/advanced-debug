@@ -29,10 +29,12 @@ import imgui.gl3.ImGuiImplGl3;
 import imgui.glfw.ImGuiImplGlfw;
 import imgui.type.ImBoolean;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.components.events.ContainerEventHandler;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -74,7 +76,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.Team;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.glfw.GLFW;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 
@@ -105,6 +106,7 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
         }
     };
     private static final Marker MARKER = MarkerFactory.getMarker("DebugGui");
+
     public static final ImBoolean SHOW_PLAYER_INFO = new ImBoolean(false);
     public static final ImBoolean SHOW_CLIENT_LEVEL_INFO = new ImBoolean(false);
     public static final ImBoolean SHOW_SERVER_LEVEL_INFO = new ImBoolean(false);
@@ -114,6 +116,12 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
     private static final ImBoolean DI_SHOW_PLAYER = new ImBoolean(false);
     private static final ImBoolean DI_SHOW_LEVEL = new ImBoolean(false);
     private static final ImBoolean DI_SHOW_WINDOW = new ImBoolean(false);
+    public static final ImBoolean SHOW_IM_GUI = new ImBoolean(false);
+
+    public static Entity selectedEntity;
+    public static Entity selectedServerEntity;
+    public static final SelectedBlocks SELECTED_BLOCKS = new SelectedBlocks();
+
     private static boolean imGuiHovered;
     private static boolean imGuiFocused;
     private static boolean renderingImGui = false;
@@ -122,12 +130,6 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
     private final Minecraft minecraft = Minecraft.getInstance();
     private int width;
     private int height;
-    public static final ImBoolean SHOW_IM_GUI = new ImBoolean(false);
-
-    public static Entity selectedEntity;
-    public static Entity selectedServerEntity;
-    public static final SelectedBlocks SELECTED_BLOCKS = new SelectedBlocks();
-
     private DebugGui() {
 
     }
@@ -1041,13 +1043,11 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
         setPage(getPage() - 1);
     }
 
-    public boolean onKeyReleased(int keyCode, int scanCode, int action, int modifiers) {
-        if (action == GLFW.GLFW_RELEASE && keyCode == ((KeyMappingAccessor)KeyBindingList.DEBUG_SCREEN).getKey().getValue()) {
+    public void tick() {
+        if (KeyBindingList.DEBUG_SCREEN.consumeClick()) {
             if (InputUtils.isShiftDown()) prev();
             else next();
-            return true;
         }
-        return false;
     }
 
     @Deprecated(forRemoval = true)

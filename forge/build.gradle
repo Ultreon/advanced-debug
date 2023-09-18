@@ -29,9 +29,9 @@ configurations {
 }
 
 dependencies {
-    forge "net.minecraftforge:forge:${rootProject.architectury.minecraft}-${rootProject.forge_version}"
+    forge "net.minecraftforge:forge:$minecraft_version-$forge_version"
     // Remove the next line if you don't want to depend on the API
-    modApi "dev.architectury:architectury-forge:${rootProject.architectury_version}"
+    modApi "dev.architectury:architectury-forge:$architectury_version"
 
     modApi "com.github.Ultreon.ultreonlib:ultreon-lib-forge:$ultreonlib_version"
 
@@ -59,6 +59,8 @@ processResources {
         p.put("minecraftVersion", rootProject.architectury.minecraft)
         expand(p)
     }
+
+    from "$rootProject.projectDir/LICENSE"
 }
 
 shadowJar {

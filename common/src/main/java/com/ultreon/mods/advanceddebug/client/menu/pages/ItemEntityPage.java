@@ -17,9 +17,10 @@ public class ItemEntityPage extends EntityPage {
         EntityHitResult entityHit = TargetUtils.entity();
         if (entityHit != null && entityHit.getEntity() instanceof ItemEntity entity) {
             ctx.left("Generic");
-            ctx.left("Thrower", entity.getThrower());
             ctx.left("Owner", entity.getOwner());
             ctx.left("Item", entity.getItem());
+            ctx.left("Spin", entity.getSpin(minecraft.getFrameTime()));
+            ctx.left("Age", entity.getAge());
             ctx.left();
 
             ctx.right("Flags");

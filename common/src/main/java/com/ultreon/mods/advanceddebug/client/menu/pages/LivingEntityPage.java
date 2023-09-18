@@ -25,7 +25,6 @@ public class LivingEntityPage extends EntityPage {
             ctx.left("Arrows", entity.getArrowCount());
             ctx.left("Time Fall-flying", entity.getFallFlyingTicks());
             ctx.left("Jump Boost Power", entity.getJumpBoostPower());
-            ctx.left("Mob Type", entity.getMobType());
             ctx.left("Idle For", entity.getNoActionTime());
             ctx.left("Scale", entity.getScale());
             ctx.left("Speed", entity.getSpeed());

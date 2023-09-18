@@ -5,19 +5,34 @@
   "name": "Advanced Debug",
   "description": "${description}",
   "authors": [
-    "Qboi123"
+    "Ultreon Team"
   ],
   "contributors": [
+    {
+      "name": "XyperCode",
+      "contact": {
+        "homepage": "https://github.com/XyperCode",
+        "youtube": "https://youtube.com/@xypercode
+      }
+    },
+    {
+      "name": "Qboi",
+      "contact": {
 
+      }
+    }
   ],
   "contact": {
-    "website": "https://ultreon.github.io/web/",
-    "repo": "https://github.com/Ultreon/advanced-debug",
-    "issues": "https://github.com/Ultreon/advanced-debug/issues"
+    "homepage": "https://github.com/Ultreon/advanced-debug",
+    "sources": "https://github.com/Ultreon/advanced-debug",
+    "issues": "https://github.com/Ultreon/advanced-debug/issues",
+    "discord": "https://discord.gg/dtdc46g6ry",
+    "guilded": "https://guilded.gg/ultreon",
+    "youtube": "https://youtube.com/@ultreon"
   },
-  "license": "LGPL-3.0",
+  "license": "Ultreon-API-1.0",
   "icon": "advanced_debug.png",
-  "environment": "*",
+  "environment": "client",
   "entrypoints": {
     "client": [
       "com.ultreon.mods.advanceddebug.fabric.AdvancedDebugFabric"
@@ -29,8 +44,8 @@
   ],
   "depends": {
     "fabricloader": ">=${loaderVersion}",
-    "minecraft": "1.19.3",
-    "architectury": ">=7.0 <8.0",
-    "forgeconfigapiport": ">=5.0 <6.0"
+    "minecraft": ">=${minecraftVersion} <1.20",
+    "architectury": ">=8.1 <9.0",
+    "forgeconfigapiport": ">=6.0 <7.0"
   }
 }
