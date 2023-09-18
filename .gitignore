@@ -1,6 +1,7 @@
 # User-specific stuff
 .idea/
 .vscode/
+!.idea/inspectionProfiles/Project_Default.xml
 
 *.iml
 *.ipr
@@ -9,6 +10,8 @@
 
 # IntelliJ
 out/
+
+
 # mpeltonen/sbt-idea plugin
 .idea_modules/
 

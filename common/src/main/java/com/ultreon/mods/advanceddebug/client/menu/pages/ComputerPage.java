@@ -8,17 +8,12 @@ import com.ultreon.mods.advanceddebug.api.client.menu.DebugPage;
 import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
 import com.ultreon.mods.advanceddebug.api.common.IntSize;
 import com.ultreon.mods.advanceddebug.mixin.common.WindowAccessor;
-import com.ultreon.mods.advanceddebug.util.FileSize;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.glfw.GLFW;
 import oshi.SystemInfo;
 import oshi.hardware.CentralProcessor;
 import oshi.hardware.GlobalMemory;
-import oshi.hardware.GraphicsCard;
 import oshi.hardware.PhysicalMemory;
-
-import java.util.Arrays;
-import java.util.List;
 
 public class ComputerPage extends DebugPage {
     private static final SystemInfo SYSTEM_INFO = new SystemInfo();
@@ -31,8 +26,6 @@ public class ComputerPage extends DebugPage {
     public void render(PoseStack poseStack, IDebugRenderContext ctx) {
         long l = GLFW.glfwGetWindowMonitor(getMainWindow().getWindow());
         Monitor monitor = ((WindowAccessor)(Object) getMainWindow()).getScreenManager().getMonitor(l);
-        long l = GLFW.glfwGetWindowMonitor(getWindow().getWindow());
-        Monitor monitor = ((WindowAccessor)(Object)getWindow()).getScreenManager().getMonitor(l);
 
         if (monitor != null) {
             VideoMode currentMode = monitor.getCurrentMode();

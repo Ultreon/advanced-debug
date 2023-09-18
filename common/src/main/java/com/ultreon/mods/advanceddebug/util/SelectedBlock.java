@@ -60,10 +60,6 @@ public class SelectedBlock {
         return level.isRainingAt(pos);
     }
 
-    public boolean isHumid() {
-        return level.isHumidAt(pos);
-    }
-
     public boolean isWater() {
         return level.isWaterAt(pos);
     }

@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.ultreon.libs.commons.v0.Identifier;
 import com.ultreon.mods.advanceddebug.api.common.*;
 import com.ultreon.mods.advanceddebug.registry.ModPreRegistries;
+import dev.architectury.extensions.injected.InjectedRegistryEntryExtension;
 import dev.architectury.platform.Mod;
 import dev.architectury.platform.Platform;
 import net.minecraft.client.Minecraft;
@@ -15,16 +16,10 @@ import java.awt.*;
 @SuppressWarnings("unused")
 public abstract class DebugPage {
     protected final Minecraft minecraft = Minecraft.getInstance();
-    private final ResourceLocation resourceLocation;
     protected final Minecraft mc = Minecraft.getInstance();
 
     public DebugPage() {
-        // Mod container.
-        Mod mod = Platform.getMod(modId);
-        if (mod == null) {
-            throw new IllegalArgumentException("Mod not found with id: " + modId);
-        }
-        this.resourceLocation = new ResourceLocation(modId, name);
+
     }
 
     protected final Window getMainWindow() {

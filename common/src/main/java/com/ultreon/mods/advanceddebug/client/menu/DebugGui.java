@@ -44,6 +44,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -66,11 +67,14 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.Team;
@@ -379,7 +383,7 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
         float frameTime = instance.getFrameTime();
 
         ImGuiEx.text("Entity Count:", level::getEntityCount);
-        ImGuiEx.text("Sky Flash Time:", level::getSkyFlashTime);
+        ImGuiEx.editInt("Sky Flash Time:", "ServerLevel[" + level.dimension() + "].NoSave", level::getSkyFlashTime, level::setSkyFlashTime);
         ImGuiEx.text("Star Brightness:", () -> level.getStarBrightness(frameTime));
 
         showLevelInfo(level, frameTime);
@@ -429,7 +433,7 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
                 return structure.orElse(null);
             });
         }
-        ImGuiEx.bool("No Save:", () -> level.noSave);
+        ImGuiEx.editBool("No Save:", "ServerLevel[" + level.dimension() + "].NoSave", level.noSave, v -> level.noSave = v);
         ImGuiEx.bool("Flat:", level::isFlat);
 
         showLevelInfo(level, frameTime);
@@ -458,10 +462,12 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
     }
 
     public static void showLevelInfo(Level level, float frameTime) {
+        ImGuiEx.editFloat("Rain Level", "ServerLevel[" + level.dimension() + "].RainLevel", () -> level.getRainLevel(0F), level::setRainLevel);
+        ImGuiEx.editFloat("Thunder Level", "ServerLevel[" + level.dimension() + "].ThunderTime", () -> level.getThunderLevel(0F), level::setRainLevel);
         ImGuiEx.text("Chunk SS:", level::gatherChunkSourceStats);
-        ImGuiEx.text("Thunder Level:", () -> level.getThunderLevel(frameTime));
-        ImGuiEx.text("Rain Level:", () -> level.getRainLevel(frameTime));
-        ImGuiEx.text("Day Time:", level::getDayTime);
+        if (!level.isClientSide()) {
+            ImGuiEx.text("Day Time:", level::getDayTime);
+        }
         ImGuiEx.text("Game Time:", level::getGameTime);
         ImGuiEx.text("Moon Brightness:", level::getMoonBrightness);
         ImGuiEx.text("Moon Phase:", level::getMoonPhase);
@@ -490,15 +496,34 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
     }
 
     private static void showSelectedBlock(SelectedBlock block) {
+        Level level = block.getLevel();
+        BlockPos pos = block.getPos();
         BlockEntity blockEntity = block.getBlockEntity();
         BlockState blockState = block.getBlockState();
+        FluidState fluidState = block.getFluidState();
+        Holder<Biome> biome = block.getBiome();
 
-        ImGuiEx.text("Position:", () -> block.getPos().toShortString());
-        ImGuiEx.text("Light:", () -> block.getBlockState().getLightBlock(block.getLevel(), block.getPos()));
-        ImGuiEx.text("Offset:", () -> block.getBlockState().getOffset(block.getLevel(), block.getPos()));
-        ImGuiEx.text("Map Color:", () -> block.getBlockState().getMapColor(block.getLevel(), block.getPos()));
-        ImGuiEx.text("Destroy Speed:", () -> block.getBlockState().getDestroySpeed(block.getLevel(), block.getPos()));
-        ImGuiEx.text("Block Seed:", () -> block.getBlockState().getSeed(block.getPos()));
+        if (level == null || pos == null) {
+            ImGui.text("null");
+            return;
+        }
+
+        ImGuiEx.text("Position:", pos::toShortString);
+        ImGuiEx.text("Level:", level::dimension);
+        ImGuiEx.editId("Type:", level.getClass().getSimpleName() + "[" + level.dimension() + "]" + ".BlockStateAt[" + pos.toShortString() + "].Type", () -> {
+            try {
+                return level.getBlockState(pos).getBlock().arch$registryName();
+            } catch (Exception e) {
+                return Blocks.VOID_AIR.arch$registryName();
+            }
+        }, resourceLocation -> {
+            level.setBlock(pos, BuiltInRegistries.BLOCK.get(resourceLocation).defaultBlockState(), 0b00000011);
+        });
+
+        if (ImGui.collapsingHeader("Block Type Info")) {
+            ImGui.treePush();
+            ImGui.treePop();
+        }
 
         if (blockEntity != null) {
             if (ImGui.collapsingHeader("Block Entity Info")) {
@@ -514,11 +539,18 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
                 ImGui.treePop();
             }
         }
+
+        if (fluidState != null) {
+            if (ImGui.collapsingHeader("Fluid State Info")) {
+                ImGui.treePush();
+                showBlockState(blockState);
+                ImGui.treePop();
+            }
+        }
     }
 
     private static void showBlockState(BlockState blockState) {
         ImGuiEx.text("Light Emission:", blockState::getLightEmission);
-        ImGuiEx.text("Offset Type:", () -> blockState.getOffsetType().name());
         ImGuiEx.text("Render Shape:", () -> blockState.getRenderShape().name());
         ImGuiEx.bool("Air:", blockState::isAir);
         ImGuiEx.bool("Signal Source:", blockState::isSignalSource);
@@ -724,7 +756,6 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
     private static void showItemEntityInfo(ItemEntity itemEntity) {
         ImGuiEx.text("Age:", itemEntity::getAge);
         ImGuiEx.text("Owner:", itemEntity::getOwner);
-        ImGuiEx.text("Thrower:", itemEntity::getThrower);
         if (ImGui.collapsingHeader("Item")) {
             ImGui.treePush();
             showItem(itemEntity.getItem());
@@ -790,8 +821,6 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
         ImGuiEx.text("Used Hand:", () -> livingEntity.getUsedItemHand().name());
         ImGuiEx.text("Death Time:", () -> livingEntity.deathTime);
         ImGuiEx.text("Attack Anim.:", () -> livingEntity.attackAnim);
-        ImGuiEx.text("Anim. Speed:", () -> livingEntity.animationSpeed);
-        ImGuiEx.text("Anim. Position:", () -> livingEntity.animationPosition);
         ImGuiEx.bool("Attackable:", livingEntity::attackable);
 
         if (ImGui.collapsingHeader("Combat Tracker")) {
@@ -815,7 +844,8 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
                 ImGuiEx.text("Age (hours):", () -> entry.getTime() / 20 / 60 / 60);
                 ImGuiEx.text("Location:", entry::getLocation);
                 ImGuiEx.text("Damage:", entry::getDamage);
-                ImGuiEx.text("Damage Source:", () -> entry.getSource().msgId);
+                ImGuiEx.text("Damage Source:", () -> entry.getSource().type().msgId());
+                ImGuiEx.text("Damage Source Pos:", () -> entry.getSource().getSourcePosition());
                 ImGuiEx.text("Attacker Name:", entry::getAttackerName);
                 ImGuiEx.text("Health Before:", entry::getHealthBeforeDamage);
                 ImGuiEx.text("Health After:", entry::getHealthAfterDamage);
