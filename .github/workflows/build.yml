@@ -32,7 +32,7 @@ jobs:
         if: ${{ runner.os != 'Windows' }}
         run: chmod +x ./gradlew
       - name: build
-        run: ./gradlew build mergeJars
+        run: ./gradlew build
         env:
           GITHUB_BUILD_NUMBER: ${{ github.run_number }}
       - name: capture fabric's build artifacts
@@ -47,12 +47,6 @@ jobs:
         with:
           name: Common
           path: common/build/libs/
-      - name: capture the merged build artifacts
-        if: ${{ runner.os == 'Linux' && matrix.java == '17' }} # Only upload artifacts built from latest java on one OS
-        uses: actions/upload-artifact@v2
-        with:
-          name: Merged
-          path: build/libs/merged
       - name: capture forge's build artifacts
         if: ${{ runner.os == 'Linux' && matrix.java == '17' }} # Only upload artifacts built from latest java on one OS
         uses: actions/upload-artifact@v2
