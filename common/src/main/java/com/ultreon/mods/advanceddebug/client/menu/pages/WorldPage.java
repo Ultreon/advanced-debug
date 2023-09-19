@@ -9,8 +9,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 
 public class WorldPage extends DebugPage {
-    public WorldPage(String modId, String name) {
-        super(modId, name);
+    public WorldPage() {
     }
 
     @Override

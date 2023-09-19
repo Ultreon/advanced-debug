@@ -6,8 +6,7 @@ import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
 import net.minecraft.client.gui.screens.Screen;
 
 public class MinecraftPage extends DebugPage {
-    public MinecraftPage(String modId, String name) {
-        super(modId, name);
+    public MinecraftPage() {
     }
 
     @Override

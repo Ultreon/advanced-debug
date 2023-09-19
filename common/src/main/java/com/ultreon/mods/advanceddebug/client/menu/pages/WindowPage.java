@@ -8,8 +8,8 @@ import com.ultreon.mods.advanceddebug.mixin.common.OptionsAccessor;
 import com.ultreon.mods.advanceddebug.util.InputUtils;
 
 public class WindowPage extends DebugPage {
-    public WindowPage(String modId, String name) {
-        super(modId, name);
+    public WindowPage() {
+
     }
 
     @Override

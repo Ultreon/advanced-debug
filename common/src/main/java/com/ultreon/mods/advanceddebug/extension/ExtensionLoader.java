@@ -7,10 +7,8 @@ import com.ultreon.mods.advanceddebug.client.menu.DebugGui;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.ServiceLoader;
+import java.util.*;
+import java.util.function.Consumer;
 
 import static com.ultreon.mods.advanceddebug.AdvancedDebug.LOGGER;
 
@@ -19,6 +17,7 @@ public final class ExtensionLoader {
     private static final Marker MARKER = MarkerFactory.getMarker("ExtensionLoader");
     private List<ServiceLoader.Provider<Extension>> providers;
     private static final Map<String, Extension> EXTENSIONS = new HashMap<>();
+    private static final Map<Extension, String> EXTENSION_2_ID = new HashMap<>();
 
     private ExtensionLoader() {
 
@@ -28,9 +27,25 @@ public final class ExtensionLoader {
         return instance;
     }
 
+    public static void invoke(Consumer<Extension> consumer) {
+        EXTENSIONS.values().forEach(consumer);
+    }
+
+    public static String get(Extension extension) {
+        return EXTENSION_2_ID.get(extension);
+    }
+
     public void scan() {
         ServiceLoader<Extension> load = ServiceLoader.load(Extension.class);
         providers = load.stream().toList();
+    }
+
+    public static Extension get(String id) {
+        return EXTENSIONS.get(id);
+    }
+
+    public static Collection<Extension> getExtensions() {
+        return EXTENSIONS.values();
     }
 
     public void construct() {
@@ -41,8 +56,10 @@ public final class ExtensionLoader {
                 LOGGER.warn(MARKER, "Advanced Debug extension doesn't have info: " + type.getName());
                 continue;
             }
+            Extension extension = provider.get();
             String value = annotation.value();
-            EXTENSIONS.put(value, provider.get());
+            EXTENSIONS.put(value, extension);
+            EXTENSION_2_ID.put(extension, value);
         }
     }
 

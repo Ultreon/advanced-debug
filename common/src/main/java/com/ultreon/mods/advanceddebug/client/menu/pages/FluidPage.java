@@ -15,8 +15,7 @@ import static net.minecraft.ChatFormatting.RED;
 public class FluidPage extends DebugPage {
     private static final Minecraft MC = Minecraft.getInstance();
 
-    public FluidPage(String modId, String name) {
-        super(modId, name);
+    public FluidPage() {
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.ultreon.mods.advanceddebug.client.formatter;
 
+import com.ultreon.mods.advanceddebug.api.IAdvancedDebug;
 import com.ultreon.mods.advanceddebug.api.client.formatter.IFormatterContext;
 import com.ultreon.mods.advanceddebug.client.Config;
 import com.ultreon.mods.advanceddebug.client.menu.DebugGui;
@@ -153,7 +154,7 @@ public class FormatterContext implements IFormatterContext {
 
     @Override
     public IFormatterContext enumConstant(Enum<?> enumValue) {
-        if (Config.SPACED_ENUM_CONSTANTS.get()) {
+        if (IAdvancedDebug.get().isEnumConstantsSpaced()) {
             enumConstant(enumValue.name().toLowerCase(Locale.ROOT).replaceAll("_", " "));
         } else {
             enumConstant(enumValue.name().toLowerCase(Locale.ROOT).replaceAll("_", "-"));

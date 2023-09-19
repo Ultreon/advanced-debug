@@ -18,8 +18,7 @@ import java.util.Collection;
 import static net.minecraft.ChatFormatting.RED;
 
 public class BlockPage extends DebugPage {
-    public BlockPage(String modId, String name) {
-        super(modId, name);
+    public BlockPage() {
     }
 
     @Override

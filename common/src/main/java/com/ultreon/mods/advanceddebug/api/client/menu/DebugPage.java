@@ -2,11 +2,13 @@ package com.ultreon.mods.advanceddebug.api.client.menu;
 
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.ultreon.libs.commons.v0.Identifier;
 import com.ultreon.mods.advanceddebug.api.common.*;
+import com.ultreon.mods.advanceddebug.registry.ModPreRegistries;
+import dev.architectury.extensions.injected.InjectedRegistryEntryExtension;
 import dev.architectury.platform.Mod;
 import dev.architectury.platform.Platform;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 
 import java.awt.*;
@@ -14,15 +16,14 @@ import java.awt.*;
 @SuppressWarnings("unused")
 public abstract class DebugPage {
     protected final Minecraft minecraft = Minecraft.getInstance();
-    private final ResourceLocation resourceLocation;
+    protected final Minecraft mc = Minecraft.getInstance();
 
-    public DebugPage(String modId, String name) {
-        // Mod container.
-        Mod mod = Platform.getMod(modId);
-        if (mod == null) {
-            throw new IllegalArgumentException("Mod not found with id: " + modId);
-        }
-        this.resourceLocation = new ResourceLocation(modId, name);
+    public DebugPage() {
+
+    }
+
+    protected final Window getMainWindow() {
+        return mc.getWindow();
     }
 
     public abstract void render(PoseStack poseStack, IDebugRenderContext ctx);
@@ -78,8 +79,12 @@ public abstract class DebugPage {
         return minecraft;
     }
 
-    public ResourceLocation registryName() {
-        return resourceLocation;
+    public Identifier getId() {
+        Identifier id = ModPreRegistries.DEBUG_PAGE.getKey(this);
+        if (id == null) throw new IllegalStateException("Debug page not registered: " + getClass().getName());
+        Mod mod = Platform.getMod(id.location());
+        if (mod == null) throw new IllegalArgumentException("Mod not found with id: " + id.location());
+        return id;
     }
 
     protected Window getWindow() {

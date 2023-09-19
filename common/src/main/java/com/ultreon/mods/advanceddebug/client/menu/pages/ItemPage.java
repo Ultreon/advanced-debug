@@ -10,8 +10,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 public class ItemPage extends DebugPage {
-    public ItemPage(String modId, String name) {
-        super(modId, name);
+    public ItemPage() {
     }
 
     @Override

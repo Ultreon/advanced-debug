@@ -9,10 +9,16 @@
   ],
   "contributors": [
     {
+      "name": "XyperCode",
+      "contact": {
+        "homepage": "https://github.com/XyperCode",
+        "youtube": "https://youtube.com/@xypercode"
+      }
+    },
+    {
       "name": "Qboi",
       "contact": {
-        "homepage": "https://github.com/Qboi123",
-        "youtube": "https://youtube.com/@ultreon"
+
       }
     }
   ],

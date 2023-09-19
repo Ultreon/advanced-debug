@@ -7,8 +7,12 @@
     "LivingEntityAccessor"
   ],
   "client": [
+    "KeyboardHandlerMixin",
+    "GameRendererMixin",
+    "ImageButtonAccessor",
     "KeyMappingAccessor",
     "MinecraftAccessor",
+    "MouseHandlerMixin",
     "OptionsAccessor",
     "WindowAccessor"
   ],

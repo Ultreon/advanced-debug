@@ -11,10 +11,18 @@ import com.ultreon.mods.advanceddebug.client.registry.FormatterRegistry;
 import com.ultreon.mods.advanceddebug.extension.ExtensionLoader;
 import com.ultreon.mods.advanceddebug.init.ModDebugPages;
 import com.ultreon.mods.advanceddebug.init.ModOverlays;
+import com.ultreon.mods.advanceddebug.util.TargetUtils;
 import dev.architectury.event.events.client.ClientLifecycleEvent;
 import dev.architectury.event.events.client.ClientTickEvent;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +61,39 @@ public class AdvancedDebug implements IAdvancedDebug {
             FormatterRegistry.get().dump();
         }
 
+        ClientTickEvent.CLIENT_POST.register(minecraft -> {
+            if (KeyBindingList.SELECT_ENTITY.consumeClick()) {
+                EntityHitResult hit = TargetUtils.entity();
+                DebugGui.selectedEntity = hit != null ? hit.getEntity() : null;
+                Entity entity = DebugGui.selectedEntity;
+                if (entity == null) {
+                    DebugGui.selectedServerEntity = null;
+                } else {
+                    IntegratedServer server = minecraft.getSingleplayerServer();
+                    if (server != null) {
+                        ServerLevel level = server.getLevel(entity.level.dimension());
+                        if (level != null) {
+                            DebugGui.selectedServerEntity = level.getEntity(entity.getId());
+                        }
+                    }
+                }
+            }
+            if (KeyBindingList.SELECT_BLOCK.consumeClick()) {
+                @Nullable BlockHitResult hit = TargetUtils.block();
+                ClientLevel level = minecraft.level;
+                if (level != null) {
+                    DebugGui.SELECTED_BLOCKS.set(level, hit != null ? hit.getBlockPos() : null);
+                    IntegratedServer server = minecraft.getSingleplayerServer();
+                    if (server != null) {
+                        ServerLevel serverLevel = server.getLevel(level.dimension());
+                        if (serverLevel != null) {
+                            DebugGui.SELECTED_BLOCKS.set(serverLevel, hit != null ? hit.getBlockPos() : null);
+                        }
+                    }
+                }
+            }
+        });
+
         loader.scan();
         loader.construct();
     }
@@ -89,20 +130,5 @@ public class AdvancedDebug implements IAdvancedDebug {
         LOGGER.debug("Client side setup done!");
 
         ModDebugPages.init();
-    }
-
-    @Override
-    public boolean isSpacedNamespace() {
-        return Config.SPACED_NAMESPACES.get();
-    }
-
-    @Override
-    public boolean isSpacedEnumConstants() {
-        return Config.SPACED_ENUM_CONSTANTS.get();
-    }
-
-    @Override
-    public boolean enableBubbleBlasterID() {
-        return Config.ENABLE_BUBBLE_BLASTER_ID.get();
     }
 }

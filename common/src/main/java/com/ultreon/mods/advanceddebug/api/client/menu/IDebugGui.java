@@ -1,12 +1,13 @@
 package com.ultreon.mods.advanceddebug.api.client.menu;
 
+import com.ultreon.libs.commons.v0.Identifier;
 import com.ultreon.mods.advanceddebug.api.client.formatter.IFormatterContext;
 import com.ultreon.mods.advanceddebug.api.common.IFormatter;
 
 import javax.annotation.Nullable;
 
 public interface IDebugGui extends IFormatter<Object> {
-    <T extends DebugPage> T registerPage(T page);
+    <T extends DebugPage> T registerPage(Identifier id, T page);
 
     @Nullable
     DebugPage getDebugPage();
