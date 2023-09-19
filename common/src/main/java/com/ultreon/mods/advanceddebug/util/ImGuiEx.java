@@ -20,6 +20,7 @@ import imgui.extension.imguifiledialog.ImGuiFileDialog;
 import imgui.extension.imguifiledialog.callback.ImGuiFileDialogPaneFun;
 import imgui.extension.imguifiledialog.flag.ImGuiFileDialogFlags;
 import imgui.flag.ImGuiDataType;
+import imgui.flag.ImGuiInputTextFlags;
 import imgui.type.ImBoolean;
 import imgui.type.ImDouble;
 import imgui.type.ImFloat;
@@ -129,7 +130,7 @@ public class ImGuiEx {
         ImGui.text(label);
         ImGui.sameLine();
         try {
-            ImString i = new ImString(value.get());
+            ImString i = new ImString(value.get(), 512);
             if (ImGui.inputText("##" + id, i)) {
                 setter.accept(i.get());
             }
@@ -142,7 +143,7 @@ public class ImGuiEx {
         ImGui.text(label);
         ImGui.sameLine();
         try {
-            ImString i = new ImString(value);
+            ImString i = new ImString(value, 512);
             if (ImGui.inputText("##" + id, i)) {
                 setter.accept(i.get());
             }
@@ -155,8 +156,8 @@ public class ImGuiEx {
         ImGui.text(label);
         ImGui.sameLine();
         try {
-            ImString i = new ImString(value.get().toString());
-            if (ImGui.inputText("##" + id, i)) {
+            ImString i = new ImString(value.get().toString(), 160);
+            if (ImGui.inputText("##" + id, i, ImGuiInputTextFlags.EnterReturnsTrue)) {
                 setter.accept(new ResourceLocation(i.get()));
             }
         } catch (ResourceLocationException ignored) {
@@ -170,7 +171,7 @@ public class ImGuiEx {
         ImGui.text(label);
         ImGui.sameLine();
         try {
-            ImString i = new ImString(value.toString());
+            ImString i = new ImString(value.toString(), 160);
             if (ImGui.inputText("##" + id, i)) {
                 setter.accept(new ResourceLocation(i.get()));
             }

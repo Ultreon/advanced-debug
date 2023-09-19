@@ -2,6 +2,7 @@ package com.ultreon.mods.advanceddebug.mixin.common;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.ultreon.mods.advanceddebug.client.menu.DebugGui;
+import com.ultreon.mods.advanceddebug.events.GameRendererEvents;
 import imgui.ImGui;
 import imgui.ImGuiIO;
 import imgui.gl3.ImGuiImplGl3;
@@ -24,7 +25,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import static org.lwjgl.glfw.GLFW.*;
 
-@Mixin(GameRenderer.class)
+@SuppressWarnings("DataFlowIssue")
+@Mixin(value = GameRenderer.class, priority = 0)
 public class GameRendererMixin {
     @Shadow @Final
     Minecraft minecraft;
@@ -57,7 +59,7 @@ public class GameRendererMixin {
     }
 
     @Inject(method = "render", at = @At("RETURN"))
-    private void advancedDebug$injectImGuiRender(float partialTicks, long nanoTime, boolean renderLevel, CallbackInfo ci) {
+    private void advancedDebug$injectImGuiRender$return(float partialTicks, long nanoTime, boolean renderLevel, CallbackInfo ci) {
         boolean toggleKey = glfwGetKey(minecraft.getWindow().getWindow(), GLFW_KEY_F12) == GLFW_TRUE;
         if (wasTogglePressed && !toggleKey) {
             wasTogglePressed = false;
@@ -66,6 +68,13 @@ public class GameRendererMixin {
             wasTogglePressed = true;
         }
         DebugGui.renderImGui(imGuiGlfw, imGuiGl3);
+
+        GameRendererEvents.POST_GAME_RENDER.invoker().onPostGameRender(minecraft, (GameRenderer)(Object)this, partialTicks, nanoTime, renderLevel);
+    }
+
+    @Inject(method = "render", at = @At("HEAD"))
+    private void advancedDebug$injectImGuiRender$head(float partialTicks, long nanoTime, boolean renderLevel, CallbackInfo ci) {
+        GameRendererEvents.PRE_GAME_RENDER.invoker().onPreGameRender(minecraft, (GameRenderer)(Object)this, partialTicks, nanoTime, renderLevel);
     }
 
     @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;renderWithTooltip(Lcom/mojang/blaze3d/vertex/PoseStack;IIF)V"))

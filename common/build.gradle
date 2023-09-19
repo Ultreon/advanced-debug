@@ -14,13 +14,13 @@ repositories {
 dependencies {
     // We depend on fabric loader here to use the fabric @Environment annotations and get the mixin dependencies
     // Do NOT use other classes from fabric loader
-    modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
+    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
     // Remove the next line if you don't want to depend on the API
-    modApi "dev.architectury:architectury:${rootProject.architectury_version}"
+    modApi "dev.architectury:architectury:${architectury_version}"
 
     modApi "com.github.Ultreon.ultreonlib:ultreon-lib:$ultreonlib_version"
 
-    modCompileOnly "curse.maven:forgeapiportfabric-547434:3671141"
+    modImplementation "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:$forge_config_api_port_version"
     modCompileOnly 'com.electronwill.night-config:core:3.6.3'
     modCompileOnly 'com.electronwill.night-config:toml:3.6.3'
 

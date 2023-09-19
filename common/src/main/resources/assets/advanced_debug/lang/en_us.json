@@ -1,6 +1,6 @@
 {
   "key.advanced_debug.debug_screen": "Change Page",
   "key.categories.advanced_debug": "Advanced Debug",
-  "key.advanced_debug.selectEntity": "Select Entity [Ctrl]",
-  "key.advanced_debug.selectBlock": "Select Block [Ctrl]"
+  "key.advanced_debug.selectEntity": "Select Entity",
+  "key.advanced_debug.selectBlock": "Select Block"
 }

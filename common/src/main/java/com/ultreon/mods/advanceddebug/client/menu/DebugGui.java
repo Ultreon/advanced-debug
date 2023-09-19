@@ -1,9 +1,12 @@
 package com.ultreon.mods.advanceddebug.client.menu;
 
 import com.google.common.collect.Lists;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.ultreon.libs.commons.v0.Identifier;
+import com.ultreon.libs.commons.v0.util.ClassUtils;
 import com.ultreon.mods.advanceddebug.AdvancedDebug;
+import com.ultreon.mods.advanceddebug.IllegalThreadError;
 import com.ultreon.mods.advanceddebug.api.client.formatter.IFormatterContext;
 import com.ultreon.mods.advanceddebug.api.client.menu.DebugPage;
 import com.ultreon.mods.advanceddebug.api.client.menu.Formatter;
@@ -18,10 +21,11 @@ import com.ultreon.mods.advanceddebug.client.registry.FormatterRegistry;
 import com.ultreon.mods.advanceddebug.extension.ExtensionLoader;
 import com.ultreon.mods.advanceddebug.init.ModDebugPages;
 import com.ultreon.mods.advanceddebug.mixin.common.ImageButtonAccessor;
-import com.ultreon.mods.advanceddebug.mixin.common.KeyMappingAccessor;
 import com.ultreon.mods.advanceddebug.registry.ModPreRegistries;
 import com.ultreon.mods.advanceddebug.text.ComponentBuilder;
 import com.ultreon.mods.advanceddebug.util.*;
+import dev.architectury.event.events.client.ClientLifecycleEvent;
+import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.platform.Platform;
 import imgui.ImGui;
 import imgui.flag.*;
@@ -29,7 +33,10 @@ import imgui.gl3.ImGuiImplGl3;
 import imgui.glfw.ImGuiImplGlfw;
 import imgui.type.ImBoolean;
 import it.unimi.dsi.fastutil.longs.LongSet;
-import net.minecraft.client.KeyMapping;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.CrashReport;
+import net.minecraft.CrashReportCategory;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
 import net.minecraft.client.gui.Font;
@@ -87,6 +94,8 @@ import javax.annotation.Nullable;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static net.minecraft.ChatFormatting.*;
 import static net.minecraft.util.FastColor.ARGB32.*;
@@ -95,6 +104,7 @@ import static net.minecraft.util.FastColor.ARGB32.*;
  * Client listener
  */
 @SuppressWarnings("unused")
+@Environment(EnvType.CLIENT)
 public final class DebugGui extends GuiComponent implements Renderable, IDebugGui {
     private static final DebugGui INSTANCE = new DebugGui();
     private static final List<DebugPage> pages = new ArrayList<>();
@@ -134,15 +144,76 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
     private final Minecraft minecraft = Minecraft.getInstance();
     private int width;
     private int height;
-    private DebugGui() {
+    private final ReentrantLock lock = new ReentrantLock(true);
+    private boolean enabled = true;
 
+    private DebugGui() {
+        ClassUtils.checkCallerClassEquals(DebugGui.class);
+        if (INSTANCE != null) {
+            throw new Error("Invalid initialization for singleton class " + DebugGui.class.getName());
+        }
+
+        ClientLifecycleEvent.CLIENT_STOPPING.register(instance -> requestDisable());
+
+        LifecycleEvent.SERVER_STOPPING.register(instance -> requestDisable());
+
+        LifecycleEvent.SERVER_STOPPED.register(instance -> enable());
+    }
+
+    private void enable() {
+        RenderSystem.recordRenderCall(() -> {
+            enabled = true;
+        });
+    }
+
+    /**
+     * Requests to disable the debug GUI.<br>
+     * If it fails it will crash the game.
+     */
+    public void requestDisable() {
+        try {
+            if (this.tryRequestDisable()) return;
+        } catch (InterruptedException ignored) { }
+
+        CrashReport report = new CrashReport("Time-out!", new TimeoutException("Timed out when waiting on Debug GUI shutdown request"));
+        CrashReportCategory shutdownReq = report.addCategory("Debug GUI Shutdown Request");
+        shutdownReq.setDetail("Duration", 30000 + "ms");
+        shutdownReq.setDetail("Flag set", !enabled);
+        Minecraft.crash(report);
+
+        Runtime.getRuntime().halt(0x0000_dead); // Should never run, unless some mod modifies crash handling in a weird way.
+    }
+
+    /**
+     * Tries to request disabling the debug GUI.<br>
+     * If the rendering of the debug GUI frame isn't finished after 30 sec, the request will automatically fail.<br>
+     * This method cannot be called from the render thread.
+     *
+     * @return {@code true} - disabling was done successful<br>
+     *         {@code false} - the request was timed-out.
+     * @throws InterruptedException if the thread was interrupted while waiting on the lock to be available.
+     */
+    public boolean tryRequestDisable() throws InterruptedException {
+        if (RenderSystem.isOnRenderThread()) {
+            this.enabled = false;
+            return true;
+        }
+
+        if (!this.lock.tryLock(30000, TimeUnit.MILLISECONDS)) {
+            return false;
+        }
+
+        this.enabled = false;
+
+        this.lock.unlock();
+
+        return true;
     }
 
     @Override
     public void render(@NotNull PoseStack poseStack, int mouseX, int mouseY, float partialTick) {
-        if (Minecraft.getInstance().options.renderDebug) {
-            return;
-        }
+        if (!RenderSystem.isOnRenderThread()) return;
+        if (!enabled || Minecraft.getInstance().options.renderDebug) return;
 
         updateSize();
 
@@ -151,6 +222,7 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
         DebugPage debugPage = getDebugPage();
         Minecraft mc = Minecraft.getInstance();
 
+        lock.lock();
         double scale = mc.getWindow().getGuiScale();
         double preferredScale = Config.USE_CUSTOM_SCALE.get() ? Config.CUSTOM_SCALE.get() : scale;
         Boolean useCustomScale = Config.USE_CUSTOM_SCALE.get();
@@ -195,12 +267,16 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
         } else {
             ModDebugPages.DEFAULT.render(poseStack, context);
         }
+        lock.unlock();
     }
 
     public synchronized static void renderImGui(ImGuiImplGlfw glfw, ImGuiImplGl3 gl3) {
+        if (!RenderSystem.isOnRenderThread()) throw new IllegalThreadError();
+        if (!get().enabled) return;
         if (renderingImGui) return;
         renderingImGui = true;
 
+        get().lock.lock();
         if (SHOW_IM_GUI.get()) {
             glfw.newFrame();
 
@@ -251,12 +327,12 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
             ImGui.render();
             gl3.renderDrawData(ImGui.getDrawData());
         }
+        get().lock.unlock();
 
         renderingImGui = false;
     }
 
     private static void showPlayerInfoWindow() {
-//		Screen currentScreen = getCurrentScreen();
         ImGui.setNextWindowSize(400, 200, ImGuiCond.Once);
         ImGui.setNextWindowPos(ImGui.getMainViewport().getPosX() + 100, ImGui.getMainViewport().getPosY() + 100, ImGuiCond.Once);
         var minecraft = Minecraft.getInstance();
@@ -273,7 +349,6 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
     }
 
     private static void showClientLevelInfoWindow() {
-//		Screen currentScreen = getCurrentScreen();
         ImGui.setNextWindowSize(400, 200, ImGuiCond.Once);
         ImGui.setNextWindowPos(ImGui.getMainViewport().getPosX() + 100, ImGui.getMainViewport().getPosY() + 100, ImGuiCond.Once);
         var minecraft = Minecraft.getInstance();
@@ -292,7 +367,6 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
     }
 
     private static void showServerLevelInfoWindow() {
-//		Screen currentScreen = getCurrentScreen();
         ImGui.setNextWindowSize(400, 200, ImGuiCond.Once);
         ImGui.setNextWindowPos(ImGui.getMainViewport().getPosX() + 100, ImGui.getMainViewport().getPosY() + 100, ImGuiCond.Once);
         var server = Minecraft.getInstance().getSingleplayerServer();
@@ -309,7 +383,6 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
     }
 
     private static void showWindowInfoWindow() {
-//		Screen currentScreen = getCurrentScreen();
         ImGui.setNextWindowSize(400, 200, ImGuiCond.Once);
         ImGui.setNextWindowPos(ImGui.getMainViewport().getPosX() + 100, ImGui.getMainViewport().getPosY() + 100, ImGuiCond.Once);
         var minecraft = Minecraft.getInstance();
@@ -326,7 +399,6 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
     }
 
     private static void showScreenInfoWindow() {
-//		Screen currentScreen = getCurrentScreen();
         ImGui.setNextWindowSize(400, 200, ImGuiCond.Once);
         ImGui.setNextWindowPos(ImGui.getMainViewport().getPosX() + 100, ImGui.getMainViewport().getPosY() + 100, ImGuiCond.Once);
         var minecraft = Minecraft.getInstance();
@@ -383,8 +455,12 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
         float frameTime = instance.getFrameTime();
 
         ImGuiEx.text("Entity Count:", level::getEntityCount);
-        ImGuiEx.editInt("Sky Flash Time:", "ServerLevel[" + level.dimension() + "].NoSave", level::getSkyFlashTime, level::setSkyFlashTime);
+        ImGuiEx.editInt("Sky Flash Time:", "ClientLevel[" + level.dimension() + "].SkyFlashTime", level::getSkyFlashTime, level::setSkyFlashTime);
         ImGuiEx.text("Star Brightness:", () -> level.getStarBrightness(frameTime));
+
+        ImGuiEx.editLong("Day Time:", "ClientLevel[" + level.dimension() + "].DayTime", level::getDayTime, level::setDayTime);
+        ImGuiEx.editLong("Game Time:", "ClientLevel[" + level.dimension() + "].GameTime", level::getGameTime, level::setGameTime);
+        ImGuiEx.text("Time of Day:", () -> level.getTimeOfDay(Minecraft.getInstance().getFrameTime()));
 
         showLevelInfo(level, frameTime);
 
@@ -436,6 +512,9 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
         ImGuiEx.editBool("No Save:", "ServerLevel[" + level.dimension() + "].NoSave", level.noSave, v -> level.noSave = v);
         ImGuiEx.bool("Flat:", level::isFlat);
 
+        ImGuiEx.editLong("Day Time:", "ServerLevel[" + level.dimension() + "].DayTime", level::getDayTime, level::setDayTime);
+        ImGuiEx.text("Game Time:", level::getGameTime);
+
         showLevelInfo(level, frameTime);
 
         Entity serverEntity = selectedServerEntity;
@@ -465,9 +544,6 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
         ImGuiEx.editFloat("Rain Level", "ServerLevel[" + level.dimension() + "].RainLevel", () -> level.getRainLevel(0F), level::setRainLevel);
         ImGuiEx.editFloat("Thunder Level", "ServerLevel[" + level.dimension() + "].ThunderTime", () -> level.getThunderLevel(0F), level::setRainLevel);
         ImGuiEx.text("Chunk SS:", level::gatherChunkSourceStats);
-        if (!level.isClientSide()) {
-            ImGuiEx.text("Day Time:", level::getDayTime);
-        }
         ImGuiEx.text("Game Time:", level::getGameTime);
         ImGuiEx.text("Moon Brightness:", level::getMoonBrightness);
         ImGuiEx.text("Moon Phase:", level::getMoonPhase);
@@ -519,11 +595,6 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
         }, resourceLocation -> {
             level.setBlock(pos, BuiltInRegistries.BLOCK.get(resourceLocation).defaultBlockState(), 0b00000011);
         });
-
-        if (ImGui.collapsingHeader("Block Type Info")) {
-            ImGui.treePush();
-            ImGui.treePop();
-        }
 
         if (blockEntity != null) {
             if (ImGui.collapsingHeader("Block Entity Info")) {

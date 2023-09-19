@@ -257,12 +257,12 @@ public final class ModDebugFormatters {
     public static final Formatter<ResourceLocation> RESOURCE_LOCATION = REGISTRY.register(new Formatter<>(ResourceLocation.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "minecraft/resource_location")) {
         @Override
         public void format(ResourceLocation obj, IFormatterContext context) {
-            if (IAdvancedDebug.get().isSpacedNamespace()) {
+            if (IAdvancedDebug.get().isNamespaceSpaced()) {
                 context.operator("(")
                         .className(obj.getNamespace().replaceAll("_", " "))
                         .operator(") ")
                         .identifier(obj.getPath().replaceAll("_", " ").replaceAll("/", " -> "));
-            } else if (IAdvancedDebug.get().enableBubbleBlasterID()) {
+            } else if (IAdvancedDebug.get().isBubbleBlasterIdEnabled()) {
                 String namespace = obj.getNamespace();
                 if (namespace.equals(ResourceLocation.DEFAULT_NAMESPACE)) namespace = "bubbles";
                 context.identifier(obj.getPath())

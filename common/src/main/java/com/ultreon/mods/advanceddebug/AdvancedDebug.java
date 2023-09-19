@@ -12,10 +12,7 @@ import com.ultreon.mods.advanceddebug.extension.ExtensionLoader;
 import com.ultreon.mods.advanceddebug.init.ModDebugPages;
 import com.ultreon.mods.advanceddebug.init.ModOverlays;
 import com.ultreon.mods.advanceddebug.util.TargetUtils;
-import com.ultreon.mods.lib.util.KeyboardHelper;
-import dev.architectury.event.EventResult;
 import dev.architectury.event.events.client.ClientLifecycleEvent;
-import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.event.events.client.ClientTickEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -65,7 +62,7 @@ public class AdvancedDebug implements IAdvancedDebug {
         }
 
         ClientTickEvent.CLIENT_POST.register(minecraft -> {
-            if (KeyBindingList.SELECT_ENTITY.consumeClick() && KeyboardHelper.isCtrlDown()) {
+            if (KeyBindingList.SELECT_ENTITY.consumeClick()) {
                 EntityHitResult hit = TargetUtils.entity();
                 DebugGui.selectedEntity = hit != null ? hit.getEntity() : null;
                 Entity entity = DebugGui.selectedEntity;
@@ -81,7 +78,7 @@ public class AdvancedDebug implements IAdvancedDebug {
                     }
                 }
             }
-            if (KeyBindingList.SELECT_BLOCK.consumeClick() && KeyboardHelper.isCtrlDown()) {
+            if (KeyBindingList.SELECT_BLOCK.consumeClick()) {
                 @Nullable BlockHitResult hit = TargetUtils.block();
                 ClientLevel level = minecraft.level;
                 if (level != null) {
@@ -133,20 +130,5 @@ public class AdvancedDebug implements IAdvancedDebug {
         LOGGER.debug("Client side setup done!");
 
         ModDebugPages.init();
-    }
-
-    @Override
-    public boolean isSpacedNamespace() {
-        return Config.SPACED_NAMESPACES.get();
-    }
-
-    @Override
-    public boolean isSpacedEnumConstants() {
-        return Config.SPACED_ENUM_CONSTANTS.get();
-    }
-
-    @Override
-    public boolean enableBubbleBlasterID() {
-        return Config.ENABLE_BUBBLE_BLASTER_ID.get();
     }
 }
