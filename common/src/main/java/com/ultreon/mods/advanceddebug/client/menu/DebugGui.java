@@ -25,6 +25,7 @@ import com.ultreon.mods.advanceddebug.registry.ModPreRegistries;
 import com.ultreon.mods.advanceddebug.text.ComponentBuilder;
 import com.ultreon.mods.advanceddebug.util.*;
 import dev.architectury.event.events.client.ClientLifecycleEvent;
+import dev.architectury.event.events.client.ClientPlayerEvent;
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.platform.Platform;
 import imgui.ImGui;
@@ -119,6 +120,7 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
             context.hexValue(obj.hashCode());
         }
     };
+
     private static final Marker MARKER = MarkerFactory.getMarker("DebugGui");
 
     public static final ImBoolean SHOW_PLAYER_INFO = new ImBoolean(false);
@@ -154,8 +156,10 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
         }
 
         ClientLifecycleEvent.CLIENT_STOPPING.register(instance -> requestDisable());
-
-        LifecycleEvent.SERVER_STOPPING.register(instance -> requestDisable());
+        ClientPlayerEvent.CLIENT_PLAYER_QUIT.register(player -> {
+            if (player == null) return;
+            requestDisable();
+        });
 
         LifecycleEvent.SERVER_STOPPED.register(instance -> enable());
     }
@@ -173,7 +177,9 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
     public void requestDisable() {
         try {
             if (this.tryRequestDisable()) return;
-        } catch (InterruptedException ignored) { }
+        } catch (InterruptedException ignored) {
+
+        }
 
         CrashReport report = new CrashReport("Time-out!", new TimeoutException("Timed out when waiting on Debug GUI shutdown request"));
         CrashReportCategory shutdownReq = report.addCategory("Debug GUI Shutdown Request");
