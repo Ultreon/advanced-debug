@@ -7,7 +7,6 @@
     "LivingEntityAccessor"
   ],
   "client": [
-    "KeyboardHandlerMixin",
     "GameRendererMixin",
     "ImageButtonAccessor",
     "KeyMappingAccessor",

@@ -39,3 +39,10 @@ mandatory = true
 versionRange = "[9.1,10)"
 ordering = "NONE"
 side = "CLIENT"
+
+[[dependencies.advanced_debug]]
+modId = "ultreonlib"
+mandatory = true
+versionRange = "[1.5.0,)"
+ordering = "NONE"
+side = "CLIENT"

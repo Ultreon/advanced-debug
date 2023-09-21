@@ -81,13 +81,4 @@ public class GameRendererMixin {
     private void advancedDebug$injectImGuiRender$head(float partialTicks, long nanoTime, boolean renderLevel, CallbackInfo ci) {
         GameRendererEvents.PRE_GAME_RENDER.invoker().onPreGameRender(minecraft, (GameRenderer)(Object)this, partialTicks, nanoTime, renderLevel);
     }
-
-    @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;renderWithTooltip(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"))
-    private void advancedDebug$redirectMouseForImGui(Screen instance, @NotNull GuiGraphics gfx, int i, int j, float f) {
-        if (DebugGui.isImGuiHovered()) {
-            instance.renderWithTooltip(gfx, Integer.MAX_VALUE, Integer.MAX_VALUE, f);
-        } else {
-            instance.renderWithTooltip(gfx, i, j, f);
-        }
-    }
 }

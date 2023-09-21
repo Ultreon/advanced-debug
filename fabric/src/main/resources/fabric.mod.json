@@ -46,6 +46,7 @@
     "fabricloader": ">=${loaderVersion}",
     "minecraft": ">=${minecraftVersion} <1.20.2",
     "architectury": ">=9.1 <10",
-    "forgeconfigapiport": ">=8 <9"
+    "forgeconfigapiport": ">=8 <9",
+    "ultreonlib": ">=1.5.0"
   }
 }

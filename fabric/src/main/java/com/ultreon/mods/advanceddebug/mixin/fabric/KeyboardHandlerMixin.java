@@ -1,4 +1,4 @@
-package com.ultreon.mods.advanceddebug.mixin.common;
+package com.ultreon.mods.advanceddebug.mixin.fabric;
 
 import com.ultreon.mods.advanceddebug.client.menu.DebugGui;
 import net.minecraft.client.KeyboardHandler;
