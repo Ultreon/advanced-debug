@@ -1,16 +1,17 @@
 package com.ultreon.mods.advanceddebug.client.menu.pages;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.ultreon.mods.advanceddebug.api.client.menu.DebugPage;
 import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import org.jetbrains.annotations.NotNull;
 
 public class MinecraftPage extends DebugPage {
     public MinecraftPage() {
     }
 
     @Override
-    public void render(PoseStack poseStack, IDebugRenderContext ctx) {
+    public void render(@NotNull GuiGraphics gfx, IDebugRenderContext ctx) {
         Screen screen = minecraft.screen;
 
         ctx.left("Version");

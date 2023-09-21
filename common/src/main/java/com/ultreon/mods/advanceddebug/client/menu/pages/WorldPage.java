@@ -1,19 +1,20 @@
 package com.ultreon.mods.advanceddebug.client.menu.pages;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.ultreon.mods.advanceddebug.api.client.menu.DebugPage;
 import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
 import com.ultreon.mods.advanceddebug.api.common.MoonPhase;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
+import org.jetbrains.annotations.NotNull;
 
 public class WorldPage extends DebugPage {
     public WorldPage() {
     }
 
     @Override
-    public void render(PoseStack poseStack, IDebugRenderContext ctx) {
+    public void render(@NotNull GuiGraphics gfx, IDebugRenderContext ctx) {
         if (Minecraft.getInstance().level != null) {
             ClientLevel dimension = Minecraft.getInstance().level;
 

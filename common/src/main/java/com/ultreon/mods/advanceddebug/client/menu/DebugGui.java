@@ -2,7 +2,6 @@ package com.ultreon.mods.advanceddebug.client.menu;
 
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.ultreon.libs.commons.v0.Identifier;
 import com.ultreon.libs.commons.v0.util.ClassUtils;
 import com.ultreon.mods.advanceddebug.AdvancedDebug;
@@ -41,7 +40,7 @@ import net.minecraft.CrashReportCategory;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.components.events.ContainerEventHandler;
@@ -83,7 +82,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.Team;
 import org.jetbrains.annotations.ApiStatus;
@@ -106,7 +104,7 @@ import static net.minecraft.util.FastColor.ARGB32.*;
  */
 @SuppressWarnings("unused")
 @Environment(EnvType.CLIENT)
-public final class DebugGui extends GuiComponent implements Renderable, IDebugGui {
+public final class DebugGui implements Renderable, IDebugGui {
     private static final DebugGui INSTANCE = new DebugGui();
     private static final List<DebugPage> pages = new ArrayList<>();
     private static final FormatterRegistry FORMATTER_REGISTRY = FormatterRegistry.get();
@@ -217,7 +215,7 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
     }
 
     @Override
-    public void render(@NotNull PoseStack poseStack, int mouseX, int mouseY, float partialTick) {
+    public void render(@NotNull GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
         if (!RenderSystem.isOnRenderThread()) return;
         if (!enabled || Minecraft.getInstance().options.renderDebug) return;
 
@@ -236,23 +234,23 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
         int rescaledWidth = (int) (((double) width * scale) / preferredScale);
         int rescaledHeight = (int) (((double) height * scale) / preferredScale);
 
-        DebugRenderContext context = new DebugRenderContext(poseStack, rescaledWidth, rescaledHeight) {
+        DebugRenderContext context = new DebugRenderContext(gfx, rescaledWidth, rescaledHeight) {
             @Override
-            protected void drawLine(PoseStack pose, Component text, int x, int y) {
-                DebugGui.this.drawLine(pose, text, x, y);
+            protected void drawLine(@NotNull GuiGraphics gfx, Component text, int x, int y) {
+                DebugGui.this.drawLine(gfx, text, x, y);
             }
         };
 
         if (debugPage != null) {
-            poseStack.pushPose();
+            gfx.pose().pushPose();
             {
-                poseStack.scale((float) ((1 * preferredScale) / scale), (float) ((1 * preferredScale) / scale), 1);
+                gfx.pose().scale((float) ((1 * preferredScale) / scale), (float) ((1 * preferredScale) / scale), 1);
                 Identifier resourceLocation = debugPage.getId();
                 try {
                     if (Config.SHOW_CURRENT_PAGE.get()) {
-                        drawLine(poseStack, Component.literal("Debug Page: " + resourceLocation.toString()), 6, height - 16);
+                        drawLine(gfx, Component.literal("Debug Page: " + resourceLocation.toString()), 6, height - 16);
                     }
-                    debugPage.render(poseStack, context);
+                    debugPage.render(gfx, context);
                 } catch (Exception e) {
                     if (resourceLocation != null)
                         AdvancedDebug.LOGGER.error(MARKER, "Error rendering debug page {}", resourceLocation, e);
@@ -269,9 +267,9 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
                     }
                 }
             }
-            poseStack.popPose();
+            gfx.pose().popPose();
         } else {
-            ModDebugPages.DEFAULT.render(poseStack, context);
+            ModDebugPages.DEFAULT.render(gfx, context);
         }
         lock.unlock();
     }
@@ -633,19 +631,19 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
         ImGuiEx.bool("Signal Source:", blockState::isSignalSource);
         ImGuiEx.bool("Randomly Ticking:", blockState::isRandomlyTicking);
 
-        Material material = blockState.getMaterial();
-        if (ImGui.collapsingHeader("Material Info")) {
-            ImGui.treePush();
-            ImGuiEx.text("Color:", () -> "#%08x".formatted(material.getColor().col));
-            ImGuiEx.text("Color ID:", () -> material.getColor().id);
-            ImGuiEx.text("Push Reaction:", () -> material.getPushReaction().name());
-            ImGuiEx.bool("Flammable:", material::isFlammable);
-            ImGuiEx.bool("Liquid:", material::isLiquid);
-            ImGuiEx.bool("Replaceable:", material::isReplaceable);
-            ImGuiEx.bool("Solid Blocking:", material::isSolidBlocking);
-            ImGuiEx.bool("Solid:", material::isSolid);
-            ImGui.treePop();
-        }
+//        Material material = blockState.getMaterial();
+//        if (ImGui.collapsingHeader("Material Info")) {
+//            ImGui.treePush();
+//            ImGuiEx.text("Color:", () -> "#%08x".formatted(material.getColor().col));
+//            ImGuiEx.text("Color ID:", () -> material.getColor().id);
+//            ImGuiEx.text("Push Reaction:", () -> material.getPushReaction().name());
+//            ImGuiEx.bool("Flammable:", material::isFlammable);
+//            ImGuiEx.bool("Liquid:", material::isLiquid);
+//            ImGuiEx.bool("Replaceable:", material::isReplaceable);
+//            ImGuiEx.bool("Solid Blocking:", material::isSolidBlocking);
+//            ImGuiEx.bool("Solid:", material::isSolid);
+//            ImGui.treePop();
+//        }
         SoundType soundType = blockState.getSoundType();
         if (ImGui.collapsingHeader("Sound Type Info")) {
             ImGui.treePush();
@@ -707,7 +705,7 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
     public static void showEntity(Entity entity) {
         ImGuiEx.text("Pos:", () -> entity.blockPosition().toShortString());
         ImGuiEx.text("Rot:", () -> entity.getXRot() + ", " + entity.getYRot());
-        ImGuiEx.text("Dim:", () -> entity.level.dimension().location());
+        ImGuiEx.text("Dim:", () -> entity.level().dimension().location());
         ImGuiEx.text("Name:", entity::getName);
         ImGuiEx.text("UUID:", entity::getStringUUID);
         ImGuiEx.text("Custom Name:", entity::getCustomName);
@@ -720,7 +718,7 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
         IntegratedServer server = Minecraft.getInstance().getSingleplayerServer();
         if (server != null) {
             ImGuiEx.nbt("NBT:", () -> {
-                ServerLevel level = server.getLevel(entity.level.dimension());
+                ServerLevel level = server.getLevel(entity.level().dimension());
                 CompoundTag compoundTag = new CompoundTag();
                 if (level != null) {
                     Entity serverEntity = level.getEntity(entity.getId());
@@ -904,37 +902,6 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
             ImGui.treePush();
             ImGuiEx.text("Combat Duration:", () -> livingEntity.getCombatTracker().getCombatDuration());
             ImGuiEx.text("Cur. Death Message:", () -> livingEntity.getCombatTracker().getDeathMessage());
-            ImGuiEx.bool("In Combat:", () -> livingEntity.getCombatTracker().isInCombat());
-            ImGuiEx.bool("Taking Damage:", () -> livingEntity.getCombatTracker().isTakingDamage());
-            LivingEntity killer = livingEntity.getCombatTracker().getKiller();
-            if (ImGui.collapsingHeader("Killer Info") && killer != null) {
-                ImGui.treePush();
-                showEntity(killer);
-                ImGui.treePop();
-            }
-            CombatEntry entry = livingEntity.getCombatTracker().getLastEntry();
-            if (ImGui.collapsingHeader("Last Attack Info") && entry != null) {
-                ImGui.treePush();
-                ImGuiEx.text("Age (ticks):", entry::getTime);
-                ImGuiEx.text("Age (seconds):", () -> entry.getTime() / 20);
-                ImGuiEx.text("Age (minutes):", () -> entry.getTime() / 20 / 60);
-                ImGuiEx.text("Age (hours):", () -> entry.getTime() / 20 / 60 / 60);
-                ImGuiEx.text("Location:", entry::getLocation);
-                ImGuiEx.text("Damage:", entry::getDamage);
-                ImGuiEx.text("Damage Source:", () -> entry.getSource().type().msgId());
-                ImGuiEx.text("Damage Source Pos:", () -> entry.getSource().getSourcePosition());
-                ImGuiEx.text("Attacker Name:", entry::getAttackerName);
-                ImGuiEx.text("Health Before:", entry::getHealthBeforeDamage);
-                ImGuiEx.text("Health After:", entry::getHealthAfterDamage);
-                ImGuiEx.text("Fall Distance:", entry::getFallDistance);
-                Entity attacker = entry.getAttacker();
-                if (ImGui.collapsingHeader("Attacker Info") && attacker != null) {
-                    ImGui.treePush();
-                    showEntity(attacker);
-                    ImGui.treePop();
-                }
-                ImGui.treePop();
-            }
             ImGui.treePop();
         }
         if (ImGui.collapsingHeader("Main Hand Info")) {
@@ -1083,9 +1050,9 @@ public final class DebugGui extends GuiComponent implements Renderable, IDebugGu
         height = minecraft.getWindow().getGuiScaledHeight();
     }
 
-    private void drawLine(PoseStack pose, Component text, int x, int y) {
-        Screen.fill(pose, x, y, x + font.width(text) + 2, (y - 1) + font.lineHeight + 2, 0x5f000000);
-        font.draw(pose, text, x + 1, y + 1, 0xffffff);
+    private void drawLine(@NotNull GuiGraphics gfx, Component text, int x, int y) {
+        gfx.fill(x, y, x + font.width(text) + 2, (y - 1) + font.lineHeight + 2, 0x5f000000);
+        gfx.drawString(this.font, text, x + 1, y + 1, 0xffffff, false);
     }
 
     public static DebugGui get() {

@@ -3,12 +3,13 @@ package com.ultreon.mods.advanceddebug.client.menu.pages;
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.platform.Monitor;
 import com.mojang.blaze3d.platform.VideoMode;
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.ultreon.mods.advanceddebug.api.client.menu.DebugPage;
 import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
 import com.ultreon.mods.advanceddebug.api.common.IntSize;
 import com.ultreon.mods.advanceddebug.mixin.common.WindowAccessor;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 import oshi.SystemInfo;
 import oshi.hardware.CentralProcessor;
@@ -23,7 +24,7 @@ public class ComputerPage extends DebugPage {
     }
 
     @Override
-    public void render(PoseStack poseStack, IDebugRenderContext ctx) {
+    public void render(@NotNull GuiGraphics gfx, IDebugRenderContext ctx) {
         long l = GLFW.glfwGetWindowMonitor(getMainWindow().getWindow());
         Monitor monitor = ((WindowAccessor)(Object) getMainWindow()).getScreenManager().getMonitor(l);
 
@@ -94,21 +95,21 @@ public class ComputerPage extends DebugPage {
         ctx.right("Is Java 64-bit", (minecraft.is64Bit() ? "yes" : "no"));
         ctx.right("Platform", SystemInfo.getCurrentPlatform());
 
-        CentralProcessor processor = SYSTEM_INFO.getHardware().getProcessor();
-        ctx.right("Processor");
-//        ctx.right("CPU Frequencies", Arrays.stream(processor.getCurrentFreq()).boxed().toList());
-        ctx.right("CPU Max Frequency", Lists.newArrayList(processor.getMaxFreq()));
-        ctx.right("CPU Phys. Processor Count", processor.getPhysicalProcessorCount());
-        ctx.right("CPU Logic. Processor Count", processor.getLogicalProcessorCount());
-        ctx.right("CPU Interrupts", processor.getInterrupts());
-        ctx.right("CPU Load", processor.getProcessorCpuLoad(1000000000L));
-
-        GlobalMemory memory = SYSTEM_INFO.getHardware().getMemory();
-        ctx.right("Memory");
-        ctx.right("Physical Memory", memory.getPhysicalMemory().stream().mapToLong(PhysicalMemory::getCapacity).sum());
-        ctx.right("Virtual Memory", memory.getVirtualMemory().getVirtualMax());
-        ctx.right("Swap Memory", memory.getVirtualMemory().getSwapTotal());
-        ctx.right("Total Memory", memory.getTotal());
-        ctx.right("Memory Available", memory.getAvailable());
+//        CentralProcessor processor = SYSTEM_INFO.getHardware().getProcessor();
+//        ctx.right("Processor");
+////        ctx.right("CPU Frequencies", Arrays.stream(processor.getCurrentFreq()).boxed().toList());
+//        ctx.right("CPU Max Frequency", Lists.newArrayList(processor.getMaxFreq()));
+//        ctx.right("CPU Phys. Processor Count", processor.getPhysicalProcessorCount());
+//        ctx.right("CPU Logic. Processor Count", processor.getLogicalProcessorCount());
+//        ctx.right("CPU Interrupts", processor.getInterrupts());
+//        ctx.right("CPU Load", processor.getProcessorCpuLoad(1000000000L));
+//
+//        GlobalMemory memory = SYSTEM_INFO.getHardware().getMemory();
+//        ctx.right("Memory");
+//        ctx.right("Physical Memory", memory.getPhysicalMemory().stream().mapToLong(PhysicalMemory::getCapacity).sum());
+//        ctx.right("Virtual Memory", memory.getVirtualMemory().getVirtualMax());
+//        ctx.right("Swap Memory", memory.getVirtualMemory().getSwapTotal());
+//        ctx.right("Total Memory", memory.getTotal());
+//        ctx.right("Memory Available", memory.getAvailable());
     }
 }

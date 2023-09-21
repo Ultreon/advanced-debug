@@ -1,11 +1,12 @@
 package com.ultreon.mods.advanceddebug.client.menu.pages;
 
 import com.mojang.blaze3d.platform.Window;
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.ultreon.mods.advanceddebug.api.client.menu.DebugPage;
 import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
 import com.ultreon.mods.advanceddebug.mixin.common.OptionsAccessor;
 import com.ultreon.mods.advanceddebug.util.InputUtils;
+import net.minecraft.client.gui.GuiGraphics;
+import org.jetbrains.annotations.NotNull;
 
 public class WindowPage extends DebugPage {
     public WindowPage() {
@@ -13,7 +14,7 @@ public class WindowPage extends DebugPage {
     }
 
     @Override
-    public void render(PoseStack poseStack, IDebugRenderContext ctx) {
+    public void render(@NotNull GuiGraphics gfx, IDebugRenderContext ctx) {
         Window window = getWindow();
 
         ctx.left("Scale / Size");

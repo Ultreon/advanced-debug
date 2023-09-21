@@ -1,11 +1,11 @@
 package com.ultreon.mods.advanceddebug.client.menu.pages;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.ultreon.mods.advanceddebug.api.client.menu.DebugPage;
 import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
 import com.ultreon.mods.advanceddebug.api.common.Percentage;
 import com.ultreon.mods.advanceddebug.mixin.common.LivingEntityAccessor;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.language.I18n;
@@ -20,6 +20,7 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.Team;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -34,7 +35,7 @@ public class PlayerPage extends DebugPage {
     }
 
     @Override
-    public void render(PoseStack poseStack, IDebugRenderContext ctx) {
+    public void render(@NotNull GuiGraphics gfx, IDebugRenderContext ctx) {
         if (Minecraft.getInstance().player == null) {
             ctx.top(RED + "<Local Player not found>");
             return;
@@ -110,7 +111,7 @@ public class PlayerPage extends DebugPage {
         ctx.right("Allow Build", player.mayBuild());
         ctx.right("Glowing", player.isCurrentlyGlowing());
         ctx.right("Invisible", player.isInvisible());
-        ctx.right("On Ground", player.isOnGround());
+        ctx.right("On Ground", player.onGround());
         ctx.right("On Ladder", player.onClimbable());
         ctx.right();
 
@@ -146,7 +147,7 @@ public class PlayerPage extends DebugPage {
                 BlockPos pos = lookingAt.getBlockPos();
 
                 // now the coordinates you want are in pos. Example of use:
-                BlockState blockState = Minecraft.getInstance().player.getLevel().getBlockState(pos);
+                BlockState blockState = Minecraft.getInstance().player.level().getBlockState(pos);
                 ctx.top(blockState.getBlock().getName().getString());
             } else {
                 // not looking at a block, or too far away from one to tell
@@ -159,7 +160,7 @@ public class PlayerPage extends DebugPage {
                 BlockPos pos = lookingAt.getBlockPos();
 
                 // now the coordinates you want are in pos. Example of use:
-                BlockState blockState = Minecraft.getInstance().player.getLevel().getBlockState(pos);
+                BlockState blockState = Minecraft.getInstance().player.level().getBlockState(pos);
                 FluidState fluidState = blockState.getFluidState();
                 if (!fluidState.isEmpty()) {
                     ctx.top(blockState.getBlock().getName().getString());

@@ -1,14 +1,15 @@
 package com.ultreon.mods.advanceddebug.client.menu.pages;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.ultreon.mods.advanceddebug.api.client.menu.DebugPage;
 import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
 import com.ultreon.mods.advanceddebug.util.TargetUtils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.BlockHitResult;
+import org.jetbrains.annotations.NotNull;
 
 import static net.minecraft.ChatFormatting.RED;
 
@@ -19,7 +20,7 @@ public class FluidPage extends DebugPage {
     }
 
     @Override
-    public void render(PoseStack poseStack, IDebugRenderContext ctx) {
+    public void render(@NotNull GuiGraphics gfx, IDebugRenderContext ctx) {
         BlockHitResult lookingAt = TargetUtils.fluid();
         LocalPlayer player = MC.player;
         
@@ -29,18 +30,18 @@ public class FluidPage extends DebugPage {
             BlockPos pos = lookingAt.getBlockPos();
 
             // now the coordinates you want are in pos. Example of use:
-            FluidState state = player.getLevel().getBlockState(pos).getFluidState();
+            FluidState state = player.level().getBlockState(pos).getFluidState();
             if (!state.isEmpty()) {
                 ctx.left("Fluid Related");
                 ctx.left("Height", state.getOwnHeight());
                 ctx.left("Amount", state.getAmount());
-                ctx.left("Actual Height", state.getType().getHeight(state, player.getLevel(), pos));
+                ctx.left("Actual Height", state.getType().getHeight(state, player.level(), pos));
                 try {
                     ctx.left("Filled Bucket", state.getType().getBucket());
                 } catch (Throwable ignored) {
 
                 }
-                ctx.left("Tick Rate", state.getType().getTickDelay(player.getLevel()));
+                ctx.left("Tick Rate", state.getType().getTickDelay(player.level()));
                 ctx.left();
 
                 ctx.right("Flags");

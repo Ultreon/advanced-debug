@@ -1,14 +1,15 @@
 package com.ultreon.mods.advanceddebug.client.menu.pages;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.ultreon.mods.advanceddebug.api.client.menu.DebugPage;
 import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
 import com.ultreon.mods.advanceddebug.api.common.Formatted;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.core.Vec3i;
+import org.jetbrains.annotations.NotNull;
 
 import static net.minecraft.ChatFormatting.GOLD;
 
@@ -17,7 +18,7 @@ public class WorldInfoPage extends DebugPage {
     }
 
     @Override
-    public void render(PoseStack poseStack, IDebugRenderContext ctx) {
+    public void render(@NotNull GuiGraphics gfx, IDebugRenderContext ctx) {
         if (Minecraft.getInstance().level != null) {
             ClientLevel.ClientLevelData dimensionInfo = Minecraft.getInstance().level.getLevelData();
 

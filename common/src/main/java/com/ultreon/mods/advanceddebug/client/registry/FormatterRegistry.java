@@ -21,6 +21,7 @@ public class FormatterRegistry implements IFormatterRegistry {
 
     @Override
     public <T> Formatter<T> register(Formatter<T> formatter) {
+        System.out.println("formatter = " + formatter);
         Class<?> clazz = formatter.clazz();
         FORMATTERS.put(clazz.getName(), formatter);
         return formatter;

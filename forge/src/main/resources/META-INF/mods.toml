@@ -29,6 +29,13 @@ side = "CLIENT"
 [[dependencies.advanced_debug]]
 modId = "minecraft"
 mandatory = true
-versionRange = "[${minecraftVersion},1.20)"
+versionRange = "[${minecraftVersion},1.20.2)"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.advanced_debug]]
+modId = "architectury"
+mandatory = true
+versionRange = "[9.1,10)"
 ordering = "NONE"
 side = "CLIENT"

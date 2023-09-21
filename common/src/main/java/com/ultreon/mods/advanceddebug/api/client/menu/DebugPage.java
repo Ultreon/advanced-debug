@@ -1,15 +1,15 @@
 package com.ultreon.mods.advanceddebug.api.client.menu;
 
 import com.mojang.blaze3d.platform.Window;
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.ultreon.libs.commons.v0.Identifier;
 import com.ultreon.mods.advanceddebug.api.common.*;
 import com.ultreon.mods.advanceddebug.registry.ModPreRegistries;
-import dev.architectury.extensions.injected.InjectedRegistryEntryExtension;
 import dev.architectury.platform.Mod;
 import dev.architectury.platform.Platform;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -26,7 +26,7 @@ public abstract class DebugPage {
         return mc.getWindow();
     }
 
-    public abstract void render(PoseStack poseStack, IDebugRenderContext ctx);
+    public abstract void render(@NotNull GuiGraphics gfx, IDebugRenderContext ctx);
 
     @Deprecated(forRemoval = true, since = "1.2.0")
     protected static IFormattable getFormatted(String s) {

@@ -36,7 +36,6 @@ dependencies {
 
     modApi "com.github.Ultreon.ultreonlib:ultreon-lib-fabric:$ultreonlib_version"
 
-    modImplementation "curse.maven:forgeapiportfabric-547434:3946675"
     modImplementation 'com.electronwill.night-config:core:3.6.5'
     modImplementation 'com.electronwill.night-config:toml:3.6.5'
 

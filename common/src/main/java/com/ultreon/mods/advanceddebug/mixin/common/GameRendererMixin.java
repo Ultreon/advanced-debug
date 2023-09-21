@@ -1,6 +1,5 @@
 package com.ultreon.mods.advanceddebug.mixin.common;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.ultreon.mods.advanceddebug.client.menu.DebugGui;
 import com.ultreon.mods.advanceddebug.events.GameRendererEvents;
 import imgui.ImGui;
@@ -8,16 +7,19 @@ import imgui.ImGuiIO;
 import imgui.gl3.ImGuiImplGl3;
 import imgui.glfw.ImGuiImplGlfw;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.RenderBuffers;
 import net.minecraft.server.packs.resources.ResourceManager;
+import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -30,9 +32,12 @@ import static org.lwjgl.glfw.GLFW.*;
 public class GameRendererMixin {
     @Shadow @Final
     Minecraft minecraft;
-    private boolean wasTogglePressed = false;
-    private static final ImGuiImplGlfw imGuiGlfw = new ImGuiImplGlfw();
-    private static final ImGuiImplGl3 imGuiGl3 = new ImGuiImplGl3();
+    @Unique
+    private boolean advanced_debug$wasTogglePressed = false;
+    @Unique
+    private static final ImGuiImplGlfw advanced_debug$imGuiGlfw = new ImGuiImplGlfw();
+    @Unique
+    private static final ImGuiImplGl3 advanced_debug$imGuiGl3 = new ImGuiImplGl3();
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void advancedDebug$injectImGuiInit(Minecraft minecraft, ItemInHandRenderer itemInHandRenderer, ResourceManager resourceManager, RenderBuffers renderBuffers, CallbackInfo ci) {
@@ -47,27 +52,27 @@ public class GameRendererMixin {
 
         long windowHandle = minecraft.getWindow().getWindow();
 
-        imGuiGlfw.init(windowHandle, true);
-        imGuiGl3.init("#version 150");
+        advanced_debug$imGuiGlfw.init(windowHandle, true);
+        advanced_debug$imGuiGl3.init("#version 150");
     }
 
     @Inject(method = "close", at = @At("TAIL"))
     private void advancedDebug$injectImGuiDispose(CallbackInfo ci) {
-        imGuiGl3.dispose();
-        imGuiGlfw.dispose();
+        advanced_debug$imGuiGl3.dispose();
+        advanced_debug$imGuiGlfw.dispose();
         ImGui.destroyContext();
     }
 
     @Inject(method = "render", at = @At("RETURN"))
     private void advancedDebug$injectImGuiRender$return(float partialTicks, long nanoTime, boolean renderLevel, CallbackInfo ci) {
         boolean toggleKey = glfwGetKey(minecraft.getWindow().getWindow(), GLFW_KEY_F12) == GLFW_TRUE;
-        if (wasTogglePressed && !toggleKey) {
-            wasTogglePressed = false;
+        if (advanced_debug$wasTogglePressed && !toggleKey) {
+            advanced_debug$wasTogglePressed = false;
             DebugGui.SHOW_IM_GUI.set(!DebugGui.SHOW_IM_GUI.get());
-        } else if (!wasTogglePressed && toggleKey) {
-            wasTogglePressed = true;
+        } else if (!advanced_debug$wasTogglePressed && toggleKey) {
+            advanced_debug$wasTogglePressed = true;
         }
-        DebugGui.renderImGui(imGuiGlfw, imGuiGl3);
+        DebugGui.renderImGui(advanced_debug$imGuiGlfw, advanced_debug$imGuiGl3);
 
         GameRendererEvents.POST_GAME_RENDER.invoker().onPostGameRender(minecraft, (GameRenderer)(Object)this, partialTicks, nanoTime, renderLevel);
     }
@@ -77,12 +82,12 @@ public class GameRendererMixin {
         GameRendererEvents.PRE_GAME_RENDER.invoker().onPreGameRender(minecraft, (GameRenderer)(Object)this, partialTicks, nanoTime, renderLevel);
     }
 
-    @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;renderWithTooltip(Lcom/mojang/blaze3d/vertex/PoseStack;IIF)V"))
-    private void advancedDebug$redirectMouseForImGui(Screen instance, PoseStack poseStack, int i, int j, float f) {
+    @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;renderWithTooltip(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"))
+    private void advancedDebug$redirectMouseForImGui(Screen instance, @NotNull GuiGraphics gfx, int i, int j, float f) {
         if (DebugGui.isImGuiHovered()) {
-            instance.renderWithTooltip(poseStack, Integer.MAX_VALUE, Integer.MAX_VALUE, f);
+            instance.renderWithTooltip(gfx, Integer.MAX_VALUE, Integer.MAX_VALUE, f);
         } else {
-            instance.renderWithTooltip(poseStack, i, j, f);
+            instance.renderWithTooltip(gfx, i, j, f);
         }
     }
 }

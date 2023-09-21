@@ -4,7 +4,6 @@ import com.ultreon.mods.advanceddebug.api.IAdvancedDebug;
 import com.ultreon.mods.advanceddebug.api.client.menu.IDebugGui;
 import com.ultreon.mods.advanceddebug.api.client.registry.IFormatterRegistry;
 import com.ultreon.mods.advanceddebug.api.init.ModDebugFormatters;
-import com.ultreon.mods.advanceddebug.client.Config;
 import com.ultreon.mods.advanceddebug.client.input.KeyBindingList;
 import com.ultreon.mods.advanceddebug.client.menu.DebugGui;
 import com.ultreon.mods.advanceddebug.client.registry.FormatterRegistry;
@@ -51,7 +50,7 @@ public class AdvancedDebug implements IAdvancedDebug {
     public void init() {
         ModOverlays.registerAll();
 
-        ClientLifecycleEvent.CLIENT_SETUP.register(this::setup);
+        ClientLifecycleEvent.CLIENT_STARTED.register(this::setup);
 
         ClientTickEvent.CLIENT_POST.register(AdvancedDebug::tick);
 
@@ -71,7 +70,7 @@ public class AdvancedDebug implements IAdvancedDebug {
                 } else {
                     IntegratedServer server = minecraft.getSingleplayerServer();
                     if (server != null) {
-                        ServerLevel level = server.getLevel(entity.level.dimension());
+                        ServerLevel level = server.getLevel(entity.level().dimension());
                         if (level != null) {
                             DebugGui.selectedServerEntity = level.getEntity(entity.getId());
                         }

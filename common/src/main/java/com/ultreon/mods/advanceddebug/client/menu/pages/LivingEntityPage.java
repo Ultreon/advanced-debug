@@ -1,11 +1,12 @@
 package com.ultreon.mods.advanceddebug.client.menu.pages;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.ultreon.mods.advanceddebug.api.client.menu.IDebugRenderContext;
 import com.ultreon.mods.advanceddebug.util.TargetUtils;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.EntityHitResult;
+import org.jetbrains.annotations.NotNull;
 
 import static net.minecraft.ChatFormatting.RED;
 
@@ -14,7 +15,7 @@ public class LivingEntityPage extends EntityPage {
     }
 
     @Override
-    public void render(PoseStack poseStack, IDebugRenderContext ctx) {
+    public void render(@NotNull GuiGraphics gfx, IDebugRenderContext ctx) {
         EntityHitResult entityHit = TargetUtils.entity();
         if (entityHit != null && entityHit.getEntity() instanceof LivingEntity entity) {
             ctx.left("Properties");
@@ -31,9 +32,7 @@ public class LivingEntityPage extends EntityPage {
             ctx.left("Voice Pitch", entity.getVoicePitch());
             ctx.left();
 
-            ctx.left("Combat");
-            ctx.left("In Combat", entity.getCombatTracker().isInCombat());
-            ctx.left("Killer ID", entity.getCombatTracker().getKillerId());
+            ctx.left("Combat");;
             ctx.left("Combat Duration", entity.getCombatTracker().getCombatDuration());
             ctx.left("Death Message", entity.getCombatTracker().getDeathMessage());
             ctx.left();

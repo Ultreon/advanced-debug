@@ -9,10 +9,13 @@ import com.ultreon.mods.advanceddebug.api.common.IFormattable;
 import com.ultreon.mods.advanceddebug.api.common.MoonPhase;
 import dev.architectury.utils.Env;
 import net.minecraft.advancements.Advancement;
-import net.minecraft.core.*;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.core.Direction.AxisDirection;
 import net.minecraft.core.Direction.Plane;
+import net.minecraft.core.Direction8;
+import net.minecraft.core.FrontAndTop;
+import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -35,7 +38,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.material.MaterialColor;
+import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
@@ -369,9 +372,9 @@ public final class ModDebugFormatters {
             context.enumConstant(obj);
         }
     });
-    public static final Formatter<MaterialColor> MATERIAL_COLOR = REGISTRY.register(new Formatter<>(MaterialColor.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "minecraft/material_color")) {
+    public static final Formatter<MapColor> MAP_COLOR = REGISTRY.register(new Formatter<>(MapColor.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "minecraft/map_color")) {
         @Override
-        public void format(MaterialColor obj, IFormatterContext context) {
+        public void format(MapColor obj, IFormatterContext context) {
             Color color = new Color(FastColor.ARGB32.red(obj.col), FastColor.ARGB32.green(obj.col), FastColor.ARGB32.blue(obj.col));
 
             context.parameter("id", obj.id)
@@ -548,7 +551,7 @@ public final class ModDebugFormatters {
     });
 
     public static void initClass() {
-
+        
     }
 
     private ModDebugFormatters() {
