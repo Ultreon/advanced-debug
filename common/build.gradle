@@ -1,6 +1,6 @@
 //file:noinspection GradlePackageUpdate
 architectury {
-    common("fabric", "forge")
+    common(platforms.split(","))
 }
 
 loom {
@@ -18,7 +18,7 @@ dependencies {
     // Remove the next line if you don't want to depend on the API
     modApi "dev.architectury:architectury:${architectury_version}"
 
-    modApi "com.github.Ultreon.ultreonlib:ultreon-lib:$ultreonlib_version"
+    modApi "com.github.Ultreon.ultreonlib:ultreonlib:$ultreonlib_version"
 
     modImplementation "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:$forge_config_api_port_version"
     modCompileOnly 'com.electronwill.night-config:core:3.6.3'
@@ -30,6 +30,8 @@ dependencies {
     implementation "io.github.spair:imgui-java-natives-linux:$imgui_version"
     implementation "io.github.spair:imgui-java-natives-macos:$imgui_version"
     implementation "io.github.spair:imgui-java-natives-windows:$imgui_version"
+
+    implementation("com.google.errorprone:error_prone_annotations:$error_prone_version")
 }
 
 sourceSets {

@@ -3,6 +3,7 @@ package com.ultreon.mods.advanceddebug.client.menu;
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.ultreon.libs.commons.v0.Identifier;
+import com.ultreon.libs.commons.v0.tuple.Pair;
 import com.ultreon.libs.commons.v0.util.ClassUtils;
 import com.ultreon.mods.advanceddebug.AdvancedDebug;
 import com.ultreon.mods.advanceddebug.IllegalThreadError;
@@ -19,7 +20,9 @@ import com.ultreon.mods.advanceddebug.client.input.KeyBindingList;
 import com.ultreon.mods.advanceddebug.client.registry.FormatterRegistry;
 import com.ultreon.mods.advanceddebug.extension.ExtensionLoader;
 import com.ultreon.mods.advanceddebug.init.ModDebugPages;
-import com.ultreon.mods.advanceddebug.mixin.common.ImageButtonAccessor;
+import com.ultreon.mods.advanceddebug.inspect.InspectionNode;
+import com.ultreon.mods.advanceddebug.inspect.InspectionRoot;
+import com.ultreon.mods.advanceddebug.mixin.common.DebugScreenOverlayMixin;
 import com.ultreon.mods.advanceddebug.registry.ModPreRegistries;
 import com.ultreon.mods.advanceddebug.text.ComponentBuilder;
 import com.ultreon.mods.advanceddebug.util.*;
@@ -35,13 +38,13 @@ import imgui.type.ImBoolean;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.ChatFormatting;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.components.events.ContainerEventHandler;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -55,10 +58,10 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.damagesource.CombatEntry;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffectUtil;
 import net.minecraft.world.entity.Entity;
@@ -86,14 +89,16 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.Team;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.lwjgl.glfw.GLFW;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 
-import javax.annotation.Nullable;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static net.minecraft.ChatFormatting.*;
@@ -121,6 +126,7 @@ public final class DebugGui implements Renderable, IDebugGui {
 
     private static final Marker MARKER = MarkerFactory.getMarker("DebugGui");
 
+    public static final ImBoolean SHOW_OBJECT_INSPECTION = new ImBoolean(false);
     public static final ImBoolean SHOW_PLAYER_INFO = new ImBoolean(false);
     public static final ImBoolean SHOW_CLIENT_LEVEL_INFO = new ImBoolean(false);
     public static final ImBoolean SHOW_SERVER_LEVEL_INFO = new ImBoolean(false);
@@ -146,6 +152,9 @@ public final class DebugGui implements Renderable, IDebugGui {
     private int height;
     private final ReentrantLock lock = new ReentrantLock(true);
     private boolean enabled = true;
+    private String inspectCurrentPath = "/";
+    private String inspectIdxInput = "";
+    private final boolean[] pressed = new boolean[GLFW.GLFW_KEY_LAST + 1];
 
     private DebugGui() {
         ClassUtils.checkCallerClassEquals(DebugGui.class);
@@ -153,18 +162,18 @@ public final class DebugGui implements Renderable, IDebugGui {
             throw new Error("Invalid initialization for singleton class " + DebugGui.class.getName());
         }
 
-        ClientLifecycleEvent.CLIENT_STOPPING.register(instance -> requestDisable());
+        ClientLifecycleEvent.CLIENT_STOPPING.register(instance -> this.requestDisable());
         ClientPlayerEvent.CLIENT_PLAYER_QUIT.register(player -> {
             if (player == null) return;
-            requestDisable();
+            this.requestDisable();
         });
 
-        LifecycleEvent.SERVER_STOPPED.register(instance -> enable());
+        LifecycleEvent.SERVER_STOPPED.register(instance -> this.enable());
     }
 
     private void enable() {
         RenderSystem.recordRenderCall(() -> {
-            enabled = true;
+            this.enabled = true;
         });
     }
 
@@ -182,7 +191,7 @@ public final class DebugGui implements Renderable, IDebugGui {
         CrashReport report = new CrashReport("Time-out!", new TimeoutException("Timed out when waiting on Debug GUI shutdown request"));
         CrashReportCategory shutdownReq = report.addCategory("Debug GUI Shutdown Request");
         shutdownReq.setDetail("Duration", 30000 + "ms");
-        shutdownReq.setDetail("Flag set", !enabled);
+        shutdownReq.setDetail("Flag set", !this.enabled);
         Minecraft.crash(report);
 
         Runtime.getRuntime().halt(0x0000_dead); // Should never run, unless some mod modifies crash handling in a weird way.
@@ -217,38 +226,43 @@ public final class DebugGui implements Renderable, IDebugGui {
     @Override
     public void render(@NotNull GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
         if (!RenderSystem.isOnRenderThread()) return;
-        if (!enabled || Minecraft.getInstance().options.renderDebug) return;
+        var overlayMixin = (DebugScreenOverlayMixin) Minecraft.getInstance().getDebugOverlay();
+        if (!this.enabled || overlayMixin.isRenderDebug()) return;
 
-        updateSize();
+        this.updateSize();
 
-        font = Minecraft.getInstance().font;
+        this.font = Minecraft.getInstance().font;
 
-        DebugPage debugPage = getDebugPage();
+        DebugPage debugPage = this.getDebugPage();
         Minecraft mc = Minecraft.getInstance();
 
-        lock.lock();
+        this.lock.lock();
         double scale = mc.getWindow().getGuiScale();
         double preferredScale = Config.USE_CUSTOM_SCALE.get() ? Config.CUSTOM_SCALE.get() : scale;
         Boolean useCustomScale = Config.USE_CUSTOM_SCALE.get();
 
-        int rescaledWidth = (int) (((double) width * scale) / preferredScale);
-        int rescaledHeight = (int) (((double) height * scale) / preferredScale);
+        int rescaledWidth = (int) (this.width * scale / preferredScale);
+        int rescaledHeight = (int) (this.height * scale / preferredScale);
 
-        DebugRenderContext context = new DebugRenderContext(gfx, rescaledWidth, rescaledHeight) {
+        var context = new DebugRenderContext(gfx, rescaledWidth, rescaledHeight) {
             @Override
             protected void drawLine(@NotNull GuiGraphics gfx, Component text, int x, int y) {
                 DebugGui.this.drawLine(gfx, text, x, y);
             }
         };
+        
+        long window = this.minecraft.getWindow().getWindow();
 
-        if (debugPage != null) {
+        if (SHOW_OBJECT_INSPECTION.get()) {
+            this.renderObjectInspection(gfx, window, context, AdvancedDebug.getInstance().inspections);
+        } else if (debugPage != null) {
             gfx.pose().pushPose();
             {
-                gfx.pose().scale((float) ((1 * preferredScale) / scale), (float) ((1 * preferredScale) / scale), 1);
+                gfx.pose().scale((float) (1 * preferredScale / scale), (float) (1 * preferredScale / scale), 1);
                 Identifier resourceLocation = debugPage.getId();
                 try {
                     if (Config.SHOW_CURRENT_PAGE.get()) {
-                        drawLine(gfx, Component.literal("Debug Page: " + resourceLocation.toString()), 6, height - 16);
+                        this.drawLine(gfx, Component.literal("Debug Page: " + resourceLocation.toString()), 6, this.height - 16);
                     }
                     debugPage.render(gfx, context);
                 } catch (Exception e) {
@@ -271,7 +285,85 @@ public final class DebugGui implements Renderable, IDebugGui {
         } else {
             ModDebugPages.DEFAULT.render(gfx, context);
         }
-        lock.unlock();
+        this.lock.unlock();
+    }
+
+    private void renderObjectInspection(GuiGraphics gfx, long window, DebugRenderContext ctx, InspectionRoot<Minecraft> inspections) {
+
+        String path = this.inspectCurrentPath;
+
+        Comparator<InspectionNode<?>> comparator = Comparator.comparing(InspectionNode::getName);
+
+        ctx.left(gfx, Component.literal(this.inspectIdxInput == null ? "" : this.inspectIdxInput).withStyle(ChatFormatting.WHITE));
+
+        ctx.left(gfx, Component.literal(path).withStyle(s -> s.withColor(BLUE).withBold(true).withUnderlined(true)));
+        ctx.left();
+
+        {
+            @Nullable InspectionNode<?> node = inspections.getNode(path);
+            if (node == null) {
+                this.inspectCurrentPath = "/";
+                return;
+            }
+
+            List<InspectionNode<?>> nodes = node.getNodes().values().stream().sorted(comparator).toList();
+            int i = 0;
+            for (int nodesSize = nodes.size(); i < nodesSize; i++) {
+                InspectionNode<?> curNode = nodes.get(i);
+                ctx.left(gfx, Component.literal("[" + i + "]: ").withStyle(s -> s.withColor(GOLD).withBold(true)).append(Component.literal(curNode.getName()).withStyle(s -> s.withColor(WHITE).withBold(false))));
+            }
+
+            List<Pair<String, String>> elements = node.getElements().entrySet().stream().map(t -> new Pair<>(t.getKey(), t.getValue().get())).sorted(Comparator.comparing(Pair::getFirst)).toList();
+            for (Pair<String, String> element : elements) {
+                ctx.left(gfx, Component.literal(element.getFirst() + " = ").withStyle(s -> s.withColor(GRAY).withBold(false)).append(Component.literal(element.getSecond()).withStyle(s -> s.withColor(WHITE).withItalic(true))));
+            }
+        }
+
+        if (this.isKeyJustPressed(GLFW.GLFW_KEY_KP_ENTER)) {
+            String input = this.inspectIdxInput;
+            try {
+                int idx = Integer.parseInt(input);
+
+                @Nullable InspectionNode<?> node = inspections.getNode(path);
+                if (node == null) {
+                    this.inspectCurrentPath = "/";
+                    return;
+                }
+                List<InspectionNode<?>> nodes = node.getNodes().values().stream().sorted(comparator).toList();
+
+                if (nodes.isEmpty()) return;
+
+                if (idx >= 0 && idx < nodes.size()) {
+                    path += nodes.get(idx).getName() + "/";
+                    this.inspectCurrentPath = path;
+                }
+                this.inspectIdxInput = "";
+            } catch (NumberFormatException ignored) {
+                this.inspectIdxInput = "";
+            }
+        } else if (this.isKeyJustPressed(GLFW.GLFW_KEY_BACKSPACE)) {
+            if (this.inspectCurrentPath.equals("/")) {
+                return;
+            }
+
+            if (path.endsWith("/")) path = path.substring(0, path.length() - 1);
+            this.inspectCurrentPath = path.substring(0, path.lastIndexOf("/")) + "/";
+        } else if (this.isKeyJustPressed(GLFW.GLFW_KEY_KP_DECIMAL)) {
+            this.inspectIdxInput = "";
+        } else for (int num = 0; num < 10; num++) {
+            int key = GLFW.GLFW_KEY_KP_0 + num;
+            if (this.isKeyJustPressed(key)) {
+                this.inspectIdxInput += String.valueOf(num);
+                break;
+            }
+        }
+    }
+
+    private boolean isKeyJustPressed(int key) {
+        var pressed = GLFW.glfwGetKey(this.minecraft.getWindow().getWindow(), key) == GLFW.GLFW_PRESS;
+        boolean wasPressed = this.pressed[key];
+        this.pressed[key] = pressed;
+        return pressed && !wasPressed;
     }
 
     public synchronized static void renderImGui(ImGuiImplGlfw glfw, ImGuiImplGl3 gl3) {
@@ -311,6 +403,7 @@ public final class DebugGui implements Renderable, IDebugGui {
                         ImGui.menuItem("Show Server Level Info", null, SHOW_SERVER_LEVEL_INFO);
                         ImGui.menuItem("Show Window Info", null, SHOW_WINDOW_INFO);
                         ImGui.menuItem("Show Screen Info", null, SHOW_SCREEN_INFO);
+                        ImGui.menuItem("Show Object Inspection", null, SHOW_OBJECT_INSPECTION);
                         ImGui.endMenu();
                     }
                     ExtensionLoader.invoke(Extension::handleImGuiMenuBar);
@@ -426,7 +519,6 @@ public final class DebugGui implements Renderable, IDebugGui {
     }
 
     public static void showLocalPlayer(LocalPlayer player) {
-        ImGuiEx.text("Server Brand:", player::getServerBrand);
         ImGuiEx.text("Water Vision:", player::getWaterVision);
         showEntity(player);
     }
@@ -1009,9 +1101,6 @@ public final class DebugGui implements Renderable, IDebugGui {
                     if (child instanceof CycleButton<?> button) {
                         ImGuiEx.text("Value:", button::getValue);
                     }
-                    if (child instanceof ImageButton button) {
-                        ImGuiEx.text("Image:", () -> ((ImageButtonAccessor) button).getResourceLocation());
-                    }
                     if (child instanceof AbstractButton button) {
                         ImGui.button("Click Button");
                         if (ImGui.isItemClicked()) {
@@ -1046,12 +1135,12 @@ public final class DebugGui implements Renderable, IDebugGui {
     }
 
     private void updateSize() {
-        width = minecraft.getWindow().getGuiScaledWidth();
-        height = minecraft.getWindow().getGuiScaledHeight();
+        this.width = this.minecraft.getWindow().getGuiScaledWidth();
+        this.height = this.minecraft.getWindow().getGuiScaledHeight();
     }
 
     private void drawLine(@NotNull GuiGraphics gfx, Component text, int x, int y) {
-        gfx.fill(x, y, x + font.width(text) + 2, (y - 1) + font.lineHeight + 2, 0x5f000000);
+        gfx.fill(x, y, x + this.font.width(text) + 2, y - 1 + this.font.lineHeight + 2, 0x5f000000);
         gfx.drawString(this.font, text, x + 1, y + 1, 0xffffff, false);
     }
 
@@ -1075,23 +1164,23 @@ public final class DebugGui implements Renderable, IDebugGui {
     @Override
     @Nullable
     public DebugPage getDebugPage() {
-        fixPage();
-        if (page == 0) {
+        this.fixPage();
+        if (this.page == 0) {
             return null;
         }
-        return pages.get(page - 1);
+        return pages.get(this.page - 1);
     }
 
     private void fixPage() {
-        page %= pages.size() + 1;
-        if (page < 0) {
-            page += pages.size() + 1;
+        this.page %= pages.size() + 1;
+        if (this.page < 0) {
+            this.page += pages.size() + 1;
         }
     }
 
     @Override
     public int getPage() {
-        return page;
+        return this.page;
     }
 
     @Override
@@ -1109,18 +1198,18 @@ public final class DebugGui implements Renderable, IDebugGui {
 
     @Override
     public void next() {
-        setPage(getPage() + 1);
+        this.setPage(this.getPage() + 1);
     }
 
     @Override
     public void prev() {
-        setPage(getPage() - 1);
+        this.setPage(this.getPage() - 1);
     }
 
     public void tick() {
         if (KeyBindingList.DEBUG_SCREEN.consumeClick()) {
-            if (InputUtils.isShiftDown()) prev();
-            else next();
+            if (InputUtils.isShiftDown()) this.prev();
+            else this.next();
         }
     }
 
@@ -1175,7 +1264,7 @@ public final class DebugGui implements Renderable, IDebugGui {
         StringBuilder sb = new StringBuilder();
 
         FormatterContext context = new FormatterContext();
-        format(obj, context);
+        this.format(obj, context);
 
         ComponentBuilder builder = new ComponentBuilder();
         builder.append(text, WHITE);
@@ -1184,7 +1273,7 @@ public final class DebugGui implements Renderable, IDebugGui {
 
         for (Object object : objects) {
             FormatterContext ctx = new FormatterContext();
-            format(object, ctx);
+            this.format(object, ctx);
 
             builder.append(", ", GRAY);
             builder.append(ctx.build());

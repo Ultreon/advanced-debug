@@ -18,7 +18,7 @@ public enum MoonPhase implements IIndexable {
 
     @Override
     public int getIndex() {
-        return index;
+        return this.index;
     }
 
     public static MoonPhase fromIndex(int index) {

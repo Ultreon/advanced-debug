@@ -34,7 +34,7 @@ dependencies {
     // Remove the next line if you don't want to depend on the API
     modApi "dev.architectury:architectury-fabric:$architectury_version"
 
-    modApi "com.github.Ultreon.ultreonlib:ultreon-lib-fabric:$ultreonlib_version"
+    modApi "com.github.Ultreon.ultreonlib:ultreonlib-fabric:$ultreonlib_version"
 
     modImplementation 'com.electronwill.night-config:core:3.6.5'
     modImplementation 'com.electronwill.night-config:toml:3.6.5'
@@ -57,6 +57,8 @@ dependencies {
     include implementation("io.github.spair:imgui-java-natives-linux:$imgui_version")
     include implementation("io.github.spair:imgui-java-natives-macos:$imgui_version")
     include implementation("io.github.spair:imgui-java-natives-windows:$imgui_version")
+
+    implementation("com.google.errorprone:error_prone_annotations:$error_prone_version")
 }
 
 processResources {
@@ -76,18 +78,18 @@ processResources {
 
 shadowJar {
     configurations = [project.configurations.shadowCommon]
-    classifier "dev-shadow"
+    archiveClassifier = "dev-shadow"
 }
 
 remapJar {
     injectAccessWidener = true
     input.set shadowJar.archiveFile
     dependsOn shadowJar
-    classifier null
+    archiveClassifier = null
 }
 
 jar {
-    classifier "dev"
+    archiveClassifier = "dev"
 }
 
 sourcesJar {

@@ -9,7 +9,9 @@ import com.ultreon.mods.advanceddebug.client.menu.DebugGui;
 import com.ultreon.mods.advanceddebug.client.registry.FormatterRegistry;
 import com.ultreon.mods.advanceddebug.extension.ExtensionLoader;
 import com.ultreon.mods.advanceddebug.init.ModDebugPages;
+import com.ultreon.mods.advanceddebug.init.ModInspectionInit;
 import com.ultreon.mods.advanceddebug.init.ModOverlays;
+import com.ultreon.mods.advanceddebug.inspect.InspectionRoot;
 import com.ultreon.mods.advanceddebug.util.TargetUtils;
 import dev.architectury.event.events.client.ClientLifecycleEvent;
 import dev.architectury.event.events.client.ClientTickEvent;
@@ -34,6 +36,8 @@ public class AdvancedDebug implements IAdvancedDebug {
 
     private static final ExtensionLoader loader = ExtensionLoader.get();
 
+    public final InspectionRoot<Minecraft> inspections = new InspectionRoot<>(Minecraft.getInstance());
+
     public static AdvancedDebug getInstance() {
         return instance;
     }
@@ -49,6 +53,8 @@ public class AdvancedDebug implements IAdvancedDebug {
 
     public void init() {
         ModOverlays.registerAll();
+
+        ModInspectionInit.registerAutoFillers();
 
         ClientLifecycleEvent.CLIENT_STARTED.register(this::setup);
 
@@ -129,5 +135,12 @@ public class AdvancedDebug implements IAdvancedDebug {
         LOGGER.debug("Client side setup done!");
 
         ModDebugPages.init();
+
+        this.inspections.createNode("player", value -> value.player);
+        this.inspections.createNode("level", value -> value.level);
+        this.inspections.createNode("screen", value -> value.screen);
+        this.inspections.createNode("window", Minecraft::getWindow);
+        this.inspections.createNode("singleplayerServer", Minecraft::getSingleplayerServer);
+        this.inspections.createNode("currentServer", Minecraft::getCurrentServer);
     }
 }

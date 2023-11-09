@@ -7,8 +7,8 @@
     "LivingEntityAccessor"
   ],
   "client": [
+    "DebugScreenOverlayMixin",
     "GameRendererMixin",
-    "ImageButtonAccessor",
     "KeyMappingAccessor",
     "MinecraftAccessor",
     "MouseHandlerMixin",

@@ -27,17 +27,17 @@ public class WorldPage extends DebugPage {
             ctx.left();
 
             ctx.left("Colors");
-            ctx.left("Cloud Color", getColor(dimension.getCloudColor(minecraft.getFrameTime())));
+            ctx.left("Cloud Color", getColor(dimension.getCloudColor(this.minecraft.getFrameTime())));
             if (Minecraft.getInstance().player != null) {
                 LocalPlayer player = Minecraft.getInstance().player;
-                ctx.left("Sky Color", getColor(dimension.getSkyColor(player.position(), minecraft.getFrameTime())));
+                ctx.left("Sky Color", getColor(dimension.getSkyColor(player.position(), this.minecraft.getFrameTime())));
             }
             ctx.left();
 
-            float skyDarken = dimension.getSkyDarken(minecraft.getFrameTime());
+            float skyDarken = dimension.getSkyDarken(this.minecraft.getFrameTime());
 
             ctx.left("Brightness");
-            ctx.left("Star Brightness", getPercentage(dimension.getStarBrightness(minecraft.getFrameTime())));
+            ctx.left("Star Brightness", getPercentage(dimension.getStarBrightness(this.minecraft.getFrameTime())));
             ctx.left("Sun Brightness", getPercentage(skyDarken));
             ctx.left();
 

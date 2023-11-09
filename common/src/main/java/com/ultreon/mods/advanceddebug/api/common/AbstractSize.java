@@ -9,50 +9,50 @@ public abstract class AbstractSize {
     public abstract Number getHeight();
 
     public int getIntWidth() {
-        return (int) getWidth();
+        return (int) this.getWidth();
     }
 
     public int getIntHeight() {
-        return (int) getHeight();
+        return (int) this.getHeight();
     }
 
     public long getLongWidth() {
-        return (long) getWidth();
+        return (long) this.getWidth();
     }
 
     public long getLongHeight() {
-        return (long) getHeight();
+        return (long) this.getHeight();
     }
 
     public float getFloatWidth() {
-        return (float) getWidth();
+        return (float) this.getWidth();
     }
 
     public float getFloatHeight() {
-        return (float) getHeight();
+        return (float) this.getHeight();
     }
 
     public double getDoubleWidth() {
-        return (double) getWidth();
+        return (double) this.getWidth();
     }
 
     public double getDoubleHeight() {
-        return (double) getHeight();
+        return (double) this.getHeight();
     }
 
     public BigInteger getBigIntegerWidth() {
-        return new BigInteger(getWidth().toString());
+        return new BigInteger(this.getWidth().toString());
     }
 
     public BigInteger getBigIntegerHeight() {
-        return new BigInteger(getHeight().toString());
+        return new BigInteger(this.getHeight().toString());
     }
 
     public BigDecimal getBigDecimalWidth() {
-        return new BigDecimal(getWidth().toString());
+        return new BigDecimal(this.getWidth().toString());
     }
 
     public BigDecimal getBigDecimalHeight() {
-        return new BigDecimal(getHeight().toString());
+        return new BigDecimal(this.getHeight().toString());
     }
 }

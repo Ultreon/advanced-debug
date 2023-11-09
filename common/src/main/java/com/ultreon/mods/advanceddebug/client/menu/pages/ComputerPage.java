@@ -25,8 +25,8 @@ public class ComputerPage extends DebugPage {
 
     @Override
     public void render(@NotNull GuiGraphics gfx, IDebugRenderContext ctx) {
-        long l = GLFW.glfwGetWindowMonitor(getMainWindow().getWindow());
-        Monitor monitor = ((WindowAccessor)(Object) getMainWindow()).getScreenManager().getMonitor(l);
+        long l = GLFW.glfwGetWindowMonitor(this.getMainWindow().getWindow());
+        Monitor monitor = ((WindowAccessor)(Object) this.getMainWindow()).getScreenManager().getMonitor(l);
 
         if (monitor != null) {
             VideoMode currentMode = monitor.getCurrentMode();
@@ -92,7 +92,7 @@ public class ComputerPage extends DebugPage {
         }
 
         ctx.right("System");
-        ctx.right("Is Java 64-bit", (minecraft.is64Bit() ? "yes" : "no"));
+        ctx.right("Is Java 64-bit", (this.minecraft.is64Bit() ? "yes" : "no"));
         ctx.right("Platform", SystemInfo.getCurrentPlatform());
 
 //        CentralProcessor processor = SYSTEM_INFO.getHardware().getProcessor();

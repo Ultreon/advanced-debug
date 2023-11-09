@@ -20,7 +20,7 @@ public class ItemEntityPage extends EntityPage {
             ctx.left("Generic");
             ctx.left("Owner", entity.getOwner());
             ctx.left("Item", entity.getItem());
-            ctx.left("Spin", entity.getSpin(minecraft.getFrameTime()));
+            ctx.left("Spin", entity.getSpin(this.minecraft.getFrameTime()));
             ctx.left("Age", entity.getAge());
             ctx.left();
 

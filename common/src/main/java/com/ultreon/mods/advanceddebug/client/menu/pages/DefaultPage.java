@@ -21,7 +21,7 @@ public class DefaultPage extends DebugPage {
         if (Config.SHOW_FPS_ON_DEFAULT_PAGE.get()) {
             ctx.left("FPS", MinecraftAccessor.getFps());
             IntegratedServer server;
-            if (mc.hasSingleplayerServer() && (server = mc.getSingleplayerServer()) != null) {
+            if (this.mc.hasSingleplayerServer() && (server = this.mc.getSingleplayerServer()) != null) {
                 ctx.left("Server TPS", server.getTickCount());
             }
         }

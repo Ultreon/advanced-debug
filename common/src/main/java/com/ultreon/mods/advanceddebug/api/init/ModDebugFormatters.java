@@ -7,8 +7,10 @@ import com.ultreon.mods.advanceddebug.api.client.registry.IFormatterRegistry;
 import com.ultreon.mods.advanceddebug.api.common.Angle;
 import com.ultreon.mods.advanceddebug.api.common.IFormattable;
 import com.ultreon.mods.advanceddebug.api.common.MoonPhase;
+import com.ultreon.mods.lib.util.ServerLifecycle;
 import dev.architectury.utils.Env;
 import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.core.Direction.AxisDirection;
@@ -409,9 +411,16 @@ public final class ModDebugFormatters {
     public static final Formatter<Advancement> ADVANCEMENT = REGISTRY.register(new Formatter<>(Advancement.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "minecraft/advancement")) {
         @Override
         public void format(Advancement obj, IFormatterContext context) {
+            AdvancementHolder holder = ServerLifecycle.getCurrentServer().getAdvancements().getAllAdvancements().stream().filter(a -> a.value().equals(obj)).findFirst().orElse(null);
+            if (holder == null) {
+                context.className("advancement")
+                        .space()
+                        .error("UNRESOLVED");
+                return;
+            }
             context.className("advancement")
                     .space()
-                    .other(obj.getId());
+                    .other(holder.id());
         }
     });
     public static final Formatter<Stat> STAT = REGISTRY.register(new Formatter<>(Stat.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "minecraft/stat")) {
@@ -531,19 +540,19 @@ public final class ModDebugFormatters {
             context.enumConstant(obj);
         }
     });
-    public static final Formatter<MoonPhase> RT_MOON_PHASE = REGISTRY.register(new Formatter<>(MoonPhase.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "moon_phase")) {
+    public static final Formatter<MoonPhase> AD_MOON_PHASE = REGISTRY.register(new Formatter<>(MoonPhase.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "moon_phase")) {
         @Override
         public void format(MoonPhase obj, IFormatterContext context) {
             context.enumConstant(obj);
         }
     });
-    public static final Formatter<IFormattable> RT_FORMATTABLE = REGISTRY.register(new Formatter<>(IFormattable.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "formattable")) {
+    public static final Formatter<IFormattable> AD_FORMATTABLE = REGISTRY.register(new Formatter<>(IFormattable.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "formattable")) {
         @Override
         public void format(IFormattable obj, IFormatterContext context) {
             context.subFormat(obj::format);
         }
     });
-    public static final Formatter<Angle> RT_ANGLE = REGISTRY.register(new Formatter<>(Angle.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "angle")) {
+    public static final Formatter<Angle> AD_ANGLE = REGISTRY.register(new Formatter<>(Angle.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "angle")) {
         @Override
         public void format(Angle obj, IFormatterContext context) {
             context.subFormat(obj::format);

@@ -37,7 +37,7 @@ public final class ExtensionLoader {
 
     public void scan() {
         ServiceLoader<Extension> load = ServiceLoader.load(Extension.class);
-        providers = load.stream().toList();
+        this.providers = load.stream().toList();
     }
 
     public static Extension get(String id) {
@@ -49,7 +49,7 @@ public final class ExtensionLoader {
     }
 
     public void construct() {
-        for (ServiceLoader.Provider<Extension> provider : providers) {
+        for (ServiceLoader.Provider<Extension> provider : this.providers) {
             Class<? extends Extension> type = provider.type();
             ExtensionInfo annotation = type.getAnnotation(ExtensionInfo.class);
             if (annotation == null) {

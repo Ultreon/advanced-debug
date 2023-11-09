@@ -14,7 +14,7 @@ public final class IntSize implements IFormattable {
     }
 
     public int getWidth() {
-        return width;
+        return this.width;
     }
 
     public void setWidth(int width) {
@@ -22,7 +22,7 @@ public final class IntSize implements IFormattable {
     }
 
     public int getHeight() {
-        return height;
+        return this.height;
     }
 
     public void setHeight(int height) {
@@ -31,19 +31,19 @@ public final class IntSize implements IFormattable {
 
     @Override
     public void format(IFormatterContext ctx) {
-        ctx.number(width).operator(" × ").number(height);
+        ctx.number(this.width).operator(" × ").number(this.height);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || this.getClass() != o.getClass()) return false;
         IntSize size = (IntSize) o;
-        return width == size.width && height == size.height;
+        return this.width == size.width && this.height == size.height;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(width, height);
+        return Objects.hash(this.width, this.height);
     }
 }

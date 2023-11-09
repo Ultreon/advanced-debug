@@ -33,7 +33,7 @@ dependencies {
     // Remove the next line if you don't want to depend on the API
     modApi "dev.architectury:architectury-forge:$architectury_version"
 
-    modApi "com.github.Ultreon.ultreonlib:ultreon-lib-forge:$ultreonlib_version"
+    modApi "com.github.Ultreon.ultreonlib:ultreonlib-forge:$ultreonlib_version"
 
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionForge")) { transitive = false }
@@ -43,6 +43,8 @@ dependencies {
     include implementation("io.github.spair:imgui-java-natives-linux:$imgui_version")
     include implementation("io.github.spair:imgui-java-natives-macos:$imgui_version")
     include implementation("io.github.spair:imgui-java-natives-windows:$imgui_version")
+
+    include implementation("com.google.errorprone:error_prone_annotations:$error_prone_version")
 }
 
 processResources {
@@ -68,17 +70,17 @@ shadowJar {
     exclude "architectury.common.json"
 
     configurations = [project.configurations.shadowCommon]
-    classifier "dev-shadow"
+    archiveClassifier = "dev-shadow"
 }
 
 remapJar {
     input.set shadowJar.archiveFile
     dependsOn shadowJar
-    classifier null
+    archiveClassifier = null
 }
 
 jar {
-    classifier "dev"
+    archiveClassifier = "dev"
     manifest {
         attributes([
                 "Specification-Title"     : "Ultreon Modding Lib",

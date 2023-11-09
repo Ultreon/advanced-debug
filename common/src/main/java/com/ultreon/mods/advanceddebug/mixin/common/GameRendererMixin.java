@@ -65,20 +65,25 @@ public class GameRendererMixin {
 
     @Inject(method = "render", at = @At("RETURN"))
     private void advancedDebug$injectImGuiRender$return(float partialTicks, long nanoTime, boolean renderLevel, CallbackInfo ci) {
-        boolean toggleKey = glfwGetKey(minecraft.getWindow().getWindow(), GLFW_KEY_F12) == GLFW_TRUE;
-        if (advanced_debug$wasTogglePressed && !toggleKey) {
-            advanced_debug$wasTogglePressed = false;
+        boolean toggleKey = glfwGetKey(this.minecraft.getWindow().getWindow(), GLFW_KEY_F12) == GLFW_TRUE;
+        if (this.advanced_debug$wasTogglePressed && !toggleKey) {
+            this.advanced_debug$wasTogglePressed = false;
+
+            if (glfwGetKey(this.minecraft.getWindow().getWindow(), GLFW_KEY_LEFT_SHIFT) == GLFW_TRUE) {
+                DebugGui.SHOW_OBJECT_INSPECTION.set(!DebugGui.SHOW_OBJECT_INSPECTION.get());
+                return;
+            }
             DebugGui.SHOW_IM_GUI.set(!DebugGui.SHOW_IM_GUI.get());
-        } else if (!advanced_debug$wasTogglePressed && toggleKey) {
-            advanced_debug$wasTogglePressed = true;
+        } else if (!this.advanced_debug$wasTogglePressed && toggleKey) {
+            this.advanced_debug$wasTogglePressed = true;
         }
         DebugGui.renderImGui(advanced_debug$imGuiGlfw, advanced_debug$imGuiGl3);
 
-        GameRendererEvents.POST_GAME_RENDER.invoker().onPostGameRender(minecraft, (GameRenderer)(Object)this, partialTicks, nanoTime, renderLevel);
+        GameRendererEvents.POST_GAME_RENDER.invoker().onPostGameRender(this.minecraft, (GameRenderer)(Object)this, partialTicks, nanoTime, renderLevel);
     }
 
     @Inject(method = "render", at = @At("HEAD"))
     private void advancedDebug$injectImGuiRender$head(float partialTicks, long nanoTime, boolean renderLevel, CallbackInfo ci) {
-        GameRendererEvents.PRE_GAME_RENDER.invoker().onPreGameRender(minecraft, (GameRenderer)(Object)this, partialTicks, nanoTime, renderLevel);
+        GameRendererEvents.PRE_GAME_RENDER.invoker().onPreGameRender(this.minecraft, (GameRenderer)(Object)this, partialTicks, nanoTime, renderLevel);
     }
 }

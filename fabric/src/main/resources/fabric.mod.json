@@ -43,10 +43,10 @@
     "advanced-debug-common.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=${loaderVersion}",
-    "minecraft": ">=${minecraftVersion} <1.20.2",
-    "architectury": ">=9.1 <10",
-    "forgeconfigapiport": ">=8 <9",
-    "ultreonlib": ">=1.5.0"
+    "fabricloader": ">=0.14.23",
+    "minecraft": ">=${minecraftVersion} <1.20.3",
+    "architectury": ">=10 <11",
+    "forgeconfigapiport": ">=9 <10",
+    "ultreonlib": ">=1.6.0"
   }
 }

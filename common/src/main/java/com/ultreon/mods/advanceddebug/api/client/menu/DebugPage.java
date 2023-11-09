@@ -23,7 +23,7 @@ public abstract class DebugPage {
     }
 
     protected final Window getMainWindow() {
-        return mc.getWindow();
+        return this.mc.getWindow();
     }
 
     public abstract void render(@NotNull GuiGraphics gfx, IDebugRenderContext ctx);
@@ -76,12 +76,12 @@ public abstract class DebugPage {
     }
 
     public Minecraft getMinecraft() {
-        return minecraft;
+        return this.minecraft;
     }
 
     public Identifier getId() {
         Identifier id = ModPreRegistries.DEBUG_PAGE.getKey(this);
-        if (id == null) throw new IllegalStateException("Debug page not registered: " + getClass().getName());
+        if (id == null) throw new IllegalStateException("Debug page not registered: " + this.getClass().getName());
         Mod mod = Platform.getMod(id.location());
         if (mod == null) throw new IllegalArgumentException("Mod not found with id: " + id.location());
         return id;

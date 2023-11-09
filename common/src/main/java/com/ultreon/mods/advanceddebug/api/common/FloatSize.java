@@ -15,7 +15,7 @@ public final class FloatSize implements IFormattable {
     }
 
     public float getWidth() {
-        return width;
+        return this.width;
     }
 
     public void setWidth(float width) {
@@ -23,7 +23,7 @@ public final class FloatSize implements IFormattable {
     }
 
     public float getHeight() {
-        return height;
+        return this.height;
     }
 
     public void setHeight(float height) {
@@ -32,19 +32,19 @@ public final class FloatSize implements IFormattable {
 
     @Override
     public void format(IFormatterContext ctx) {
-        ctx.number(MathUtil.roundTo(width, 5)).operator(" × ").number(MathUtil.roundTo(height, 5));
+        ctx.number(MathUtil.roundTo(this.width, 5)).operator(" × ").number(MathUtil.roundTo(this.height, 5));
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || this.getClass() != o.getClass()) return false;
         FloatSize size = (FloatSize) o;
-        return Float.compare(size.width, width) == 0 && Float.compare(size.height, height) == 0;
+        return Float.compare(size.width, this.width) == 0 && Float.compare(size.height, this.height) == 0;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(width, height);
+        return Objects.hash(this.width, this.height);
     }
 }

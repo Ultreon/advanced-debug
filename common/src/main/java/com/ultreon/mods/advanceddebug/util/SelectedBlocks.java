@@ -17,22 +17,22 @@ public class SelectedBlocks {
     }
 
     public SelectedBlock get(@NotNull Level level) {
-        return map.get(level.dimension().location());
+        return this.map.get(level.dimension().location());
     }
 
     public void set(@NotNull Level level, @Nullable SelectedBlock selected) {
         if (selected == null) {
-            map.remove(level.dimension().location());
+            this.map.remove(level.dimension().location());
             return;
         }
-        map.put(level.dimension().location(), selected);
+        this.map.put(level.dimension().location(), selected);
     }
 
     public void set(@NotNull Level level, @Nullable BlockPos pos) {
         if (pos == null) {
-            map.remove(level.dimension().location());
+            this.map.remove(level.dimension().location());
             return;
         }
-        map.put(level.dimension().location(), new SelectedBlock(level, pos));
+        this.map.put(level.dimension().location(), new SelectedBlock(level, pos));
     }
 }

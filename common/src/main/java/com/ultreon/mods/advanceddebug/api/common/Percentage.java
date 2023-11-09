@@ -25,11 +25,11 @@ public final class Percentage implements IFormattable {
 
     @Override
     public void format(IFormatterContext ctx) {
-        ctx.number(Math.round(percentage)).operator("%");
+        ctx.number(Math.round(this.percentage)).operator("%");
     }
 
     public double getValue() {
-        return percentage / 100;
+        return this.percentage / 100;
     }
 
     public void setPercentage(double percentage) {
@@ -45,26 +45,26 @@ public final class Percentage implements IFormattable {
     }
 
     public double getPercentage() {
-        return percentage;
+        return this.percentage;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || this.getClass() != o.getClass()) return false;
         Percentage that = (Percentage) o;
-        return Double.compare(that.percentage, percentage) == 0;
+        return Double.compare(that.percentage, this.percentage) == 0;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(percentage);
+        return Objects.hash(this.percentage);
     }
 
     @Override
     public String toString() {
         return "Percentage{" +
-                "percentage=" + percentage +
+                "percentage=" + this.percentage +
                 '}';
     }
 }

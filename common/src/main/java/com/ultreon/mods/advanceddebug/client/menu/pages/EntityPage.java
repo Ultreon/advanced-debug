@@ -44,7 +44,7 @@ public class EntityPage extends DebugPage {
             ctx.left("Eye Height", entity.getEyeHeight());
             ctx.left("Look Angle", entity.getLookAngle());
             ctx.left("Riding Entity", entity.getVehicle());
-            ctx.left("Riding Offset", entity.getMyRidingOffset());
+            ctx.left("Riding Offset", entity.getMyRidingOffset(entity));
             ctx.left("Entity UUID", entity.getUUID());
             ctx.left("Entity ID", entity.getId());
             ctx.left("Entity Name", entity.getName().getString());
@@ -73,7 +73,7 @@ public class EntityPage extends DebugPage {
                 ctx.right("Attacking Entity", living.getKillCredit());
                 ctx.right("Item Usage Ticks Remaining", living.getUseItemRemainingTicks());
                 ctx.right("Last Attacked Mob", living.getLastHurtMob());
-                ctx.right("Rope Position", living.getRopeHoldPosition(mc.getFrameTime()));
+                ctx.right("Rope Position", living.getRopeHoldPosition(this.mc.getFrameTime()));
                 ctx.right("Pose", living.getPose());
                 ctx.right("Scale", living.getScale());
                 ctx.right("Armor Value", living.getArmorValue());
@@ -81,7 +81,7 @@ public class EntityPage extends DebugPage {
                 ctx.right(GRAY + "Item Entity");
                 ctx.right("Owner", itemEntity.getOwner());
                 ctx.right("Item", itemEntity.getItem());
-                ctx.right("Spin", itemEntity.getSpin(minecraft.getFrameTime()));
+                ctx.right("Spin", itemEntity.getSpin(this.minecraft.getFrameTime()));
                 ctx.right("Age", itemEntity.getAge());
             }
         } else {

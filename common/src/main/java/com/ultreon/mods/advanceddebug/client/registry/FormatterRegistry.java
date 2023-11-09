@@ -3,8 +3,8 @@ package com.ultreon.mods.advanceddebug.client.registry;
 import com.ultreon.libs.collections.v0.maps.OrderedHashMap;
 import com.ultreon.mods.advanceddebug.api.client.menu.Formatter;
 import com.ultreon.mods.advanceddebug.api.client.registry.IFormatterRegistry;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.Map;
 
 public class FormatterRegistry implements IFormatterRegistry {
@@ -21,7 +21,6 @@ public class FormatterRegistry implements IFormatterRegistry {
 
     @Override
     public <T> Formatter<T> register(Formatter<T> formatter) {
-        System.out.println("formatter = " + formatter);
         Class<?> clazz = formatter.clazz();
         FORMATTERS.put(clazz.getName(), formatter);
         return formatter;
@@ -44,7 +43,7 @@ public class FormatterRegistry implements IFormatterRegistry {
                 return FORMATTERS.get(clazz.getName());
             }
             for (Class<?> inter : clazz.getInterfaces()) {
-                Formatter<?> identify = identify(inter);
+                Formatter<?> identify = this.identify(inter);
                 if (identify != null) return identify;
             }
         }

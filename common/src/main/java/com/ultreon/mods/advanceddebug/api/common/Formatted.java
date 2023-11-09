@@ -7,7 +7,7 @@ public final class Formatted implements IFormattable {
     private final String string;
 
     public String getString() {
-        return string;
+        return this.string;
     }
 
     public Formatted(String string) {
@@ -45,6 +45,6 @@ public final class Formatted implements IFormattable {
     @SuppressWarnings("deprecation")
     @Override
     public void format(IFormatterContext ctx) {
-        ctx.direct(string);
+        ctx.direct(this.string);
     }
 }

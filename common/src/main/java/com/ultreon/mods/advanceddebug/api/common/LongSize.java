@@ -14,11 +14,11 @@ public final class LongSize extends AbstractSize implements IFormattable {
     }
 
     public Double getWidth() {
-        return width;
+        return this.width;
     }
 
     public Double getHeight() {
-        return height;
+        return this.height;
     }
 
     public void setWidth(double width) {
@@ -31,19 +31,19 @@ public final class LongSize extends AbstractSize implements IFormattable {
 
     @Override
     public void format(IFormatterContext ctx) {
-        ctx.number(width).operator(" × ").number(height);
+        ctx.number(this.width).operator(" × ").number(this.height);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || this.getClass() != o.getClass()) return false;
         LongSize longSize = (LongSize) o;
-        return Double.compare(longSize.width, width) == 0 && Double.compare(longSize.height, height) == 0;
+        return Double.compare(longSize.width, this.width) == 0 && Double.compare(longSize.height, this.height) == 0;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(width, height);
+        return Objects.hash(this.width, this.height);
     }
 }

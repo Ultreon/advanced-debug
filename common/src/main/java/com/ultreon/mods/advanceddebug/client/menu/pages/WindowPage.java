@@ -15,7 +15,7 @@ public class WindowPage extends DebugPage {
 
     @Override
     public void render(@NotNull GuiGraphics gfx, IDebugRenderContext ctx) {
-        Window window = getWindow();
+        Window window = this.getWindow();
 
         ctx.left("Scale / Size");
         ctx.left("Gui Scale", getMultiplier(window.getGuiScale()));
@@ -28,7 +28,7 @@ public class WindowPage extends DebugPage {
         ctx.right("Refresh Rate", window.getRefreshRate());
         ctx.right("Framerate Limit", window.getFramerateLimit());
         ctx.right("Fullscreen Mode", window.isFullscreen());
-        ctx.right("Vsync", ((OptionsAccessor) minecraft.options).getEnableVsync().get());
+        ctx.right("Vsync", ((OptionsAccessor) this.minecraft.options).getEnableVsync().get());
 
         if (InputUtils.isAltDown()) {
             ctx.top("Please don't press Alt+F4"); // Just don't.

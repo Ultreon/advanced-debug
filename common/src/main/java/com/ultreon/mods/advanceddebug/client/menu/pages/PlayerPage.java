@@ -70,7 +70,7 @@ public class PlayerPage extends DebugPage {
         ctx.left("Idle Time", player.getNoActionTime());
         ctx.left("Motion", player.getDeltaMovement());
         ctx.left("Team Name", (team != null ? team.getName() : ""));
-        ctx.left("Height Offset", player.getMyRidingOffset());
+        ctx.left("Height Offset", player.getMyRidingOffset(player));
         ctx.left("Eye Height", player.getEyeHeight());
         ctx.left("Eye Height (real)", player.getEyeHeight(player.getPose()));
         ctx.left("Bounding Box", player.getBoundingBox());

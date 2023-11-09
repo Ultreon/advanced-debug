@@ -21,52 +21,52 @@ public class SelectedBlock {
     }
 
     public Level getLevel() {
-        return level;
+        return this.level;
     }
 
     public BlockPos getPos() {
-        return pos;
+        return this.pos;
     }
 
     public BlockEntity getBlockEntity() {
-        return level.getBlockEntity(pos);
+        return this.level.getBlockEntity(this.pos);
     }
 
     public BlockState getBlockState() {
-        return level.getBlockState(pos);
+        return this.level.getBlockState(this.pos);
     }
 
     public FluidState getFluidState() {
-        return level.getFluidState(pos);
+        return this.level.getFluidState(this.pos);
     }
 
     public Holder<Biome> getBiome() {
-        return level.getBiome(pos);
+        return this.level.getBiome(this.pos);
     }
 
     public LevelChunk getChunk() {
-        return level.getChunkAt(pos);
+        return this.level.getChunkAt(this.pos);
     }
 
     public int getTop() {
-        return level.getHeight(Heightmap.Types.MOTION_BLOCKING, pos.getX(), pos.getZ());
+        return this.level.getHeight(Heightmap.Types.MOTION_BLOCKING, this.pos.getX(), this.pos.getZ());
     }
 
     public int getDirectSignal() {
-        return level.getDirectSignalTo(pos);
+        return this.level.getDirectSignalTo(this.pos);
     }
 
     public boolean isRaining() {
-        return level.isRainingAt(pos);
+        return this.level.isRainingAt(this.pos);
     }
 
     public boolean isWater() {
-        return level.isWaterAt(pos);
+        return this.level.isWaterAt(this.pos);
     }
 
     @SuppressWarnings("ConstantValue")
     public boolean isAir() {
-        BlockState blockState = level.getBlockState(pos);
+        BlockState blockState = this.level.getBlockState(this.pos);
         return blockState == null || blockState.isAir();
     }
 }

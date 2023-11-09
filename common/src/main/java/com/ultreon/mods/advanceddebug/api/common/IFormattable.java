@@ -11,6 +11,6 @@ public interface IFormattable {
 
     @SuppressWarnings("deprecation")
     default void format(IFormatterContext ctx) {
-        ctx.direct(toFormattedString());
+        ctx.direct(this.toFormattedString());
     }
 }

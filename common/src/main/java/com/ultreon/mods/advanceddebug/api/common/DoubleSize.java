@@ -15,7 +15,7 @@ public final class DoubleSize implements IFormattable {
     }
 
     public double getWidth() {
-        return width;
+        return this.width;
     }
 
     public void setWidth(double width) {
@@ -23,7 +23,7 @@ public final class DoubleSize implements IFormattable {
     }
 
     public double getHeight() {
-        return height;
+        return this.height;
     }
 
     public void setHeight(double height) {
@@ -32,19 +32,19 @@ public final class DoubleSize implements IFormattable {
 
     @Override
     public void format(IFormatterContext ctx) {
-        ctx.number(MathUtil.roundTo(width, 5)).operator(" × ").number(MathUtil.roundTo(height, 5));
+        ctx.number(MathUtil.roundTo(this.width, 5)).operator(" × ").number(MathUtil.roundTo(this.height, 5));
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || this.getClass() != o.getClass()) return false;
         DoubleSize that = (DoubleSize) o;
-        return Double.compare(that.width, width) == 0 && Double.compare(that.height, height) == 0;
+        return Double.compare(that.width, this.width) == 0 && Double.compare(that.height, this.height) == 0;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(width, height);
+        return Objects.hash(this.width, this.height);
     }
 }

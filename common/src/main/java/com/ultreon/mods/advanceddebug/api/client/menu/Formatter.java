@@ -22,10 +22,10 @@ public abstract class Formatter<T> implements IFormatter<T> {
     }
 
     public Class<T> clazz() {
-        return clazz;
+        return this.clazz;
     }
 
     public ResourceLocation registryName() {
-        return name;
+        return this.name;
     }
 }

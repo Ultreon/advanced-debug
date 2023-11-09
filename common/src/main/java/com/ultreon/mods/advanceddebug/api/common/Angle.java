@@ -17,13 +17,13 @@ public record Angle(double degrees) implements IFormattable {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || this.getClass() != o.getClass()) return false;
         Angle angle = (Angle) o;
-        return Double.compare(angle.degrees, degrees) == 0;
+        return Double.compare(angle.degrees, this.degrees) == 0;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(degrees);
+        return Objects.hash(this.degrees);
     }
 }

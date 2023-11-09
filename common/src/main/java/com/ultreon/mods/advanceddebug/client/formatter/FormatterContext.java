@@ -32,188 +32,188 @@ public class FormatterContext implements IFormatterContext {
 
     @Override
     public IFormatterContext keyword(String text) {
-        builder.colored(text, KEYWORD_COLOR);
+        this.builder.colored(text, KEYWORD_COLOR);
         return this;
     }
 
     @Override
     public IFormatterContext number(String text) {
-        builder.colored(text, NUMBER_COLOR);
+        this.builder.colored(text, NUMBER_COLOR);
         return this;
     }
 
     @Override
     public IFormatterContext number(Number number) {
-        number(String.valueOf(number));
+        this.number(String.valueOf(number));
         return this;
     }
 
     @Override
     public IFormatterContext string(String text) {
-        builder.colored(text, STRING_COLOR);
+        this.builder.colored(text, STRING_COLOR);
         return this;
     }
 
     @Override
     public IFormatterContext stringEscape(String text) {
-        builder.colored(text, STRING_ESCAPE_COLOR);
+        this.builder.colored(text, STRING_ESCAPE_COLOR);
         return this;
     }
 
     @Override
     public IFormatterContext operator(String text) {
-        builder.colored(text, OPERATOR_COLOR);
+        this.builder.colored(text, OPERATOR_COLOR);
         return this;
     }
 
     @Override
     public IFormatterContext identifier(String text) {
-        builder.colored(text, IDENTIFIER_COLOR);
+        this.builder.colored(text, IDENTIFIER_COLOR);
         return this;
     }
 
     @Override
     public IFormatterContext parameter(String text) {
-        builder.colored(text, PARAMETER_COLOR);
+        this.builder.colored(text, PARAMETER_COLOR);
         return this;
     }
 
     @Override
     public IFormatterContext parameter(String text, Object value) {
-        parameter(text);
-        operator(" = ");
-        other(value);
+        this.parameter(text);
+        this.operator(" = ");
+        this.other(value);
         return this;
     }
 
     @Override
     public IFormatterContext comment(String text) {
-        builder.colored(text, COMMENT_COLOR);
+        this.builder.colored(text, COMMENT_COLOR);
         return this;
     }
 
     @Override
     public IFormatterContext error(String text) {
-        builder.colored(text, ERROR_COLOR);
+        this.builder.colored(text, ERROR_COLOR);
         return this;
     }
 
     @Override
     public IFormatterContext className(String text) {
-        builder.colored(text, CLASS_COLOR);
+        this.builder.colored(text, CLASS_COLOR);
         return this;
     }
 
     @Override
     public IFormatterContext enumConstant(String text) {
-        builder.colored(text, ENUM_CONST_COLOR);
+        this.builder.colored(text, ENUM_CONST_COLOR);
         return this;
     }
 
     @Override
     public IFormatterContext packageName(String text) {
-        builder.colored(text, PACKAGE_COLOR);
+        this.builder.colored(text, PACKAGE_COLOR);
         return this;
     }
 
     @Override
     public IFormatterContext methodName(String text) {
-        builder.colored(text, METHOD_COLOR);
+        this.builder.colored(text, METHOD_COLOR);
         return this;
     }
 
     @Override
     public IFormatterContext functionName(String text) {
-        builder.colored(text, METHOD_COLOR);
+        this.builder.colored(text, METHOD_COLOR);
         return this;
     }
 
     @Override
     public IFormatterContext callName(String text) {
-        builder.colored(text, METHOD_COLOR);
+        this.builder.colored(text, METHOD_COLOR);
         return this;
     }
 
     @Override
     public IFormatterContext field(String text) {
-        builder.colored(text, FIELD_COLOR);
+        this.builder.colored(text, FIELD_COLOR);
         return this;
     }
 
     @Override
     public IFormatterContext annotation(String text) {
-        builder.colored(text, ANNOTATION_COLOR);
+        this.builder.colored(text, ANNOTATION_COLOR);
         return this;
     }
 
     @Override
     public IFormatterContext normal(String text) {
-        builder.colored(text, DEFAULT_COLOR);
+        this.builder.colored(text, DEFAULT_COLOR);
         return this;
     }
 
     @Override
     public IFormatterContext enumConstant(Enum<?> enumValue) {
         if (IAdvancedDebug.get().isEnumConstantsSpaced()) {
-            enumConstant(enumValue.name().toLowerCase(Locale.ROOT).replaceAll("_", " "));
+            this.enumConstant(enumValue.name().toLowerCase(Locale.ROOT).replaceAll("_", " "));
         } else {
-            enumConstant(enumValue.name().toLowerCase(Locale.ROOT).replaceAll("_", "-"));
+            this.enumConstant(enumValue.name().toLowerCase(Locale.ROOT).replaceAll("_", "-"));
         }
         return this;
     }
 
     @Override
     public IFormatterContext classValue(Class<?> clazz) {
-        packageName(clazz.getPackage().getName() + ".");
-        className(clazz.getName());
+        this.packageName(clazz.getPackage().getName() + ".");
+        this.className(clazz.getName());
         return this;
     }
 
     @Override
     public IFormatterContext space() {
-        normal(" ");
+        this.normal(" ");
         return this;
     }
 
     @Override
     public IFormatterContext separator() {
-        operator(", ");
+        this.operator(", ");
         return this;
     }
 
     @Override
     public IFormatterContext hex(String hexString) {
-        number(hexString);
+        this.number(hexString);
         return this;
     }
 
     @Override
     public IFormatterContext hexValue(int number) {
-        hex(Integer.toHexString(number));
+        this.hex(Integer.toHexString(number));
         return this;
     }
 
     @Override
     public IFormatterContext intValue(int number) {
-        number(Integer.toString(number));
+        this.number(Integer.toString(number));
         return this;
     }
 
     @Override
     public IFormatterContext longValue(long number) {
-        number(Long.toString(number));
+        this.number(Long.toString(number));
         return this;
     }
 
     @Override
     public IFormatterContext floatValue(float number) {
-        number(Float.toString(number));
+        this.number(Float.toString(number));
         return this;
     }
 
     @Override
     public IFormatterContext doubleValue(double number) {
-        number(Double.toString(number));
+        this.number(Double.toString(number));
         return this;
     }
 
@@ -221,7 +221,7 @@ public class FormatterContext implements IFormatterContext {
     public IFormatterContext other(Object obj) {
         FormatterContext ctx = new FormatterContext();
         DebugGui.get().format(obj, ctx);
-        builder.append(ctx.build());
+        this.builder.append(ctx.build());
         return this;
     }
 
@@ -232,45 +232,45 @@ public class FormatterContext implements IFormatterContext {
         for (char c : text.toCharArray()) {
             switch (c) {
                 case '\b' -> {
-                    builder.colored(current.toString(), STRING_COLOR);
-                    stringEscape("\\b");
+                    this.builder.colored(current.toString(), STRING_COLOR);
+                    this.stringEscape("\\b");
                     current = new StringBuilder();
                 }
                 case '\t' -> {
-                    builder.colored(current.toString(), STRING_COLOR);
-                    stringEscape("\\t");
+                    this.builder.colored(current.toString(), STRING_COLOR);
+                    this.stringEscape("\\t");
                     current = new StringBuilder();
                 }
                 case '\n' -> {
-                    builder.colored(current.toString(), STRING_COLOR);
-                    stringEscape("\\n");
+                    this.builder.colored(current.toString(), STRING_COLOR);
+                    this.stringEscape("\\n");
                     current = new StringBuilder();
                 }
                 case '\f' -> {
-                    builder.colored(current.toString(), STRING_COLOR);
-                    stringEscape("\\f");
+                    this.builder.colored(current.toString(), STRING_COLOR);
+                    this.stringEscape("\\f");
                     current = new StringBuilder();
                 }
                 case '\r' -> {
-                    builder.colored(current.toString(), STRING_COLOR);
-                    stringEscape("\\r");
+                    this.builder.colored(current.toString(), STRING_COLOR);
+                    this.stringEscape("\\r");
                     current = new StringBuilder();
                 }
                 case '\"' -> {
-                    builder.colored(current.toString(), STRING_COLOR);
-                    stringEscape("\\\"");
+                    this.builder.colored(current.toString(), STRING_COLOR);
+                    this.stringEscape("\\\"");
                     current = new StringBuilder();
                 }
                 case '\\' -> {
-                    builder.colored(current.toString(), STRING_COLOR);
-                    stringEscape("\\\\");
+                    this.builder.colored(current.toString(), STRING_COLOR);
+                    this.stringEscape("\\\\");
                     current = new StringBuilder();
                 }
                 default -> current.append(c);
             }
         }
 
-        builder.colored(current.toString(), STRING_COLOR);
+        this.builder.colored(current.toString(), STRING_COLOR);
         return this;
     }
 
@@ -281,38 +281,38 @@ public class FormatterContext implements IFormatterContext {
         for (char c : text.toCharArray()) {
             switch (c) {
                 case '\b' -> {
-                    builder.colored(current.toString(), STRING_COLOR);
-                    stringEscape("\\b");
+                    this.builder.colored(current.toString(), STRING_COLOR);
+                    this.stringEscape("\\b");
                     current = new StringBuilder();
                 }
                 case '\t' -> {
-                    builder.colored(current.toString(), STRING_COLOR);
-                    stringEscape("\\t");
+                    this.builder.colored(current.toString(), STRING_COLOR);
+                    this.stringEscape("\\t");
                     current = new StringBuilder();
                 }
                 case '\n' -> {
-                    builder.colored(current.toString(), STRING_COLOR);
-                    stringEscape("\\n");
+                    this.builder.colored(current.toString(), STRING_COLOR);
+                    this.stringEscape("\\n");
                     current = new StringBuilder();
                 }
                 case '\f' -> {
-                    builder.colored(current.toString(), STRING_COLOR);
-                    stringEscape("\\f");
+                    this.builder.colored(current.toString(), STRING_COLOR);
+                    this.stringEscape("\\f");
                     current = new StringBuilder();
                 }
                 case '\r' -> {
-                    builder.colored(current.toString(), STRING_COLOR);
-                    stringEscape("\\r");
+                    this.builder.colored(current.toString(), STRING_COLOR);
+                    this.stringEscape("\\r");
                     current = new StringBuilder();
                 }
                 case '\'' -> {
-                    builder.colored(current.toString(), STRING_COLOR);
-                    stringEscape("\\'");
+                    this.builder.colored(current.toString(), STRING_COLOR);
+                    this.stringEscape("\\'");
                     current = new StringBuilder();
                 }
                 case '\\' -> {
-                    builder.colored(current.toString(), STRING_COLOR);
-                    stringEscape("\\\\");
+                    this.builder.colored(current.toString(), STRING_COLOR);
+                    this.stringEscape("\\\\");
                     current = new StringBuilder();
                 }
                 default -> current.append(c);
@@ -324,7 +324,7 @@ public class FormatterContext implements IFormatterContext {
     @Deprecated
     @Override
     public IFormatterContext direct(String alreadyFormatted) {
-        builder.append(alreadyFormatted);
+        this.builder.append(alreadyFormatted);
         return this;
     }
 
@@ -332,10 +332,10 @@ public class FormatterContext implements IFormatterContext {
     public void subFormat(Consumer<IFormatterContext> o) {
         FormatterContext ctx = new FormatterContext();
         o.accept(ctx);
-        builder.append(ctx.build());
+        this.builder.append(ctx.build());
     }
 
     public Component build() {
-        return builder.build();
+        return this.builder.build();
     }
 }
