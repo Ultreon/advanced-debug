@@ -2,7 +2,7 @@
 //file:noinspection GroovyAccessibility
 plugins {
     id "architectury-plugin" version "3.4-SNAPSHOT"
-    id "dev.architectury.loom" version "0.12.0-SNAPSHOT" apply false
+    id "dev.architectury.loom" version "1.3-SNAPSHOT" apply false
 }
 repositories {
     gradlePluginPortal()
@@ -33,6 +33,8 @@ subprojects {
             officialMojangMappings()
             parchment("org.parchmentmc.data:parchment-1.19.2:2022.08.10@zip")
         }
+
+        compileOnly 'com.google.errorprone:error_prone_annotations:2.16'
     }
 }
 

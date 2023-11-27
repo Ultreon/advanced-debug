@@ -1,17 +1,8 @@
 package com.ultreon.mods.advanceddebug.util;
 
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
-import com.ultreon.libs.functions.v0.consumer.BooleanConsumer;
-import com.ultreon.libs.functions.v0.consumer.ByteConsumer;
+import com.ultreon.libs.commons.v0.util.EnumUtils;
 import com.ultreon.libs.functions.v0.consumer.DoubleConsumer;
-import com.ultreon.libs.functions.v0.consumer.FloatConsumer;
-import com.ultreon.libs.functions.v0.consumer.ShortConsumer;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.function.*;
-
+import com.ultreon.libs.functions.v0.consumer.*;
 import com.ultreon.libs.functions.v0.supplier.ByteSupplier;
 import com.ultreon.libs.functions.v0.supplier.FloatSupplier;
 import com.ultreon.libs.functions.v0.supplier.ShortSupplier;
@@ -21,13 +12,7 @@ import imgui.extension.imguifiledialog.callback.ImGuiFileDialogPaneFun;
 import imgui.extension.imguifiledialog.flag.ImGuiFileDialogFlags;
 import imgui.flag.ImGuiDataType;
 import imgui.flag.ImGuiInputTextFlags;
-import imgui.type.ImBoolean;
-import imgui.type.ImDouble;
-import imgui.type.ImFloat;
-import imgui.type.ImInt;
-import imgui.type.ImLong;
-import imgui.type.ImShort;
-import imgui.type.ImString;
+import imgui.type.*;
 import net.minecraft.ResourceLocationException;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
@@ -37,6 +22,14 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
+
+import java.awt.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.function.IntConsumer;
+import java.util.function.LongConsumer;
+import java.util.function.*;
 
 public class ImGuiEx {
     private static final ImGuiFileDialogPaneFun DUMP_NBT_CALLBACK = new ImGuiFileDialogPaneFun() {
@@ -390,6 +383,60 @@ public class ImGuiEx {
         int[] v = new int[]{value};
         if (ImGui.sliderInt("##" + id, v, min, max)) {
             onChange.accept(v[0]);
+        }
+    }
+
+    public static void button(String label, String id, Runnable func) {
+        ImGui.text(label);
+        ImGui.sameLine();
+        try {
+            if (ImGui.button("##" + id, 120, 16)) {
+                func.run();
+            }
+        } catch (Exception e) {
+            ImGui.text(String.valueOf(e));
+        }
+    }
+
+    public static void editColor3(String color, String s, Supplier<@NotNull Color> getter, Consumer<@NotNull Color> setter) {
+        ImGui.text(color);
+        ImGui.sameLine();
+        try {
+            Color c = getter.get();
+            float[] floats = {c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, 1f};
+            if (ImGui.colorEdit3("##" + s, floats)) {
+                setter.accept(new Color(floats[0], floats[1], floats[2], 1f));
+            }
+        } catch (Exception e) {
+            ImGui.text(String.valueOf(e));
+        }
+    }
+
+    public static void editColor4(String color, String s, Supplier<Color> getter, Consumer<Color> setter) {
+        ImGui.text(color);
+        ImGui.sameLine();
+        try {
+            Color c = getter.get();
+            float[] floats = {c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, c.getAlpha() / 255f};
+            if (ImGui.colorEdit4("##" + s, floats)) {
+                setter.accept(new Color(floats[0], floats[1], floats[2], floats[3]));
+            }
+        } catch (Exception e) {
+            ImGui.text(String.valueOf(e));
+        }
+    }
+
+    public static <T extends Enum<T>> void editEnum(String s, String s1, Supplier<T> getter, Consumer<T> setter) {
+        ImGui.text(s);
+        ImGui.sameLine();
+        try {
+            T e = getter.get();
+            ImInt index = new ImInt(e.ordinal());
+            if (ImGui.combo("##" + s1, index, Arrays.stream(e.getClass().getEnumConstants()).map(Enum::name).toArray(String[]::new))) {
+                setter.accept(EnumUtils.byOrdinal(index.get(), e));
+            }
+        } catch (Exception e) {
+            ImGui.text(String.valueOf(e));
         }
     }
 }

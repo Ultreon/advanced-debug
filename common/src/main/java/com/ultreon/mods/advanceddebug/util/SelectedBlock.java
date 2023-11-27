@@ -29,7 +29,7 @@ public class SelectedBlock {
     }
 
     public BlockEntity getBlockEntity() {
-        return level.getBlockEntity(pos);
+        return level.getChunkAt(pos).getBlockEntity(pos, LevelChunk.EntityCreationType.IMMEDIATE);
     }
 
     public BlockState getBlockState() {

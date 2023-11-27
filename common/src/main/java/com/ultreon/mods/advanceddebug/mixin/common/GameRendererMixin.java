@@ -65,9 +65,14 @@ public class GameRendererMixin {
 
     @Inject(method = "render", at = @At("RETURN"))
     private void advancedDebug$injectImGuiRender$return(float partialTicks, long nanoTime, boolean renderLevel, CallbackInfo ci) {
-        boolean toggleKey = glfwGetKey(minecraft.getWindow().getWindow(), GLFW_KEY_F12) == GLFW_TRUE;
+        boolean toggleKey = glfwGetKey(minecraft.getWindow().getWindow(), GLFW_KEY_F12) == GLFW_PRESS;
         if (advanced_debug$wasTogglePressed && !toggleKey) {
             advanced_debug$wasTogglePressed = false;
+
+            if (glfwGetKey(this.minecraft.getWindow().getWindow(), GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+                DebugGui.SHOW_OBJECT_INSPECTION.set(!DebugGui.SHOW_OBJECT_INSPECTION.get());
+                return;
+            }
             DebugGui.SHOW_IM_GUI.set(!DebugGui.SHOW_IM_GUI.get());
         } else if (!advanced_debug$wasTogglePressed && toggleKey) {
             advanced_debug$wasTogglePressed = true;

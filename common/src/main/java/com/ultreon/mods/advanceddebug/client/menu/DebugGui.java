@@ -1,8 +1,10 @@
 package com.ultreon.mods.advanceddebug.client.menu;
 
 import com.google.common.collect.Lists;
+import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.ultreon.libs.commons.v0.Identifier;
+import com.ultreon.libs.commons.v0.tuple.Pair;
 import com.ultreon.libs.commons.v0.util.ClassUtils;
 import com.ultreon.mods.advanceddebug.AdvancedDebug;
 import com.ultreon.mods.advanceddebug.IllegalThreadError;
@@ -19,6 +21,8 @@ import com.ultreon.mods.advanceddebug.client.input.KeyBindingList;
 import com.ultreon.mods.advanceddebug.client.registry.FormatterRegistry;
 import com.ultreon.mods.advanceddebug.extension.ExtensionLoader;
 import com.ultreon.mods.advanceddebug.init.ModDebugPages;
+import com.ultreon.mods.advanceddebug.inspect.InspectionNode;
+import com.ultreon.mods.advanceddebug.inspect.InspectionRoot;
 import com.ultreon.mods.advanceddebug.mixin.common.ImageButtonAccessor;
 import com.ultreon.mods.advanceddebug.registry.ModPreRegistries;
 import com.ultreon.mods.advanceddebug.text.ComponentBuilder;
@@ -35,13 +39,13 @@ import imgui.type.ImBoolean;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.ChatFormatting;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.components.events.ContainerEventHandler;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -58,7 +62,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.damagesource.CombatEntry;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffectUtil;
 import net.minecraft.world.entity.Entity;
@@ -86,14 +89,16 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.Team;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.lwjgl.glfw.GLFW;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 
-import javax.annotation.Nullable;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static net.minecraft.ChatFormatting.*;
@@ -121,6 +126,7 @@ public final class DebugGui implements Renderable, IDebugGui {
 
     private static final Marker MARKER = MarkerFactory.getMarker("DebugGui");
 
+    public static final ImBoolean SHOW_OBJECT_INSPECTION = new ImBoolean(false);
     public static final ImBoolean SHOW_PLAYER_INFO = new ImBoolean(false);
     public static final ImBoolean SHOW_CLIENT_LEVEL_INFO = new ImBoolean(false);
     public static final ImBoolean SHOW_SERVER_LEVEL_INFO = new ImBoolean(false);
@@ -146,6 +152,9 @@ public final class DebugGui implements Renderable, IDebugGui {
     private int height;
     private final ReentrantLock lock = new ReentrantLock(true);
     private boolean enabled = true;
+    private final boolean[] pressed = new boolean[GLFW.GLFW_KEY_LAST + 1];
+    private String inspectCurrentPath = "/";
+    private String inspectIdxInput = "";
 
     private DebugGui() {
         ClassUtils.checkCallerClassEquals(DebugGui.class);
@@ -163,9 +172,7 @@ public final class DebugGui implements Renderable, IDebugGui {
     }
 
     private void enable() {
-        RenderSystem.recordRenderCall(() -> {
-            enabled = true;
-        });
+        RenderSystem.recordRenderCall(() -> enabled = true);
     }
 
     /**
@@ -241,6 +248,10 @@ public final class DebugGui implements Renderable, IDebugGui {
             }
         };
 
+        long window = mc.getWindow().getWindow();
+        if (SHOW_OBJECT_INSPECTION.get()) {
+            this.renderObjectInspection(gfx, window, context, AdvancedDebug.getInstance().inspections);
+        }
         if (debugPage != null) {
             gfx.pose().pushPose();
             {
@@ -274,7 +285,88 @@ public final class DebugGui implements Renderable, IDebugGui {
         lock.unlock();
     }
 
-    public synchronized static void renderImGui(ImGuiImplGlfw glfw, ImGuiImplGl3 gl3) {
+    private void renderObjectInspection(GuiGraphics gfx, long window, DebugRenderContext ctx, InspectionRoot<Minecraft> inspections) {
+
+        String path = this.inspectCurrentPath;
+
+        Comparator<InspectionNode<?>> comparator = Comparator.comparing(InspectionNode::getName);
+
+        ctx.left(gfx, Component.literal(this.inspectIdxInput == null ? "" : this.inspectIdxInput).withStyle(ChatFormatting.WHITE));
+
+        ctx.left(gfx, Component.literal(path).withStyle(s -> s.withColor(BLUE).withBold(true).withUnderlined(true)));
+        ctx.left();
+
+        if (renderInspections(gfx, ctx, inspections, path, comparator)) return;
+
+        if (this.isKeyJustPressed(GLFW.GLFW_KEY_KP_ENTER)) {
+            String input = this.inspectIdxInput;
+            try {
+                int idx = Integer.parseInt(input);
+
+                @Nullable InspectionNode<?> node = inspections.getNode(path);
+                if (node == null) {
+                    this.inspectCurrentPath = "/";
+                    return;
+                }
+                List<InspectionNode<?>> nodes = node.getNodes().values().stream().sorted(comparator).toList();
+
+                if (nodes.isEmpty()) return;
+
+                if (idx >= 0 && idx < nodes.size()) {
+                    path += nodes.get(idx).getName() + "/";
+                    this.inspectCurrentPath = path;
+                }
+                this.inspectIdxInput = "";
+            } catch (NumberFormatException ignored) {
+                this.inspectIdxInput = "";
+            }
+        } else if (this.isKeyJustPressed(GLFW.GLFW_KEY_BACKSPACE)) {
+            if (this.inspectCurrentPath.equals("/")) {
+                return;
+            }
+
+            if (path.endsWith("/")) path = path.substring(0, path.length() - 1);
+            this.inspectCurrentPath = path.substring(0, path.lastIndexOf("/")) + "/";
+        } else if (this.isKeyJustPressed(GLFW.GLFW_KEY_KP_DECIMAL)) {
+            this.inspectIdxInput = "";
+        } else for (int num = 0; num < 10; num++) {
+            int key = GLFW.GLFW_KEY_KP_0 + num;
+            if (this.isKeyJustPressed(key)) {
+                this.inspectIdxInput += String.valueOf(num);
+                break;
+            }
+        }
+    }
+
+    private boolean renderInspections(GuiGraphics gfx, DebugRenderContext ctx, InspectionRoot<Minecraft> inspections, String path, Comparator<InspectionNode<?>> comparator) {
+        @Nullable InspectionNode<?> node = inspections.getNode(path);
+        if (node == null) {
+            this.inspectCurrentPath = "/";
+            return true;
+        }
+
+        List<InspectionNode<?>> nodes = node.getNodes().values().stream().sorted(comparator).toList();
+        int i = 0;
+        for (int nodesSize = nodes.size(); i < nodesSize; i++) {
+            InspectionNode<?> curNode = nodes.get(i);
+            ctx.left(gfx, Component.literal("[" + i + "]: ").withStyle(s -> s.withColor(GOLD).withBold(true)).append(Component.literal(curNode.getName()).withStyle(s -> s.withColor(WHITE).withBold(false))));
+        }
+
+        List<Pair<String, String>> elements = node.getElements().entrySet().stream().map(t -> new Pair<>(t.getKey(), t.getValue().get())).sorted(Comparator.comparing(Pair::getFirst)).toList();
+        for (Pair<String, String> element : elements) {
+            ctx.left(gfx, Component.literal(element.getFirst() + " = ").withStyle(s -> s.withColor(GRAY).withBold(false)).append(Component.literal(element.getSecond()).withStyle(s -> s.withColor(WHITE).withItalic(true))));
+        }
+        return false;
+    }
+
+    private boolean isKeyJustPressed(int key) {
+        var pressed = GLFW.glfwGetKey(this.minecraft.getWindow().getWindow(), key) == GLFW.GLFW_PRESS;
+        boolean wasPressed = this.pressed[key];
+        this.pressed[key] = pressed;
+        return pressed && !wasPressed;
+    }
+
+    public static synchronized void renderImGui(ImGuiImplGlfw glfw, ImGuiImplGl3 gl3) {
         if (!RenderSystem.isOnRenderThread()) throw new IllegalThreadError();
         if (!get().enabled) return;
         if (renderingImGui) return;
@@ -311,6 +403,7 @@ public final class DebugGui implements Renderable, IDebugGui {
                         ImGui.menuItem("Show Server Level Info", null, SHOW_SERVER_LEVEL_INFO);
                         ImGui.menuItem("Show Window Info", null, SHOW_WINDOW_INFO);
                         ImGui.menuItem("Show Screen Info", null, SHOW_SCREEN_INFO);
+                        ImGui.menuItem("Show Object Inspection", null, SHOW_OBJECT_INSPECTION);
                         ImGui.endMenu();
                     }
                     ExtensionLoader.invoke(Extension::handleImGuiMenuBar);
@@ -448,7 +541,7 @@ public final class DebugGui implements Renderable, IDebugGui {
         }
     }
 
-    public static void showWindowInfo(com.mojang.blaze3d.platform.Window window) {
+    public static void showWindowInfo(Window window) {
         ImGuiEx.text("Size:", () -> window.getWidth() + " × " + window.getHeight());
         ImGuiEx.text("Scaled Size:", () -> window.getGuiScaledWidth() + " × " + window.getGuiScaledHeight());
         ImGuiEx.text("GUI Scale:", window::getGuiScale);
@@ -564,18 +657,13 @@ public final class DebugGui implements Renderable, IDebugGui {
         ImGuiEx.bool("Thundering:", level::isThundering);
     }
 
-    @org.jetbrains.annotations.Nullable
-    private static ServerLevel getServerLevel(MinecraftServer server) {
+    @Nullable
+    public static ServerLevel getServerLevel(MinecraftServer server) {
         ClientLevel clientLevel = Minecraft.getInstance().level;
         return clientLevel == null ? null : server.getLevel(clientLevel.dimension());
     }
 
-    @ApiStatus.Internal
-    public static void dispose() {
-
-    }
-
-    private static void showSelectedBlock(SelectedBlock block) {
+    public static void showSelectedBlock(SelectedBlock block) {
         Level level = block.getLevel();
         BlockPos pos = block.getPos();
         BlockEntity blockEntity = block.getBlockEntity();
@@ -596,54 +684,33 @@ public final class DebugGui implements Renderable, IDebugGui {
             } catch (Exception e) {
                 return Blocks.VOID_AIR.arch$registryName();
             }
-        }, resourceLocation -> {
-            level.setBlock(pos, BuiltInRegistries.BLOCK.get(resourceLocation).defaultBlockState(), 0b00000011);
-        });
+        }, resourceLocation -> level.setBlock(pos, BuiltInRegistries.BLOCK.get(resourceLocation).defaultBlockState(), 0b00000011));
 
-        if (blockEntity != null) {
-            if (ImGui.collapsingHeader("Block Entity Info")) {
-                ImGui.treePush();
-                showBlockEntity(blockEntity);
-                ImGui.treePop();
-            }
+        if (blockEntity != null && ImGui.collapsingHeader("Block Entity Info")) {
+            ImGui.treePush();
+            showBlockEntity(blockEntity);
+            ImGui.treePop();
         }
-        if (blockState != null) {
-            if (ImGui.collapsingHeader("Block State Info")) {
-                ImGui.treePush();
-                showBlockState(blockState);
-                ImGui.treePop();
-            }
+        if (blockState != null && ImGui.collapsingHeader("Block State Info")) {
+            ImGui.treePush();
+            showBlockState(blockState);
+            ImGui.treePop();
         }
 
-        if (fluidState != null) {
-            if (ImGui.collapsingHeader("Fluid State Info")) {
-                ImGui.treePush();
-                showBlockState(blockState);
-                ImGui.treePop();
-            }
+        if (fluidState != null && ImGui.collapsingHeader("Fluid State Info")) {
+            ImGui.treePush();
+            showBlockState(blockState);
+            ImGui.treePop();
         }
     }
 
-    private static void showBlockState(BlockState blockState) {
+    public static void showBlockState(BlockState blockState) {
         ImGuiEx.text("Light Emission:", blockState::getLightEmission);
         ImGuiEx.text("Render Shape:", () -> blockState.getRenderShape().name());
         ImGuiEx.bool("Air:", blockState::isAir);
         ImGuiEx.bool("Signal Source:", blockState::isSignalSource);
         ImGuiEx.bool("Randomly Ticking:", blockState::isRandomlyTicking);
 
-//        Material material = blockState.getMaterial();
-//        if (ImGui.collapsingHeader("Material Info")) {
-//            ImGui.treePush();
-//            ImGuiEx.text("Color:", () -> "#%08x".formatted(material.getColor().col));
-//            ImGuiEx.text("Color ID:", () -> material.getColor().id);
-//            ImGuiEx.text("Push Reaction:", () -> material.getPushReaction().name());
-//            ImGuiEx.bool("Flammable:", material::isFlammable);
-//            ImGuiEx.bool("Liquid:", material::isLiquid);
-//            ImGuiEx.bool("Replaceable:", material::isReplaceable);
-//            ImGuiEx.bool("Solid Blocking:", material::isSolidBlocking);
-//            ImGuiEx.bool("Solid:", material::isSolid);
-//            ImGui.treePop();
-//        }
         SoundType soundType = blockState.getSoundType();
         if (ImGui.collapsingHeader("Sound Type Info")) {
             ImGui.treePush();
@@ -667,7 +734,7 @@ public final class DebugGui implements Renderable, IDebugGui {
     }
 
     @SuppressWarnings("ConstantValue")
-    private static void showBlockEntity(BlockEntity blockEntity) {
+    public static void showBlockEntity(BlockEntity blockEntity) {
         ResourceLocation key = BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(blockEntity.getType());
 
         ImGuiEx.text("Id:", () -> key);
@@ -744,47 +811,35 @@ public final class DebugGui implements Renderable, IDebugGui {
                 ImGui.treePop();
             }
         }
-        if (entity instanceof LivingEntity livingEntity) {
-            if (ImGui.collapsingHeader("Living Info")) {
-                ImGui.treePush();
-                showLivingInfo(livingEntity);
-                ImGui.treePop();
-            }
+        if (entity instanceof LivingEntity livingEntity && ImGui.collapsingHeader("Living Info")) {
+            ImGui.treePush();
+            showLivingInfo(livingEntity);
+            ImGui.treePop();
         }
-        if (entity instanceof Mob mob) {
-            if (ImGui.collapsingHeader("Mob Info")) {
-                ImGui.treePush();
-                showMobInfo(mob);
-                ImGui.treePop();
-            }
+        if (entity instanceof Mob mob && ImGui.collapsingHeader("Mob Info")) {
+            ImGui.treePush();
+            showMobInfo(mob);
+            ImGui.treePop();
         }
-        if (entity instanceof AbstractVillager villager) {
-            if (ImGui.collapsingHeader("Base Villager Info")) {
-                ImGui.treePush();
-                showBaseVillagerInfo(villager);
-                ImGui.treePop();
-            }
+        if (entity instanceof AbstractVillager villager && ImGui.collapsingHeader("Base Villager Info")) {
+            ImGui.treePush();
+            showBaseVillagerInfo(villager);
+            ImGui.treePop();
         }
-        if (entity instanceof ItemEntity itemEntity) {
-            if (ImGui.collapsingHeader("Item Info")) {
-                ImGui.treePush();
-                showItemEntityInfo(itemEntity);
-                ImGui.treePop();
-            }
+        if (entity instanceof ItemEntity itemEntity && ImGui.collapsingHeader("Item Info")) {
+            ImGui.treePush();
+            showItemEntityInfo(itemEntity);
+            ImGui.treePop();
         }
-        if (entity instanceof Projectile projectile) {
-            if (ImGui.collapsingHeader("Projectile Info")) {
-                ImGui.treePush();
-                showProjectileInfo(projectile);
-                ImGui.treePop();
-            }
+        if (entity instanceof Projectile projectile && ImGui.collapsingHeader("Projectile Info")) {
+            ImGui.treePush();
+            showProjectileInfo(projectile);
+            ImGui.treePop();
         }
-        if (entity instanceof Player player) {
-            if (ImGui.collapsingHeader("Player Info")) {
-                ImGui.treePush();
-                showPlayerInfo(player);
-                ImGui.treePop();
-            }
+        if (entity instanceof Player player && ImGui.collapsingHeader("Player Info")) {
+            ImGui.treePush();
+            showPlayerInfo(player);
+            ImGui.treePop();
         }
         if (ImGui.collapsingHeader("Extensions")) {
             ImGui.treePush();
@@ -1227,5 +1282,10 @@ public final class DebugGui implements Renderable, IDebugGui {
 
     public static boolean isImGuiFocused() {
         return imGuiFocused;
+    }
+
+    @ApiStatus.Internal
+    public static void dispose() {
+
     }
 }

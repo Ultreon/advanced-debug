@@ -19,7 +19,9 @@ public interface Extension extends ImGuiHandler {
 
     }
 
-    void handleImGuiMenuBar();
+    default void handleImGuiMenuBar() {
+
+    }
 
     default void handleEntity(Entity entity) {
 
