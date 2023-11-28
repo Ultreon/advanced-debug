@@ -1,6 +1,8 @@
 package com.ultreon.mods.advanceddebug.client.menu;
 
+import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Streams;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.ultreon.libs.commons.v0.Identifier;
@@ -16,6 +18,7 @@ import com.ultreon.mods.advanceddebug.api.common.*;
 import com.ultreon.mods.advanceddebug.api.events.IInitPagesEvent;
 import com.ultreon.mods.advanceddebug.api.extension.Extension;
 import com.ultreon.mods.advanceddebug.client.Config;
+import com.ultreon.mods.advanceddebug.client.GenericError;
 import com.ultreon.mods.advanceddebug.client.formatter.FormatterContext;
 import com.ultreon.mods.advanceddebug.client.input.KeyBindingList;
 import com.ultreon.mods.advanceddebug.client.registry.FormatterRegistry;
@@ -23,6 +26,7 @@ import com.ultreon.mods.advanceddebug.extension.ExtensionLoader;
 import com.ultreon.mods.advanceddebug.init.ModDebugPages;
 import com.ultreon.mods.advanceddebug.inspect.InspectionNode;
 import com.ultreon.mods.advanceddebug.inspect.InspectionRoot;
+import com.ultreon.mods.advanceddebug.mixin.common.EntityAccessor;
 import com.ultreon.mods.advanceddebug.mixin.common.ImageButtonAccessor;
 import com.ultreon.mods.advanceddebug.registry.ModPreRegistries;
 import com.ultreon.mods.advanceddebug.text.ComponentBuilder;
@@ -33,6 +37,8 @@ import dev.architectury.event.events.client.ClientPlayerEvent;
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.platform.Platform;
 import imgui.ImGui;
+import imgui.ImVec2;
+import imgui.extension.implot.ImPlot;
 import imgui.flag.*;
 import imgui.gl3.ImGuiImplGl3;
 import imgui.glfw.ImGuiImplGlfw;
@@ -57,19 +63,19 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
-import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Container;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffectUtil;
-import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.npc.AbstractVillager;
 import net.minecraft.world.entity.player.Player;
@@ -82,17 +88,16 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
-import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Team;
-import org.jetbrains.annotations.ApiStatus;
+import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -132,6 +137,8 @@ public final class DebugGui implements Renderable, IDebugGui {
     private static final Marker MARKER = MarkerFactory.getMarker("DebugGui");
 
     public static final ImBoolean SHOW_OBJECT_INSPECTION = new ImBoolean(false);
+    public static final ImBoolean SHOW_FPS_GRAPH = new ImBoolean(false);
+    public static final ImBoolean SHOW_SERVER_TPS_GRAPH = new ImBoolean(false);
     public static final ImBoolean SHOW_PLAYER_INFO = new ImBoolean(false);
     public static final ImBoolean SHOW_CLIENT_LEVEL_INFO = new ImBoolean(false);
     public static final ImBoolean SHOW_SERVER_LEVEL_INFO = new ImBoolean(false);
@@ -150,6 +157,21 @@ public final class DebugGui implements Renderable, IDebugGui {
     private static boolean imGuiHovered;
     private static boolean imGuiFocused;
     private static boolean renderingImGui = false;
+    private static final int GRAPH_DENSITY = 60;
+    private static final @NotNull Integer[] GRAPH_TIME = new Integer[GRAPH_DENSITY];
+    private static final @NotNull Integer[] FPS_GRAPH = new Integer[GRAPH_DENSITY];
+    private static final @NotNull Integer[] TICK_TIME_GRAPH = new Integer[GRAPH_DENSITY];
+    static {
+        for (int i = 0; i < GRAPH_DENSITY; i++) {
+            GRAPH_TIME[i] = -(GRAPH_DENSITY - i);
+            FPS_GRAPH[i] = 0;
+            TICK_TIME_GRAPH[i] = 0;
+        }
+    }
+
+    private static long nextFpsUpdate = 0;
+    private static long nextTickTimeUpdate = 0;
+
     private Font font;
     private int page = 0;
     private final Minecraft minecraft = Minecraft.getInstance();
@@ -164,7 +186,7 @@ public final class DebugGui implements Renderable, IDebugGui {
     private DebugGui() {
         ClassUtils.checkCallerClassEquals(DebugGui.class);
         if (INSTANCE != null) {
-            throw new Error("Invalid initialization for singleton class " + DebugGui.class.getName());
+            throw new GenericError("Invalid initialization for singleton class " + DebugGui.class.getName());
         }
 
         ClientLifecycleEvent.CLIENT_STOPPING.register(instance -> requestDisable());
@@ -187,8 +209,8 @@ public final class DebugGui implements Renderable, IDebugGui {
     public void requestDisable() {
         try {
             if (this.tryRequestDisable()) return;
-        } catch (InterruptedException ignored) {
-
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
 
         CrashReport report = new CrashReport("Time-out!", new TimeoutException("Timed out when waiting on Debug GUI shutdown request"));
@@ -229,6 +251,7 @@ public final class DebugGui implements Renderable, IDebugGui {
     @Override
     public void render(@NotNull GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
         if (!RenderSystem.isOnRenderThread()) return;
+
         if (!enabled || Minecraft.getInstance().options.renderDebug) return;
 
         updateSize();
@@ -373,6 +396,26 @@ public final class DebugGui implements Renderable, IDebugGui {
 
     public static synchronized void renderImGui(ImGuiImplGlfw glfw, ImGuiImplGl3 gl3) {
         if (!RenderSystem.isOnRenderThread()) throw new IllegalThreadError();
+        if (nextFpsUpdate < System.currentTimeMillis()) {
+            int fps = Minecraft.getInstance().getFps();
+            ArrayUtils.shift(FPS_GRAPH, -1);
+            FPS_GRAPH[FPS_GRAPH.length - 1] = fps;
+            nextFpsUpdate = System.currentTimeMillis() + 1000;
+        }
+
+        @Nullable MinecraftServer server = ServerLifecycle.getCurrentServer();
+        if (server != null) {
+            if (nextTickTimeUpdate < System.currentTimeMillis()) {
+
+                int tps = (int) (MathUtils.average(server.tickTimes) * 1.0E-6D);
+                ArrayUtils.shift(TICK_TIME_GRAPH, -1);
+                TICK_TIME_GRAPH[TICK_TIME_GRAPH.length - 1] = tps;
+                nextTickTimeUpdate = System.currentTimeMillis() + 1000;
+                ArrayUtils.shift(TICK_TIME_GRAPH, -1);
+                TICK_TIME_GRAPH[TICK_TIME_GRAPH.length - 1] = tps;
+                nextTickTimeUpdate = System.currentTimeMillis() + 1000;
+            }
+        }
         if (!get().enabled) return;
         if (renderingImGui) return;
         renderingImGui = true;
@@ -403,12 +446,14 @@ public final class DebugGui implements Renderable, IDebugGui {
                     ImGuiInputTextFlags.AllowTabInput)) {
                 if (ImGui.beginMenuBar()) {
                     if (ImGui.beginMenu("View")) {
-                        ImGui.menuItem("Show Player Info", null, SHOW_PLAYER_INFO);
-                        ImGui.menuItem("Show Client Level Info", null, SHOW_CLIENT_LEVEL_INFO);
-                        ImGui.menuItem("Show Server Level Info", null, SHOW_SERVER_LEVEL_INFO);
-                        ImGui.menuItem("Show Window Info", null, SHOW_WINDOW_INFO);
-                        ImGui.menuItem("Show Screen Info", null, SHOW_SCREEN_INFO);
-                        ImGui.menuItem("Show Object Inspection", null, SHOW_OBJECT_INSPECTION);
+                        ImGui.menuItem("Player Debug", null, SHOW_PLAYER_INFO);
+                        ImGui.menuItem("Client Level Debug", null, SHOW_CLIENT_LEVEL_INFO);
+                        ImGui.menuItem("Server Level Debug", null, SHOW_SERVER_LEVEL_INFO);
+                        ImGui.menuItem("Window Debug", null, SHOW_WINDOW_INFO);
+                        ImGui.menuItem("Screen Info", null, SHOW_SCREEN_INFO);
+                        ImGui.menuItem("Object Inspection", null, SHOW_OBJECT_INSPECTION);
+                        ImGui.menuItem("FPS Graph", null, SHOW_FPS_GRAPH);
+//                        ImGui.menuItem("TPS Graph", null, SHOW_SERVER_TPS_GRAPH);
                         ImGui.endMenu();
                     }
                     ExtensionLoader.invoke(Extension::handleImGuiMenuBar);
@@ -422,6 +467,8 @@ public final class DebugGui implements Renderable, IDebugGui {
             if (SHOW_SERVER_LEVEL_INFO.get()) showServerLevelInfoWindow();
             if (SHOW_WINDOW_INFO.get()) showWindowInfoWindow();
             if (SHOW_SCREEN_INFO.get()) showScreenInfoWindow();
+            if (SHOW_FPS_GRAPH.get()) showFpsGraph();
+            if (SHOW_SERVER_TPS_GRAPH.get()) showServerTpsGraph();
 
             imGuiHovered = ImGui.isAnyItemHovered() || ImGui.isWindowHovered(ImGuiHoveredFlags.AnyWindow);
             imGuiFocused = ImGui.isWindowFocused(ImGuiHoveredFlags.AnyWindow);
@@ -434,6 +481,52 @@ public final class DebugGui implements Renderable, IDebugGui {
         renderingImGui = false;
     }
 
+    private static void showFpsGraph() {
+        ImGui.setNextWindowSize(500, 400, ImGuiCond.Once);
+        ImGui.setNextWindowPos(ImGui.getMainViewport().getPosX() + 100, ImGui.getMainViewport().getPosY() + 100, ImGuiCond.Once);
+        if (ImGui.begin("FPS Graph")) {
+            ImVec2 vec = new ImVec2();
+            ImGui.getWindowSize(vec);
+            vec.y -= 36;
+            vec.x -= 18;
+            int min = Arrays.stream(FPS_GRAPH).min(Integer::compareTo).orElse(0);
+            int max = Arrays.stream(FPS_GRAPH).max(Integer::compareTo).orElse(0);
+            max = Math.max(max, min + 10);
+
+            ImPlot.setNextPlotLimits(-GRAPH_DENSITY, 0, min, max, ImGuiCond.Always);
+            if (ImPlot.beginPlot("##FpsGraph", "Seconds", "FPS", vec)) {
+                ImPlot.plotLine("FPS", GRAPH_TIME, FPS_GRAPH);
+                ImPlot.endPlot();
+            }
+        }
+
+        ImGui.end();
+    }
+
+    private static void showServerTpsGraph() {
+        MinecraftServer server = ServerLifecycle.getCurrentServer();
+
+        ImGui.setNextWindowSize(500, 400, ImGuiCond.Once);
+        ImGui.setNextWindowPos(ImGui.getMainViewport().getPosX() + 100, ImGui.getMainViewport().getPosY() + 100, ImGuiCond.Once);
+
+        if (ImGui.begin("TPS Graph")) {
+            ImVec2 vec = new ImVec2();
+            ImGui.getWindowSize(vec);
+            vec.y -= 36;
+            vec.x -= 18;
+            int min = Arrays.stream(TICK_TIME_GRAPH).min(Integer::compareTo).orElse(0);
+            int max = Arrays.stream(TICK_TIME_GRAPH).max(Integer::compareTo).orElse(0);
+            max = Math.max(max, min + 10);
+
+            ImPlot.setNextPlotLimits(-GRAPH_DENSITY, 0, min, max, ImGuiCond.Always);
+            if (ImPlot.beginPlot("##TpsGraph", "Seconds", "TPS", vec)) {
+                ImPlot.plotLine("Tick Time", GRAPH_TIME, TICK_TIME_GRAPH);
+                ImPlot.endPlot();
+            }
+        }
+        ImGui.end();
+    }
+
     private static void showPlayerInfoWindow() {
         ImGui.setNextWindowSize(400, 200, ImGuiCond.Once);
         ImGui.setNextWindowPos(ImGui.getMainViewport().getPosX() + 100, ImGui.getMainViewport().getPosY() + 100, ImGuiCond.Once);
@@ -442,10 +535,8 @@ public final class DebugGui implements Renderable, IDebugGui {
         var level = minecraft.level;
         var window = minecraft.getWindow();
         var screen = minecraft.screen;
-        if (ImGui.begin("Player Info", getDefaultFlags())) {
-            if (player != null) {
-                showLocalPlayer(player);
-            }
+        if (ImGui.begin("Player Info", getDefaultFlags()) && player != null) {
+            showLocalPlayer(player);
         }
         ImGui.end();
     }
@@ -458,10 +549,8 @@ public final class DebugGui implements Renderable, IDebugGui {
         var level = minecraft.level;
         var window = minecraft.getWindow();
         var screen = minecraft.screen;
-        if (ImGui.begin("Client Level Info", getDefaultFlags())) {
-            if (level != null) {
-                showClientLevelInfo(level);
-            }
+        if (ImGui.begin("Client Level Info", getDefaultFlags()) && level != null) {
+            showClientLevelInfo(level);
         }
         imGuiHovered = ImGui.isAnyItemHovered() || ImGui.isWindowHovered(ImGuiHoveredFlags.AnyWindow);
         imGuiFocused = ImGui.isWindowFocused(ImGuiHoveredFlags.AnyWindow);
@@ -567,21 +656,17 @@ public final class DebugGui implements Renderable, IDebugGui {
         showLevelInfo(level, frameTime);
 
         Entity entity = selectedEntity;
-        if (entity != null) {
-            if (ImGui.collapsingHeader("(Client) [" + entity.getId() + "] Entity " + entity.getStringUUID())) {
-                ImGui.treePush();
-                showEntity(entity);
-                ImGui.treePop();
-            }
+        if (entity != null && ImGui.collapsingHeader("(Client) [" + entity.getId() + "] Entity " + entity.getStringUUID())) {
+            ImGui.treePush();
+            showEntity(entity);
+            ImGui.treePop();
         }
 
         SelectedBlock block = SELECTED_BLOCKS.get(level);
-        if (block != null) {
-            if (ImGui.collapsingHeader("(Client) [" + block.getPos().toShortString() + "] Block " + block.getBlockState().getBlock().arch$registryName())) {
-                ImGui.treePush();
-                showSelectedBlock(block);
-                ImGui.treePop();
-            }
+        if (block != null && ImGui.collapsingHeader("(Client) [" + block.getPos().toShortString() + "] Block " + block.getBlockState().getBlock().arch$registryName())) {
+            ImGui.treePush();
+            showSelectedBlock(block);
+            ImGui.treePop();
         }
     }
 
@@ -620,21 +705,17 @@ public final class DebugGui implements Renderable, IDebugGui {
         showLevelInfo(level, frameTime);
 
         Entity serverEntity = selectedServerEntity;
-        if (serverEntity != null) {
-            if (ImGui.collapsingHeader("(Server) [" + serverEntity.getId() + "] Entity " + serverEntity.getStringUUID())) {
-                ImGui.treePush();
-                showEntity(serverEntity);
-                ImGui.treePop();
-            }
+        if (serverEntity != null && ImGui.collapsingHeader("(Server) [" + serverEntity.getId() + "] Entity " + serverEntity.getStringUUID())) {
+            ImGui.treePush();
+            showEntity(serverEntity);
+            ImGui.treePop();
         }
 
         SelectedBlock serverBlock = SELECTED_BLOCKS.get(level);
-        if (serverBlock != null) {
-            if (ImGui.collapsingHeader("(Server) [" + serverBlock.getPos().toShortString() + "] Block " + serverBlock.getBlockState().getBlock().arch$registryName())) {
-                ImGui.treePush();
-                showSelectedBlock(serverBlock);
-                ImGui.treePop();
-            }
+        if (serverBlock != null && ImGui.collapsingHeader("(Server) [" + serverBlock.getPos().toShortString() + "] Block " + serverBlock.getBlockState().getBlock().arch$registryName())) {
+            ImGui.treePush();
+            showSelectedBlock(serverBlock);
+            ImGui.treePop();
         }
     }
 
@@ -818,29 +899,16 @@ public final class DebugGui implements Renderable, IDebugGui {
     }
 
     public static void showEntity(Entity entity) {
-//        ImGuiEx.editString("Custom Name:", entity + "::customName", () -> entity.getCustomName().getString(), entity::setCustomName);
-        if (ImGui.collapsingHeader("Position")) {
-            ImGui.treePush();
-            ImGuiEx.editDouble("X:", entity + "::pos::x", entity::getX, v -> entity.setPos(v, entity.getY(), entity.getZ()));
-            ImGuiEx.editDouble("Y:", entity + "::pos::y", entity::getY, v -> entity.setPos(entity.getX(), v, entity.getZ()));
-            ImGuiEx.editDouble("Z:", entity + "::pos::z", entity::getZ, v -> entity.setPos(entity.getX(), entity.getY(), v));
-            ImGui.treePop();
+        if (entity.level().isClientSide) {
+            ImGuiEx.text("Dim:", () -> entity.level().dimension().location());
+        } else {
+            ImGuiEx.editEntry("Dim:", entity + "::dimension", v -> v.dimension().location(), Suppliers.memoizeWithExpiration(() -> Streams.stream(entity.level().getServer().getAllLevels()).sorted(Comparator.comparing(level -> level.dimension().location())).toList(), 30, TimeUnit.SECONDS), () -> (ServerLevel) entity.level(), level -> {
+                if (entity.level().isClientSide) return;
+                if (level != null) {
+                    entity.teleportTo(level, entity.getX(), entity.getY(), entity.getZ(), Set.of(), entity.getXRot(), entity.getYRot());
+                }
+            });
         }
-
-        if (ImGui.collapsingHeader("Rotation")) {
-            ImGui.treePush();
-            ImGuiEx.editFloat("X:", entity + "::rot::x", entity::getXRot, entity::setXRot);
-            ImGuiEx.editFloat("Y:", entity + "::rot::y", entity::getYRot, entity::setYRot);
-            ImGui.treePop();
-        }
-
-        ImGuiEx.editId("Dim:", entity + "::dimension", () -> entity.level().dimension().location(), resourceLocation -> {
-            if (entity.level().isClientSide) return;
-            ServerLevel level = ServerLifecycle.getCurrentServer().getLevel(ResourceKey.create(Registries.DIMENSION, resourceLocation));
-            if (level != null) {
-                entity.teleportTo(level, entity.getX(), entity.getY(), entity.getZ(), Set.of(), entity.getXRot(), entity.getYRot());
-            }
-        });
         ImGuiEx.text("Name:", entity::getName);
         ImGuiEx.text("UUID:", entity::getStringUUID);
         ImGuiEx.text("Display Name:", entity::getDisplayName);
@@ -865,6 +933,25 @@ public final class DebugGui implements Renderable, IDebugGui {
         ImGuiEx.editInt("Air Supply:", entity + "::airSupply", entity::getAirSupply, entity::setAirSupply);
         ImGuiEx.editFloat("Max Air Supply:", entity + "::maxAirSupply", entity::getMaxAirSupply, v -> {});
         ImGuiEx.editInt("ID:", entity + "::id", entity::getId, entity::setId);
+        ImGuiEx.button("Force Spawn:", entity + "::forceSpawn", () -> {
+            ((EntityAccessor)entity).setRemovalReason(null);
+            entity.level().addFreshEntity(entity);
+        });
+        if (ImGui.collapsingHeader("Position")) {
+            ImGui.treePush();
+            ImGuiEx.editDouble("X:", entity + "::pos::x", entity::getX, v -> entity.setPos(v, entity.getY(), entity.getZ()));
+            ImGuiEx.editDouble("Y:", entity + "::pos::y", entity::getY, v -> entity.setPos(entity.getX(), v, entity.getZ()));
+            ImGuiEx.editDouble("Z:", entity + "::pos::z", entity::getZ, v -> entity.setPos(entity.getX(), entity.getY(), v));
+            ImGui.treePop();
+        }
+
+        if (ImGui.collapsingHeader("Rotation")) {
+            ImGui.treePush();
+            ImGuiEx.editFloat("X:", entity + "::rot::x", entity::getXRot, entity::setXRot);
+            ImGuiEx.editFloat("Y:", entity + "::rot::y", entity::getYRot, entity::setYRot);
+            ImGui.treePop();
+        }
+
         IntegratedServer server = Minecraft.getInstance().getSingleplayerServer();
         if (server != null) {
             ImGuiEx.nbt("NBT:", () -> {
@@ -937,7 +1024,7 @@ public final class DebugGui implements Renderable, IDebugGui {
         }
     }
 
-    private static void showPlayerInfo(Player player) {
+    public static void showPlayerInfo(Player player) {
         ImGuiEx.text("Absorption:", player::getAbsorptionAmount);
         ImGuiEx.text("Luck:", player::getLuck);
         ImGuiEx.text("Used Inv Slots:", () -> player.getInventory().items.stream().filter(stack -> !stack.isEmpty()).count());
@@ -955,7 +1042,7 @@ public final class DebugGui implements Renderable, IDebugGui {
         }
     }
 
-    private static void showProjectileInfo(Projectile projectile) {
+    public static void showProjectileInfo(Projectile projectile) {
         Entity fishing = projectile.getOwner();
         if (ImGui.collapsingHeader("Owner Info")) {
             ImGui.treePush();
@@ -966,7 +1053,7 @@ public final class DebugGui implements Renderable, IDebugGui {
         }
     }
 
-    private static void showItemEntityInfo(ItemEntity itemEntity) {
+    public static void showItemEntityInfo(ItemEntity itemEntity) {
         ImGuiEx.editInt("Age:", itemEntity.toString() + "::age", itemEntity::getAge, v -> {});
         ImGuiEx.text("Owner:", itemEntity::getOwner);
         if (ImGui.collapsingHeader("Item")) {
@@ -976,7 +1063,7 @@ public final class DebugGui implements Renderable, IDebugGui {
         }
     }
 
-    private static void showBaseVillagerInfo(AbstractVillager villager) {
+    public static void showBaseVillagerInfo(AbstractVillager villager) {
         ImGuiEx.text("Villager XP:", villager::getVillagerXp);
         ImGuiEx.text("Unhappy Counter:", villager::getUnhappyCounter);
 
@@ -1001,7 +1088,7 @@ public final class DebugGui implements Renderable, IDebugGui {
         }
     }
 
-    private static void showMobInfo(Mob mob) {
+    public static void showMobInfo(Mob mob) {
         ImGuiEx.editBool("Aggressive:", mob + "::aggressive", mob::isAggressive, mob::setAggressive);
         ImGuiEx.editBool("Baby:", mob + "::mob::baby_set", mob::isBaby, mob::setBaby);
         ImGuiEx.editBool("Can Pickup Loot:", mob + "::baby", mob::canPickUpLoot, mob::setCanPickUpLoot);
@@ -1031,7 +1118,7 @@ public final class DebugGui implements Renderable, IDebugGui {
         }
     }
 
-    private static void showLivingInfo(LivingEntity livingEntity) {
+    public static void showLivingInfo(LivingEntity livingEntity) {
         ImGuiEx.editFloat("Health:", livingEntity + "::health", livingEntity::getHealth, livingEntity::setHealth);
         ImGuiEx.editFloat("Max Health:", livingEntity + "::maxHealth", livingEntity::getMaxHealth, v -> {});
         ImGuiEx.editInt("Death Time:", livingEntity + "::deathTime", () -> livingEntity.deathTime, v -> livingEntity.deathTime = v);
@@ -1137,7 +1224,7 @@ public final class DebugGui implements Renderable, IDebugGui {
     public static void showEffectInstance(MobEffectInstance instance) {
         ImGuiEx.text("Id:", () -> BuiltInRegistries.MOB_EFFECT.getKey(instance.getEffect()));
         ImGuiEx.text("Duration:", () -> MobEffectUtil.formatDuration(instance, 1.0f));
-        ImGuiEx.text("Duration:", () -> instance.getFactorData().orElse(null));
+        ImGuiEx.text("Factor Data:", () -> instance.getFactorData().orElse(null));
     }
 
     public static void showOffer(MerchantOffer offer) {
@@ -1174,11 +1261,21 @@ public final class DebugGui implements Renderable, IDebugGui {
     }
 
     public static void showTeam(Team team) {
-        ImGuiEx.text("Name:", team::getName);
-        ImGuiEx.text("Color:", () -> "#%06x".formatted(team.getColor().getColor()));
-        ImGuiEx.text("Collision Rule:", () -> team.getCollisionRule().getDisplayName());
-        ImGuiEx.text("Death Msg Visibility:", () -> team.getDeathMessageVisibility().getDisplayName());
-        ImGuiEx.text("Name Tag Visibility:", () -> team.getNameTagVisibility().getDisplayName());
+        if (team instanceof PlayerTeam playerTeam) {
+            String key = "$Team(" + team.getName() + ")";
+            ImGuiEx.text("Name:", team::getName);
+            ImGuiEx.editEnum("Color:", key + "::color", playerTeam::getColor, playerTeam::setColor);
+            ImGuiEx.editEnum("Collision Rule:", key + "::collisionRule", playerTeam::getCollisionRule, playerTeam::setCollisionRule);
+            ImGuiEx.editEnum("Name Tag Visibility:", key + "::nameTagVisibility", playerTeam::getNameTagVisibility, playerTeam::setNameTagVisibility);
+            ImGuiEx.editEnum("Death Msg Visibility:", key + "::deathMsgVisibility", playerTeam::getDeathMessageVisibility, playerTeam::setDeathMessageVisibility);
+            ImGuiEx.editString("DisplayName:", key + "::displayName", () -> playerTeam.getDisplayName().getString(), name -> playerTeam.setDisplayName(Component.literal(name)));
+        } else {
+            ImGuiEx.text("Color:", () -> team.getColor().getColor());
+            ImGuiEx.text("Name:", team::getName);
+            ImGuiEx.text("Collision Rule:", () -> team.getCollisionRule().getDisplayName());
+            ImGuiEx.text("Death Msg Visibility:", () -> team.getDeathMessageVisibility().getDisplayName());
+            ImGuiEx.text("Name Tag Visibility:", () -> team.getNameTagVisibility().getDisplayName());
+        }
     }
 
     public static void showItem(ItemStack stack) {
@@ -1244,10 +1341,6 @@ public final class DebugGui implements Renderable, IDebugGui {
             }
             ImGui.treePop();
         }
-    }
-
-    private static void showUtils() {
-
     }
 
     private void updateSize() {
@@ -1432,10 +1525,5 @@ public final class DebugGui implements Renderable, IDebugGui {
 
     public static boolean isImGuiFocused() {
         return imGuiFocused;
-    }
-
-    @ApiStatus.Internal
-    public static void dispose() {
-
     }
 }

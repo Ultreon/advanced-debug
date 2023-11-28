@@ -1,5 +1,6 @@
 package com.ultreon.mods.advanceddebug.util;
 
+import com.ultreon.libs.commons.v0.tuple.Pair;
 import com.ultreon.libs.commons.v0.util.EnumUtils;
 import com.ultreon.libs.functions.v0.consumer.DoubleConsumer;
 import com.ultreon.libs.functions.v0.consumer.*;
@@ -15,18 +16,23 @@ import imgui.flag.ImGuiInputTextFlags;
 import imgui.type.*;
 import net.minecraft.ResourceLocationException;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.StringTagVisitor;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.*;
+import java.util.List;
 import java.util.function.IntConsumer;
 import java.util.function.LongConsumer;
 import java.util.function.*;
@@ -124,7 +130,7 @@ public class ImGuiEx {
         ImGui.sameLine();
         try {
             ImString i = new ImString(value.get(), 512);
-            if (ImGui.inputText("##" + id, i)) {
+            if (ImGui.inputText("##" + id, i, ImGuiInputTextFlags.EnterReturnsTrue)) {
                 setter.accept(i.get());
             }
         } catch (Throwable e) {
@@ -137,9 +143,48 @@ public class ImGuiEx {
         ImGui.sameLine();
         try {
             ImString i = new ImString(value, 512);
-            if (ImGui.inputText("##" + id, i)) {
+            if (ImGui.inputText("##" + id, i, ImGuiInputTextFlags.EnterReturnsTrue)) {
                 setter.accept(i.get());
             }
+        } catch (Throwable e) {
+            ExceptionList.push(e);
+        }
+    }
+
+    /**
+     * {@code List<T> sorted = registry.stream().sorted(Comparator.comparing(registry::getKey)).toList();}
+     * </pre>
+     */
+    public static <T> void editEntry(String label, String id, Registry<T> registry, List<T> sorted, Supplier<T> getter, Consumer<T> setter) {
+        ImGui.text(label);
+        ImGui.sameLine();
+        try {
+            T e = getter.get();
+            int ordinal = sorted.indexOf(e);
+            ImInt index = new ImInt(ordinal);
+            if (ImGui.combo("##" + id, index, sorted.stream().map(registry::getKey).map(Objects::toString).toArray(String[]::new))) {
+                setter.accept(sorted.get(index.get()));
+            }
+        } catch (ResourceLocationException ignored) {
+
+        } catch (Throwable e) {
+            ExceptionList.push(e);
+        }
+    }
+
+    public static <T> void editEntry(String label, String id, Function<T, ResourceLocation> map, Supplier<List<T>> sorted, Supplier<T> getter, Consumer<T> setter) {
+        ImGui.text(label);
+        ImGui.sameLine();
+        try {
+            T e = getter.get();
+            List<T> list = sorted.get();
+            int ordinal = list.indexOf(e);
+            ImInt index = new ImInt(ordinal);
+            if (ImGui.combo("##" + id, index, list.stream().map(map).map(Objects::toString).toArray(String[]::new))) {
+                setter.accept(list.get(index.get()));
+            }
+        } catch (ResourceLocationException ignored) {
+
         } catch (Throwable e) {
             ExceptionList.push(e);
         }
@@ -165,7 +210,7 @@ public class ImGuiEx {
         ImGui.sameLine();
         try {
             ImString i = new ImString(value.toString(), 160);
-            if (ImGui.inputText("##" + id, i)) {
+            if (ImGui.inputText("##" + id, i, ImGuiInputTextFlags.EnterReturnsTrue)) {
                 setter.accept(new ResourceLocation(i.get()));
             }
         } catch (ResourceLocationException ignored) {
@@ -232,7 +277,7 @@ public class ImGuiEx {
         ImGui.sameLine();
         try {
             ImInt i = new ImInt(value.getAsInt());
-            if (ImGui.inputInt("##" + id, i)) {
+            if (ImGui.inputInt("##" + id, i, 1, 100, ImGuiInputTextFlags.EnterReturnsTrue)) {
                 setter.accept(i.get());
             }
         } catch (Throwable e) {
@@ -246,7 +291,7 @@ public class ImGuiEx {
         ImGui.sameLine();
         try {
             ImInt i = new ImInt(value);
-            if (ImGui.inputInt("##" + id, i)) {
+            if (ImGui.inputInt("##" + id, i, 1, 100, ImGuiInputTextFlags.EnterReturnsTrue)) {
                 setter.accept(i.get());
             }
         } catch (Throwable e) {
@@ -285,7 +330,7 @@ public class ImGuiEx {
         ImGui.sameLine();
         try {
             ImFloat i = new ImFloat(value.getFloat());
-            if (ImGui.inputFloat("##" + id, i)) {
+            if (ImGui.inputFloat("##" + id, i, 0, 0, "%.3f", ImGuiInputTextFlags.EnterReturnsTrue)) {
                 setter.accept(i.get());
             }
         } catch (Throwable e) {
@@ -298,7 +343,7 @@ public class ImGuiEx {
         ImGui.sameLine();
         try {
             ImFloat i = new ImFloat(value);
-            if (ImGui.inputFloat("##" + id, i)) {
+            if (ImGui.inputFloat("##" + id, i, 0, 0, "%.3f", ImGuiInputTextFlags.EnterReturnsTrue)) {
                 setter.accept(i.get());
             }
         } catch (Throwable e) {
@@ -311,7 +356,7 @@ public class ImGuiEx {
         ImGui.sameLine();
         try {
             ImDouble i = new ImDouble(value.getAsDouble());
-            if (ImGui.inputDouble("##" + id, i)) {
+            if (ImGui.inputDouble("##" + id, i, 0, 0, "%.6f", ImGuiInputTextFlags.EnterReturnsTrue)) {
                 setter.accept(i.get());
             }
         } catch (Throwable e) {
@@ -324,7 +369,7 @@ public class ImGuiEx {
         ImGui.sameLine();
         try {
             ImDouble i = new ImDouble(value);
-            if (ImGui.inputDouble("##" + id, i)) {
+            if (ImGui.inputDouble("##" + id, i, 0, 0, "%.6f", ImGuiInputTextFlags.EnterReturnsTrue)) {
                 setter.accept(i.get());
             }
         } catch (Throwable e) {

@@ -4,6 +4,7 @@ import com.ultreon.mods.advanceddebug.client.menu.DebugGui;
 import com.ultreon.mods.advanceddebug.events.GameRendererEvents;
 import imgui.ImGui;
 import imgui.ImGuiIO;
+import imgui.extension.implot.ImPlot;
 import imgui.gl3.ImGuiImplGl3;
 import imgui.glfw.ImGuiImplGlfw;
 import net.minecraft.client.Minecraft;
@@ -46,6 +47,7 @@ public class GameRendererMixin {
             throw new IllegalStateException("Unable to initialize GLFW");
         }
         ImGui.createContext();
+        ImPlot.createContext();
         final ImGuiIO io = ImGui.getIO();
         io.setIniFilename(null);
         io.getFonts().addFontDefault();
