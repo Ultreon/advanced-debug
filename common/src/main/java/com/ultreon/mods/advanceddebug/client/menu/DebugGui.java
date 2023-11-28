@@ -27,6 +27,7 @@ import com.ultreon.mods.advanceddebug.mixin.common.ImageButtonAccessor;
 import com.ultreon.mods.advanceddebug.registry.ModPreRegistries;
 import com.ultreon.mods.advanceddebug.text.ComponentBuilder;
 import com.ultreon.mods.advanceddebug.util.*;
+import com.ultreon.mods.lib.util.ServerLifecycle;
 import dev.architectury.event.events.client.ClientLifecycleEvent;
 import dev.architectury.event.events.client.ClientPlayerEvent;
 import dev.architectury.event.events.common.LifecycleEvent;
@@ -56,18 +57,19 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Container;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffectUtil;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.OwnableEntity;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.npc.AbstractVillager;
 import net.minecraft.world.entity.player.Player;
@@ -80,8 +82,11 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.material.FluidState;
@@ -201,7 +206,7 @@ public final class DebugGui implements Renderable, IDebugGui {
      * This method cannot be called from the render thread.
      *
      * @return {@code true} - disabling was done successful<br>
-     *         {@code false} - the request was timed-out.
+     * {@code false} - the request was timed-out.
      * @throws InterruptedException if the thread was interrupted while waiting on the lock to be available.
      */
     public boolean tryRequestDisable() throws InterruptedException {
@@ -693,18 +698,18 @@ public final class DebugGui implements Renderable, IDebugGui {
         }
         if (blockState != null && ImGui.collapsingHeader("Block State Info")) {
             ImGui.treePush();
-            showBlockState(blockState);
+            showBlockState(level, pos, blockState);
             ImGui.treePop();
         }
 
         if (fluidState != null && ImGui.collapsingHeader("Fluid State Info")) {
             ImGui.treePush();
-            showBlockState(blockState);
+            showFluidState(level, pos, fluidState);
             ImGui.treePop();
         }
     }
 
-    public static void showBlockState(BlockState blockState) {
+    public static void showBlockState(Level level, BlockPos pos, BlockState blockState) {
         ImGuiEx.text("Light Emission:", blockState::getLightEmission);
         ImGuiEx.text("Render Shape:", () -> blockState.getRenderShape().name());
         ImGuiEx.bool("Air:", blockState::isAir);
@@ -727,7 +732,34 @@ public final class DebugGui implements Renderable, IDebugGui {
         if (ImGui.collapsingHeader("Properties")) {
             ImGui.treePush();
             for (var property : properties) {
-                ImGuiEx.text(property.getName() + ":", () -> blockState.getValue(property));
+                //noinspection rawtypes
+                if (property instanceof EnumProperty enumProperty) {
+                    //noinspection rawtypes,unchecked
+                    ImGuiEx.editEnum(enumProperty.getName() + ":", "", () -> (Enum) blockState.getValue(enumProperty), v -> blockState.setValue(enumProperty, v));
+                } else {
+                    Comparable<?> value = blockState.getValue(property);
+                    ImGuiEx.text(property.getName() + ":", () -> value);
+                }
+            }
+            ImGui.treePop();
+        }
+    }
+
+    public static void showFluidState(Level level, BlockPos pos, FluidState blockState) {
+        ImGuiEx.bool("Randomly Ticking:", blockState::isRandomlyTicking);
+
+        Collection<Property<?>> properties = blockState.getProperties();
+        if (ImGui.collapsingHeader("Properties")) {
+            ImGui.treePush();
+            for (var property : properties) {
+                //noinspection rawtypes
+                if (property instanceof EnumProperty enumProperty) {
+                    //noinspection rawtypes,unchecked
+                    ImGuiEx.editEnum(enumProperty.getName() + ":", "", () -> (Enum) blockState.getValue(enumProperty), v -> blockState.setValue(enumProperty, v));
+                } else {
+                    Comparable<?> value = blockState.getValue(property);
+                    ImGuiEx.text(property.getName() + ":", () -> value);
+                }
             }
             ImGui.treePop();
         }
@@ -736,6 +768,8 @@ public final class DebugGui implements Renderable, IDebugGui {
     @SuppressWarnings("ConstantValue")
     public static void showBlockEntity(BlockEntity blockEntity) {
         ResourceLocation key = BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(blockEntity.getType());
+
+        String s = "$(" + blockEntity.getLevel().isClientSide + "):(" + blockEntity.getBlockPos().toShortString() + "):(" + key + ")";
 
         ImGuiEx.text("Id:", () -> key);
         IntegratedServer server = Minecraft.getInstance().getSingleplayerServer();
@@ -756,6 +790,20 @@ public final class DebugGui implements Renderable, IDebugGui {
             });
         }
 
+        ImGuiEx.bool("Is Valid:", () -> blockEntity.getType().isValid(blockEntity.getBlockState()));
+        ImGuiEx.bool("Has Level:", blockEntity::hasLevel);
+        ImGuiEx.bool("Removed:", blockEntity::isRemoved);
+        ImGuiEx.button("Mark dirty:", s + "::markDirty", blockEntity::setChanged);
+        ImGuiEx.bool("Only OP can set NBT:", blockEntity::onlyOpCanSetNbt);
+
+        if (blockEntity instanceof Container container && ImGui.collapsingHeader("Container")) {
+            ImGui.treePush();
+            ImGuiEx.bool("Is Empty:", container::isEmpty);
+            ImGuiEx.text("Container Size:", container::getContainerSize);
+            ImGuiEx.text("Max Stack Size:", container::getMaxStackSize);
+            ImGui.treePop();
+        }
+
         if (ImGui.collapsingHeader("Extensions")) {
             ImGui.treePush();
             ExtensionLoader.invoke(extension -> {
@@ -770,18 +818,53 @@ public final class DebugGui implements Renderable, IDebugGui {
     }
 
     public static void showEntity(Entity entity) {
-        ImGuiEx.text("Pos:", () -> entity.blockPosition().toShortString());
-        ImGuiEx.text("Rot:", () -> entity.getXRot() + ", " + entity.getYRot());
-        ImGuiEx.text("Dim:", () -> entity.level().dimension().location());
+//        ImGuiEx.editString("Custom Name:", entity + "::customName", () -> entity.getCustomName().getString(), entity::setCustomName);
+        if (ImGui.collapsingHeader("Position")) {
+            ImGui.treePush();
+            ImGuiEx.editDouble("X:", entity + "::pos::x", entity::getX, v -> entity.setPos(v, entity.getY(), entity.getZ()));
+            ImGuiEx.editDouble("Y:", entity + "::pos::y", entity::getY, v -> entity.setPos(entity.getX(), v, entity.getZ()));
+            ImGuiEx.editDouble("Z:", entity + "::pos::z", entity::getZ, v -> entity.setPos(entity.getX(), entity.getY(), v));
+            ImGui.treePop();
+        }
+
+        if (ImGui.collapsingHeader("Rotation")) {
+            ImGui.treePush();
+            ImGuiEx.editFloat("X:", entity + "::rot::x", entity::getXRot, entity::setXRot);
+            ImGuiEx.editFloat("Y:", entity + "::rot::y", entity::getYRot, entity::setYRot);
+            ImGui.treePop();
+        }
+
+        ImGuiEx.editId("Dim:", entity + "::dimension", () -> entity.level().dimension().location(), resourceLocation -> {
+            if (entity.level().isClientSide) return;
+            ServerLevel level = ServerLifecycle.getCurrentServer().getLevel(ResourceKey.create(Registries.DIMENSION, resourceLocation));
+            if (level != null) {
+                entity.teleportTo(level, entity.getX(), entity.getY(), entity.getZ(), Set.of(), entity.getXRot(), entity.getYRot());
+            }
+        });
         ImGuiEx.text("Name:", entity::getName);
         ImGuiEx.text("UUID:", entity::getStringUUID);
-        ImGuiEx.text("Custom Name:", entity::getCustomName);
         ImGuiEx.text("Display Name:", entity::getDisplayName);
         ImGuiEx.text("Scoreboard Name:", entity::getScoreboardName);
         ImGuiEx.bool("Is In Powder Snow:", () -> entity.isInPowderSnow);
-        ImGuiEx.bool("No Physics:", () -> entity.noPhysics);
-        ImGuiEx.bool("No Culling:", () -> entity.noCulling);
-        ImGuiEx.bool("No Gravity:", entity::isNoGravity);
+        ImGuiEx.editBool("No Physics:", entity + "::noPhysics", () -> entity.noPhysics, v -> entity.noPhysics = v);
+        ImGuiEx.editBool("No Culling:", entity + "::noCulling", () -> entity.noCulling, v -> entity.noCulling = v);
+        ImGuiEx.editBool("No Gravity:", entity + "::noGravity", entity::isNoGravity, entity::setNoGravity);
+        ImGuiEx.editBool("Blocks Building:", entity + "::blocksBuilding", () -> entity.blocksBuilding, v -> entity.blocksBuilding = v);
+        ImGuiEx.editFloat("Fall Distance:", entity + "::fallDistance", () -> entity.fallDistance, v -> entity.fallDistance = v);
+        ImGuiEx.editFloat("Fly Distance:", entity + "::flyDistance", () -> entity.flyDist, v -> entity.flyDist = v);
+        ImGuiEx.editBool("Fly Distance:", entity + "::flyDistance", () -> entity.hasImpulse, v -> entity.hasImpulse = v);
+        ImGuiEx.editBool("Horiz. Collision:", entity + "::horizCollision", () -> entity.horizontalCollision, v -> entity.horizontalCollision = v);
+        ImGuiEx.editBool("Hurt Marked:", entity + "::hurtMarked", () -> entity.hurtMarked, v -> entity.hurtMarked = v);
+        ImGuiEx.editInt("Invul. Time:", entity + "::invulTime", () -> entity.invulnerableTime, v -> entity.invulnerableTime = v);
+        ImGuiEx.editFloat("Move Distance:", entity + "::moveDist", () -> entity.moveDist, v -> entity.moveDist = v);
+        ImGuiEx.editBool("Minor Horiz. Collision:", entity + "::minorHorizCollision", () -> entity.minorHorizontalCollision, v -> entity.minorHorizontalCollision = v);
+        ImGuiEx.editInt("Tick Count:", entity + "::tickCount", () -> entity.tickCount, v -> entity.tickCount = v);
+        ImGuiEx.editBool("Vert. Collision:", entity + "::vertCollision", () -> entity.verticalCollision, v -> entity.verticalCollision = v);
+        ImGuiEx.editBool("Vert. Collision Below:", entity + "::vertCollisionBelow", () -> entity.verticalCollisionBelow, v -> entity.verticalCollisionBelow = v);
+        ImGuiEx.editFloat("Walk Distance:", entity + "::walkDist", () -> entity.walkDist, v -> entity.walkDist = v);
+        ImGuiEx.editInt("Air Supply:", entity + "::airSupply", entity::getAirSupply, entity::setAirSupply);
+        ImGuiEx.editFloat("Max Air Supply:", entity + "::maxAirSupply", entity::getMaxAirSupply, v -> {});
+        ImGuiEx.editInt("ID:", entity + "::id", entity::getId, entity::setId);
         IntegratedServer server = Minecraft.getInstance().getSingleplayerServer();
         if (server != null) {
             ImGuiEx.nbt("NBT:", () -> {
@@ -884,7 +967,7 @@ public final class DebugGui implements Renderable, IDebugGui {
     }
 
     private static void showItemEntityInfo(ItemEntity itemEntity) {
-        ImGuiEx.text("Age:", itemEntity::getAge);
+        ImGuiEx.editInt("Age:", itemEntity.toString() + "::age", itemEntity::getAge, v -> {});
         ImGuiEx.text("Owner:", itemEntity::getOwner);
         if (ImGui.collapsingHeader("Item")) {
             ImGui.treePush();
@@ -919,16 +1002,19 @@ public final class DebugGui implements Renderable, IDebugGui {
     }
 
     private static void showMobInfo(Mob mob) {
+        ImGuiEx.editBool("Aggressive:", mob + "::aggressive", mob::isAggressive, mob::setAggressive);
+        ImGuiEx.editBool("Baby:", mob + "::mob::baby_set", mob::isBaby, mob::setBaby);
+        ImGuiEx.editBool("Can Pickup Loot:", mob + "::baby", mob::canPickUpLoot, mob::setCanPickUpLoot);
+        ImGuiEx.editBool("Left Handed:", mob + "::left_handed", mob::isLeftHanded, mob::setLeftHanded);
+        ImGuiEx.editBool("No AI:", mob + "::no_ai", mob::isNoAi, mob::setNoAi);
+        ImGuiEx.editFloat("Max Head X-Rot:", mob + "::getMaxHeadXRot", mob::getMaxHeadXRot, v -> {});
+        ImGuiEx.editFloat("Max Head Y-Rot:", mob + "::getMaxHeadYRot", mob::getMaxHeadYRot, v -> {});
+        ImGuiEx.editFloat("Head Rot Speed:", mob + "::getHeadRotSpeed", mob::getHeadRotSpeed, v -> {});
+        ImGuiEx.text("Target:", () -> mob.getTarget().getUUID());
         ImGuiEx.text("Ambient Sound Interval:", mob::getAmbientSoundInterval);
-        ImGuiEx.text("Max Head X-Rot:", mob::getMaxHeadXRot);
-        ImGuiEx.text("Max Head Y-Rot:", mob::getMaxHeadYRot);
-        ImGuiEx.text("Head Rot Speed:", mob::getHeadRotSpeed);
         ImGuiEx.text("Restrict Center:", () -> mob.getRestrictCenter().toShortString());
         ImGuiEx.text("Restrict Radius:", mob::getRestrictRadius);
         ImGuiEx.bool("Is Leashed:", mob::isLeashed);
-        ImGuiEx.bool("Is Aggressive:", mob::isAggressive);
-        ImGuiEx.bool("Is Left Handed:", mob::isLeftHanded);
-        ImGuiEx.bool("Has No AI:", mob::isNoAi);
         ImGuiEx.bool("Restricted:", mob::isWithinRestriction);
         ImGuiEx.bool("Persistent:", mob::isPersistenceRequired);
 
@@ -946,13 +1032,77 @@ public final class DebugGui implements Renderable, IDebugGui {
     }
 
     private static void showLivingInfo(LivingEntity livingEntity) {
-        ImGuiEx.text("Health:", livingEntity::getHealth);
-        ImGuiEx.text("Max Health:", livingEntity::getMaxHealth);
+        ImGuiEx.editFloat("Health:", livingEntity + "::health", livingEntity::getHealth, livingEntity::setHealth);
+        ImGuiEx.editFloat("Max Health:", livingEntity + "::maxHealth", livingEntity::getMaxHealth, v -> {});
+        ImGuiEx.editInt("Death Time:", livingEntity + "::deathTime", () -> livingEntity.deathTime, v -> livingEntity.deathTime = v);
+        ImGuiEx.editFloat("Attack Anim:", livingEntity + "::attackAnim", () -> livingEntity.attackAnim, v -> livingEntity.attackAnim = v);
+        ImGuiEx.editInt("Swing Time:", livingEntity + "::swingTime", () -> livingEntity.swingTime, v -> livingEntity.swingTime = v);
+        ImGuiEx.editBool("Swinging:", livingEntity + "::swinging", () -> livingEntity.swinging, v -> livingEntity.swinging = v);
+
+        ImGuiEx.editFloat("Absorption Amount:", livingEntity + "::absorptionAmount", livingEntity::getAbsorptionAmount, livingEntity::setAbsorptionAmount);
+        ImGuiEx.editInt("Armor Value:", livingEntity + "::armorValue", livingEntity::getArmorValue, v -> {});
+        ImGuiEx.editInt("Arrow Count:", livingEntity + "::arrowCount", livingEntity::getArrowCount, livingEntity::setArrowCount);
+        ImGuiEx.editInt("Experience Reward:", livingEntity + "::experienceReward", livingEntity::getExperienceReward, v -> {});
+        ImGuiEx.editInt("Fall Flying Ticks:", livingEntity + "::fallFlyingTicks", livingEntity::getFallFlyingTicks, v -> {});
+        ImGuiEx.editBool("Fire Immune:", livingEntity + "::fireImmune", livingEntity::fireImmune, v -> {});
+        ImGuiEx.editInt("Hurt Time:", livingEntity + "::hurtTime", () -> livingEntity.hurtTime, v -> livingEntity.hurtTime = v);
+        ImGuiEx.editInt("Hurt Duration:", livingEntity + "::hurtDuration", () -> livingEntity.hurtDuration, v -> livingEntity.hurtDuration = v);
+        ImGuiEx.editFloat("Hurt Direction:", livingEntity + "::hurtDirection", livingEntity::getHurtDir, v -> {});
+        ImGuiEx.editFloat("Invulnerable Duration:", livingEntity + "::invulnerableDuration", () -> livingEntity.invulnerableDuration, v -> {});
+        ImGuiEx.editFloat("Jump Boost Power:", livingEntity + "::jumpBoostPower", livingEntity::getJumpBoostPower, v -> {});
+        ImGuiEx.editFloat("Old Attack Anim:", livingEntity + "::oldAttackAnim", () -> livingEntity.oAttackAnim, v -> livingEntity.oAttackAnim = v);
+        ImGuiEx.editBool("On Climable:", livingEntity + "::onClimable", livingEntity::onClimbable, v -> {});
+        ImGuiEx.editInt("Remove Arrow Time:", livingEntity + "::removeArrowTime", () -> livingEntity.removeArrowTime, v -> livingEntity.removeArrowTime = v);
+        ImGuiEx.editInt("Remove Stinger Time:", livingEntity + "::removeStingerTime", () -> livingEntity.removeStingerTime, v -> livingEntity.removeStingerTime = v);
+        ImGuiEx.button("Remove All Effects:", livingEntity + "::removeAllEffects()", livingEntity::removeAllEffects);
+        ImGuiEx.editFloat("Rotation A:", livingEntity + "::rotA", () -> livingEntity.rotA, v -> {});
+        ImGuiEx.editFloat("Speed:", livingEntity + "::speed", livingEntity::getSpeed, livingEntity::setSpeed);
+        ImGuiEx.editEnum("Swinging Arm:", livingEntity + "::swingingArm", () -> livingEntity.swingingArm, v -> livingEntity.swingingArm = v);
+        ImGuiEx.editFloat("Time Offsets:", livingEntity + "::timeOffs", () -> livingEntity.timeOffs, v -> {});
+        ImGuiEx.editFloat("Y Body Rotation:", livingEntity + "::yBodyRot", () -> livingEntity.yBodyRot, v -> livingEntity.yBodyRot = v);
+        ImGuiEx.editFloat("Y Head Rotation:", livingEntity + "::yHeadRot", () -> livingEntity.yBodyRot, v -> livingEntity.yBodyRot = v);
+        ImGuiEx.editFloat("Old Y Body Rotation:", livingEntity + "::yBodyRot0", () -> livingEntity.yBodyRotO, v -> livingEntity.yBodyRotO = v);
+        ImGuiEx.editFloat("Old Y Head Rotation:", livingEntity + "::yHeadRot0", () -> livingEntity.yHeadRotO, v -> livingEntity.yHeadRotO = v);
+        ImGuiEx.editFloat("X acceleration:", livingEntity + "::xxa", () -> livingEntity.xxa, v -> livingEntity.xxa = v);
+        ImGuiEx.editFloat("Y acceleration:", livingEntity + "::yya", () -> livingEntity.yya, v -> livingEntity.yya = v);
+        ImGuiEx.editFloat("Z acceleration:", livingEntity + "::zza", () -> livingEntity.zza, v -> livingEntity.zza = v);
+
+        ImGuiEx.text("Distance:", () -> livingEntity.distanceTo(Minecraft.getInstance().getCameraEntity()));
         ImGuiEx.text("Used Hand:", () -> livingEntity.getUsedItemHand().name());
         ImGuiEx.text("Death Time:", () -> livingEntity.deathTime);
         ImGuiEx.text("Attack Anim.:", () -> livingEntity.attackAnim);
         ImGuiEx.bool("Attackable:", livingEntity::attackable);
 
+        if (ImGui.collapsingHeader("Flags (is)")) {
+            ImGui.treePush();
+            ImGuiEx.editBool("Is Alive:", livingEntity + "::isAlive", livingEntity::isAlive, v -> {});
+            ImGuiEx.editBool("Is Baby:", livingEntity + "::isBaby", livingEntity::isBaby, v -> {});
+            ImGuiEx.editBool("Is Blocking:", livingEntity + "::isBlocking", livingEntity::isBlocking, v -> {});
+            ImGuiEx.editBool("Is Auto Spin Attack:", livingEntity + "::isAutoSpinAttack", livingEntity::isAutoSpinAttack, v -> {});
+            ImGuiEx.editBool("Is Affected By Potions:", livingEntity + "::isAffectedByPotions", livingEntity::isAffectedByPotions, v -> {});
+            ImGuiEx.editBool("Is Glowing:", livingEntity + "::isGlowing", livingEntity::isCurrentlyGlowing, livingEntity::setGlowingTag);
+            ImGuiEx.editBool("Is Dead or Dying:", livingEntity + "::isDeadOrDying", livingEntity::isDeadOrDying, v -> {});
+            ImGuiEx.editBool("Is Fall Flying:", livingEntity + "::isFallFlying", livingEntity::isFallFlying, v -> {});
+            ImGuiEx.editBool("Is In Wall:", livingEntity + "::isInWall", livingEntity::isInWall, v -> {});
+            ImGuiEx.editBool("Is Pickable:", livingEntity + "::isPickable", livingEntity::isPickable, v -> {});
+            ImGuiEx.editBool("Is Pushable:", livingEntity + "::isPushable", livingEntity::isPushable, v -> {});
+            ImGuiEx.editBool("Is Sensitive To Water:", livingEntity + "::isSensitiveToWater", livingEntity::isSensitiveToWater, v -> {});
+            ImGuiEx.editBool("Is Sleeping:", livingEntity + "::isSleeping", livingEntity::isSleeping, v -> {});
+            ImGuiEx.editBool("Is Using an Item:", livingEntity + "::isUsingItem", livingEntity::isUsingItem, v -> {});
+            ImGuiEx.editBool("Is Visually Swimming:", livingEntity + "::isVisuallySwimming", livingEntity::isVisuallySwimming, v -> {});
+            ImGui.treePop();
+        }
+        if (ImGui.collapsingHeader("Flags (can)")) {
+            ImGui.treePush();
+            ImGuiEx.editBool("Can Be Seen As Enemy:", livingEntity + "::canBeSeenAsEnemy", livingEntity::canBeSeenAsEnemy, v -> {});
+            ImGuiEx.editBool("Can Be Seen By Anyone:", livingEntity + "::canBeSeenByAnyone", livingEntity::canBeSeenByAnyone, v -> {});
+            ImGuiEx.editBool("Can Freeze:", livingEntity + "::canFreeze", livingEntity::canFreeze, v -> {});
+            ImGuiEx.editBool("Can Breathe Underwater:", livingEntity + "::canBreatheUnderwater", livingEntity::canBreatheUnderwater, v -> {});
+            ImGuiEx.editBool("Can Change Dimension:", livingEntity + "::canChangeDimension", livingEntity::canChangeDimensions, v -> {});
+            ImGuiEx.editBool("Can Disable Shield:", livingEntity + "::canDisableShield", livingEntity::canDisableShield, v -> {});
+            ImGuiEx.editBool("Can Spawn Soulspeed Particle:", livingEntity + "::canSpawnSoulSpeedParticle", livingEntity::canSpawnSoulSpeedParticle, v -> {});
+            ImGui.treePop();
+        }
         if (ImGui.collapsingHeader("Combat Tracker")) {
             ImGui.treePush();
             ImGuiEx.text("Combat Duration:", () -> livingEntity.getCombatTracker().getCombatDuration());
