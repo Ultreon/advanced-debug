@@ -44,7 +44,6 @@ public class EntityPage extends DebugPage {
             ctx.left("Eye Height", entity.getEyeHeight());
             ctx.left("Look Angle", entity.getLookAngle());
             ctx.left("Riding Entity", entity.getVehicle());
-            ctx.left("Riding Offset", entity.getMyRidingOffset());
             ctx.left("Entity UUID", entity.getUUID());
             ctx.left("Entity ID", entity.getId());
             ctx.left("Entity Name", entity.getName().getString());

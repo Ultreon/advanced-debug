@@ -34,7 +34,7 @@ dependencies {
     // Remove the next line if you don't want to depend on the API
     modApi "dev.architectury:architectury-fabric:$architectury_version"
 
-    modApi "com.github.Ultreon.ultreonlib:ultreon-lib-fabric:$ultreonlib_version"
+    modApi "com.github.Ultreon.ultreonlib:ultreonlib-fabric:$ultreonlib_version"
 
     modImplementation 'com.electronwill.night-config:core:3.6.5'
     modImplementation 'com.electronwill.night-config:toml:3.6.5'
@@ -50,13 +50,24 @@ dependencies {
         exclude module: "fabric-api"
     }
 
-    modRuntimeOnly "me.shedaniel:RoughlyEnoughItems-fabric:$rei_version"
+    include api("io.github.spair:imgui-java-binding:$imgui_version")
+    include api("io.github.spair:imgui-java-lwjgl3:$imgui_version")
+    include api("io.github.spair:imgui-java-natives-linux:$imgui_version")
+    include api("io.github.spair:imgui-java-natives-macos:$imgui_version")
+    include api("io.github.spair:imgui-java-natives-windows:$imgui_version")
 
-    include implementation("io.github.spair:imgui-java-binding:$imgui_version")
-    include implementation("io.github.spair:imgui-java-lwjgl3:$imgui_version")
-    include implementation("io.github.spair:imgui-java-natives-linux:$imgui_version")
-    include implementation("io.github.spair:imgui-java-natives-macos:$imgui_version")
-    include implementation("io.github.spair:imgui-java-natives-windows:$imgui_version")
+    api "io.github.ultreon:ubo:$ultreon_data_version"
+
+    api "io.github.ultreon.corelibs:collections-v0:$corelibs_version"
+    api "io.github.ultreon.corelibs:commons-v0:$corelibs_version"
+    api "io.github.ultreon.corelibs:crash-v0:$corelibs_version"
+    api "io.github.ultreon.corelibs:datetime-v0:$corelibs_version"
+    api "io.github.ultreon.corelibs:events-v1:$corelibs_version"
+    api "io.github.ultreon.corelibs:functions-v0:$corelibs_version"
+    api "io.github.ultreon.corelibs:registries-v0:$corelibs_version"
+    api "io.github.ultreon.corelibs:resources-v0:$corelibs_version"
+    api "io.github.ultreon.corelibs:text-v0:$corelibs_version"
+    api "io.github.ultreon.corelibs:translations-v0:$corelibs_version"
 }
 
 processResources {

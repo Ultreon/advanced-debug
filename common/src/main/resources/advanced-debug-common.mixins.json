@@ -8,6 +8,7 @@
     "LivingEntityAccessor"
   ],
   "client": [
+    "DebugScreenOverlayAccessor",
     "GameRendererMixin",
     "ImageButtonAccessor",
     "KeyMappingAccessor",

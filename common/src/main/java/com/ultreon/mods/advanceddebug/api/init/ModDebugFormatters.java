@@ -7,6 +7,7 @@ import com.ultreon.mods.advanceddebug.api.client.registry.IFormatterRegistry;
 import com.ultreon.mods.advanceddebug.api.common.Angle;
 import com.ultreon.mods.advanceddebug.api.common.IFormattable;
 import com.ultreon.mods.advanceddebug.api.common.MoonPhase;
+import com.ultreon.mods.lib.util.ServerLifecycle;
 import dev.architectury.utils.Env;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.core.Direction;
@@ -17,6 +18,7 @@ import net.minecraft.core.Direction8;
 import net.minecraft.core.FrontAndTop;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
@@ -411,7 +413,7 @@ public final class ModDebugFormatters {
         public void format(Advancement obj, IFormatterContext context) {
             context.className("advancement")
                     .space()
-                    .other(obj.getId());
+                    .error("DEPRECATED: Advancement is no longer supported in 20.4+");
         }
     });
     public static final Formatter<Stat> STAT = REGISTRY.register(new Formatter<>(Stat.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "minecraft/stat")) {

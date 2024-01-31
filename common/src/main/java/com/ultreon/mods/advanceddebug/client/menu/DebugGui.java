@@ -26,6 +26,7 @@ import com.ultreon.mods.advanceddebug.extension.ExtensionLoader;
 import com.ultreon.mods.advanceddebug.init.ModDebugPages;
 import com.ultreon.mods.advanceddebug.inspect.InspectionNode;
 import com.ultreon.mods.advanceddebug.inspect.InspectionRoot;
+import com.ultreon.mods.advanceddebug.mixin.common.DebugScreenOverlayAccessor;
 import com.ultreon.mods.advanceddebug.mixin.common.EntityAccessor;
 import com.ultreon.mods.advanceddebug.mixin.common.ImageButtonAccessor;
 import com.ultreon.mods.advanceddebug.registry.ModPreRegistries;
@@ -161,6 +162,8 @@ public final class DebugGui implements Renderable, IDebugGui {
     private static final @NotNull Integer[] GRAPH_TIME = new Integer[GRAPH_DENSITY];
     private static final @NotNull Integer[] FPS_GRAPH = new Integer[GRAPH_DENSITY];
     private static final @NotNull Integer[] TICK_TIME_GRAPH = new Integer[GRAPH_DENSITY];
+    private static final Minecraft mc = Minecraft.getInstance();
+
     static {
         for (int i = 0; i < GRAPH_DENSITY; i++) {
             GRAPH_TIME[i] = -(GRAPH_DENSITY - i);
@@ -184,7 +187,6 @@ public final class DebugGui implements Renderable, IDebugGui {
     private String inspectIdxInput = "";
 
     private DebugGui() {
-        ClassUtils.checkCallerClassEquals(DebugGui.class);
         if (INSTANCE != null) {
             throw new GenericError("Invalid initialization for singleton class " + DebugGui.class.getName());
         }
@@ -199,7 +201,9 @@ public final class DebugGui implements Renderable, IDebugGui {
     }
 
     private void enable() {
-        RenderSystem.recordRenderCall(() -> enabled = true);
+        RenderSystem.recordRenderCall(() -> {
+            enabled = true;
+        });
     }
 
     /**
@@ -217,7 +221,7 @@ public final class DebugGui implements Renderable, IDebugGui {
         CrashReportCategory shutdownReq = report.addCategory("Debug GUI Shutdown Request");
         shutdownReq.setDetail("Duration", 30000 + "ms");
         shutdownReq.setDetail("Flag set", !enabled);
-        Minecraft.crash(report);
+        Minecraft.getInstance().emergencySaveAndCrash(report);
 
         Runtime.getRuntime().halt(0x0000_dead); // Should never run, unless some mod modifies crash handling in a weird way.
     }
@@ -245,6 +249,9 @@ public final class DebugGui implements Renderable, IDebugGui {
 
         this.lock.unlock();
 
+        imGuiFocused = false;
+        imGuiHovered = false;
+
         return true;
     }
 
@@ -252,7 +259,7 @@ public final class DebugGui implements Renderable, IDebugGui {
     public void render(@NotNull GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
         if (!RenderSystem.isOnRenderThread()) return;
 
-        if (!enabled || Minecraft.getInstance().options.renderDebug) return;
+        if (!enabled || ((DebugScreenOverlayAccessor)Minecraft.getInstance().getDebugOverlay()).isRenderDebug()) return;
 
         updateSize();
 
@@ -407,7 +414,7 @@ public final class DebugGui implements Renderable, IDebugGui {
         if (server != null) {
             if (nextTickTimeUpdate < System.currentTimeMillis()) {
 
-                int tps = (int) (MathUtils.average(server.tickTimes) * 1.0E-6D);
+                int tps = (int) (MathUtils.average(server.getTickTimesNanos()) * 1.0E-6D);
                 ArrayUtils.shift(TICK_TIME_GRAPH, -1);
                 TICK_TIME_GRAPH[TICK_TIME_GRAPH.length - 1] = tps;
                 nextTickTimeUpdate = System.currentTimeMillis() + 1000;
@@ -613,7 +620,6 @@ public final class DebugGui implements Renderable, IDebugGui {
     }
 
     public static void showLocalPlayer(LocalPlayer player) {
-        ImGuiEx.text("Server Brand:", player::getServerBrand);
         ImGuiEx.text("Water Vision:", player::getWaterVision);
         showEntity(player);
     }
@@ -1223,7 +1229,7 @@ public final class DebugGui implements Renderable, IDebugGui {
 
     public static void showEffectInstance(MobEffectInstance instance) {
         ImGuiEx.text("Id:", () -> BuiltInRegistries.MOB_EFFECT.getKey(instance.getEffect()));
-        ImGuiEx.text("Duration:", () -> MobEffectUtil.formatDuration(instance, 1.0f));
+        ImGuiEx.text("Duration:", () -> MobEffectUtil.formatDuration(instance, 1.0F, mc.level.tickRateManager().tickrate()));
         ImGuiEx.text("Factor Data:", () -> instance.getFactorData().orElse(null));
     }
 
@@ -1312,7 +1318,10 @@ public final class DebugGui implements Renderable, IDebugGui {
                         ImGuiEx.text("Value:", button::getValue);
                     }
                     if (child instanceof ImageButton button) {
-                        ImGuiEx.text("Image:", () -> ((ImageButtonAccessor) button).getResourceLocation());
+                        ImGuiEx.text("Image Enabled:", () -> ((ImageButtonAccessor) button).getSprites().enabled());
+                        ImGuiEx.text("Image Disabled:", () -> ((ImageButtonAccessor) button).getSprites().disabled());
+                        ImGuiEx.text("Image Enabled Focused:", () -> ((ImageButtonAccessor) button).getSprites().enabledFocused());
+                        ImGuiEx.text("Image Disabled Focused:", () -> ((ImageButtonAccessor) button).getSprites().disabledFocused());
                     }
                     if (child instanceof AbstractButton button) {
                         ImGui.button("Click Button");

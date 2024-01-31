@@ -4,23 +4,22 @@ import com.ultreon.libs.commons.v0.Identifier;
 import com.ultreon.mods.advanceddebug.api.client.menu.DebugPage;
 import com.ultreon.mods.advanceddebug.client.menu.DebugGui;
 import dev.architectury.injectables.annotations.ExpectPlatform;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.common.ForgeConfigSpec;
+import net.neoforged.neoforge.common.ModConfigSpec;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Config {
-    public static final ForgeConfigSpec.BooleanValue SHOW_FPS_ON_DEFAULT_PAGE;
-    public static final ForgeConfigSpec.BooleanValue SHOW_CURRENT_PAGE;
-    public static final ForgeConfigSpec.BooleanValue USE_CUSTOM_SCALE;
-    public static final ForgeConfigSpec.IntValue CUSTOM_SCALE;
-    public static final ForgeConfigSpec.BooleanValue SPACED_NAMESPACES;
-    public static final ForgeConfigSpec.BooleanValue SPACED_ENUM_CONSTANTS;
-    public static final ForgeConfigSpec.BooleanValue ENABLE_BUBBLE_BLASTER_ID;
-    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> ENABLED_PAGES;
+    public static final ModConfigSpec.BooleanValue SHOW_FPS_ON_DEFAULT_PAGE;
+    public static final ModConfigSpec.BooleanValue SHOW_CURRENT_PAGE;
+    public static final ModConfigSpec.BooleanValue USE_CUSTOM_SCALE;
+    public static final ModConfigSpec.IntValue CUSTOM_SCALE;
+    public static final ModConfigSpec.BooleanValue SPACED_NAMESPACES;
+    public static final ModConfigSpec.BooleanValue SPACED_ENUM_CONSTANTS;
+    public static final ModConfigSpec.BooleanValue ENABLE_BUBBLE_BLASTER_ID;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> ENABLED_PAGES;
 
-    static final ForgeConfigSpec.Builder CLIENT_BUILDER = new ForgeConfigSpec.Builder();
+    static final ModConfigSpec.Builder CLIENT_BUILDER = new ModConfigSpec.Builder();
 
 
     static {
@@ -44,7 +43,7 @@ public class Config {
 
     }
 
-    public static ForgeConfigSpec build() {
+    public static ModConfigSpec build() {
         return CLIENT_BUILDER.build();
     }
 }

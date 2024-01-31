@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
@@ -71,8 +72,8 @@ public class ImGuiEx {
                 if (ImGuiFileDialog.display("browse-key", ImGuiFileDialogFlags.None, 200, 400, 800, 600)) {
                     if (ImGuiFileDialog.isOk()) {
                         String filePathName = ImGuiFileDialog.getFilePathName();
-                        try {
-                            NbtIo.writeCompressed(compoundTag, new File(filePathName));
+                        try(var stream = new FileOutputStream(filePathName)) {
+                            NbtIo.writeCompressed(compoundTag, stream);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -115,8 +116,8 @@ public class ImGuiEx {
                 }
 
                 String filePathName = ImGuiFileDialog.getFilePathName();
-                try {
-                    NbtIo.writeCompressed(compoundTag, new File(filePathName));
+                try(var stream = new FileOutputStream(filePathName)) {
+                    NbtIo.writeCompressed(compoundTag, stream);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

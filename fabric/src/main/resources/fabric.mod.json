@@ -44,9 +44,9 @@
   ],
   "depends": {
     "fabricloader": ">=${loaderVersion}",
-    "minecraft": ">=${minecraftVersion} <1.20.2",
-    "architectury": ">=9.1 <10",
-    "forgeconfigapiport": ">=8 <9",
-    "ultreonlib": ">=1.5.0"
+    "minecraft": ">=${minecraftVersion} <1.20.5",
+    "architectury": ">=11 <12",
+    "forgeconfigapiport": ">=20.4 <20.5",
+    "ultreonlib": "<20.5"
   }
 }
