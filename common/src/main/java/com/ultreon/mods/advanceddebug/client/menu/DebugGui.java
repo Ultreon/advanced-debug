@@ -46,6 +46,7 @@ import imgui.type.ImBoolean;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
@@ -110,6 +111,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 
 import static net.minecraft.ChatFormatting.*;
 import static net.minecraft.util.FastColor.ARGB32.*;
@@ -184,7 +186,6 @@ public final class DebugGui implements Renderable, IDebugGui {
     private String inspectIdxInput = "";
 
     private DebugGui() {
-        ClassUtils.checkCallerClassEquals(DebugGui.class);
         if (INSTANCE != null) {
             throw new GenericError("Invalid initialization for singleton class " + DebugGui.class.getName());
         }
@@ -217,7 +218,7 @@ public final class DebugGui implements Renderable, IDebugGui {
         CrashReportCategory shutdownReq = report.addCategory("Debug GUI Shutdown Request");
         shutdownReq.setDetail("Duration", 30000 + "ms");
         shutdownReq.setDetail("Flag set", !enabled);
-        Minecraft.crash(report);
+        Minecraft.crash(Minecraft.getInstance(), FabricLoader.getInstance().getGameDir().toFile(), report);
 
         Runtime.getRuntime().halt(0x0000_dead); // Should never run, unless some mod modifies crash handling in a weird way.
     }
@@ -252,7 +253,9 @@ public final class DebugGui implements Renderable, IDebugGui {
     public void render(@NotNull GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
         if (!RenderSystem.isOnRenderThread()) return;
 
-        if (!enabled || Minecraft.getInstance().options.renderDebug) return;
+        if (!enabled
+                || Minecraft.getInstance().getDebugOverlay().showDebugScreen()
+                || Minecraft.getInstance().options.hideGui) return;
 
         updateSize();
 
@@ -263,18 +266,8 @@ public final class DebugGui implements Renderable, IDebugGui {
 
         lock.lock();
         double scale = mc.getWindow().getGuiScale();
-        double preferredScale = Config.USE_CUSTOM_SCALE.get() ? Config.CUSTOM_SCALE.get() : scale;
-        Boolean useCustomScale = Config.USE_CUSTOM_SCALE.get();
-
-        int rescaledWidth = (int) (((double) width * scale) / preferredScale);
-        int rescaledHeight = (int) (((double) height * scale) / preferredScale);
-
-        DebugRenderContext context = new DebugRenderContext(gfx, rescaledWidth, rescaledHeight) {
-            @Override
-            protected void drawLine(@NotNull GuiGraphics gfx, Component text, int x, int y) {
-                DebugGui.this.drawLine(gfx, text, x, y);
-            }
-        };
+        double preferredScale = Config.useCustomScale ? Config.customScale : scale;
+        DebugRenderContext context = createContext(gfx, scale, preferredScale);
 
         long window = mc.getWindow().getWindow();
         if (SHOW_OBJECT_INSPECTION.get()) {
@@ -286,7 +279,7 @@ public final class DebugGui implements Renderable, IDebugGui {
                 gfx.pose().scale((float) ((1 * preferredScale) / scale), (float) ((1 * preferredScale) / scale), 1);
                 Identifier resourceLocation = debugPage.getId();
                 try {
-                    if (Config.SHOW_CURRENT_PAGE.get()) {
+                    if (Config.showCurrentPage) {
                         drawLine(gfx, Component.literal("Debug Page: " + resourceLocation.toString()), 6, height - 16);
                     }
                     debugPage.render(gfx, context);
@@ -311,6 +304,21 @@ public final class DebugGui implements Renderable, IDebugGui {
             ModDebugPages.DEFAULT.render(gfx, context);
         }
         lock.unlock();
+    }
+
+    @NotNull
+    private DebugRenderContext createContext(@NotNull GuiGraphics gfx, double scale, double preferredScale) {
+        Boolean useCustomScale = Config.useCustomScale;
+
+        int rescaledWidth = (int) (((double) width * scale) / preferredScale);
+        int rescaledHeight = (int) (((double) height * scale) / preferredScale);
+
+        return new DebugRenderContext(gfx, rescaledWidth, rescaledHeight) {
+            @Override
+            protected void drawLine(@NotNull GuiGraphics gfx1, Component text, int x, int y) {
+                DebugGui.this.drawLine(gfx1, text, x, y);
+            }
+        };
     }
 
     private void renderObjectInspection(GuiGraphics gfx, long window, DebugRenderContext ctx, InspectionRoot<Minecraft> inspections) {
@@ -380,9 +388,9 @@ public final class DebugGui implements Renderable, IDebugGui {
             ctx.left(gfx, Component.literal("[" + i + "]: ").withStyle(s -> s.withColor(GOLD).withBold(true)).append(Component.literal(curNode.getName()).withStyle(s -> s.withColor(WHITE).withBold(false))));
         }
 
-        List<Pair<String, String>> elements = node.getElements().entrySet().stream().map(t -> new Pair<>(t.getKey(), t.getValue().get())).sorted(Comparator.comparing(Pair::getFirst)).toList();
-        for (Pair<String, String> element : elements) {
-            ctx.left(gfx, Component.literal(element.getFirst() + " = ").withStyle(s -> s.withColor(GRAY).withBold(false)).append(Component.literal(element.getSecond()).withStyle(s -> s.withColor(WHITE).withItalic(true))));
+        List<Pair<String, Supplier<String>>> elements = node.getElements().entrySet().stream().map(t -> new Pair<>(t.getKey(), t.getValue())).sorted(Comparator.comparing(Pair::getFirst)).toList();
+        for (Pair<String, Supplier<String>> element : elements) {
+            ctx.left(gfx, Component.literal(element.getFirst() + " = ").withStyle(s -> s.withColor(GRAY).withBold(false)).append(Component.literal(element.getSecond().get()).withStyle(s -> s.withColor(WHITE).withItalic(true))));
         }
         return false;
     }
@@ -407,7 +415,7 @@ public final class DebugGui implements Renderable, IDebugGui {
         if (server != null) {
             if (nextTickTimeUpdate < System.currentTimeMillis()) {
 
-                int tps = (int) (MathUtils.average(server.tickTimes) * 1.0E-6D);
+                int tps = (int) (MathUtils.average(server.getTickTimesNanos()) * 1.0E-6D);
                 ArrayUtils.shift(TICK_TIME_GRAPH, -1);
                 TICK_TIME_GRAPH[TICK_TIME_GRAPH.length - 1] = tps;
                 nextTickTimeUpdate = System.currentTimeMillis() + 1000;
@@ -613,7 +621,6 @@ public final class DebugGui implements Renderable, IDebugGui {
     }
 
     public static void showLocalPlayer(LocalPlayer player) {
-        ImGuiEx.text("Server Brand:", player::getServerBrand);
         ImGuiEx.text("Water Vision:", player::getWaterVision);
         showEntity(player);
     }
@@ -1223,7 +1230,7 @@ public final class DebugGui implements Renderable, IDebugGui {
 
     public static void showEffectInstance(MobEffectInstance instance) {
         ImGuiEx.text("Id:", () -> BuiltInRegistries.MOB_EFFECT.getKey(instance.getEffect()));
-        ImGuiEx.text("Duration:", () -> MobEffectUtil.formatDuration(instance, 1.0f));
+        ImGuiEx.text("Duration:", () -> MobEffectUtil.formatDuration(instance, 1.0f, Minecraft.getInstance().level.tickRateManager().tickrate()));
         ImGuiEx.text("Factor Data:", () -> instance.getFactorData().orElse(null));
     }
 
@@ -1312,7 +1319,10 @@ public final class DebugGui implements Renderable, IDebugGui {
                         ImGuiEx.text("Value:", button::getValue);
                     }
                     if (child instanceof ImageButton button) {
-                        ImGuiEx.text("Image:", () -> ((ImageButtonAccessor) button).getResourceLocation());
+                        ImGuiEx.text("Enabled Image:", () -> ((ImageButtonAccessor) button).getSprites().enabled());
+                        ImGuiEx.text("Disabled Image:", () -> ((ImageButtonAccessor) button).getSprites().disabled());
+                        ImGuiEx.text("Enabled Focused Image:", () -> ((ImageButtonAccessor) button).getSprites().enabledFocused());
+                        ImGuiEx.text("Disabled Focused Image:", () -> ((ImageButtonAccessor) button).getSprites().disabledFocused());
                     }
                     if (child instanceof AbstractButton button) {
                         ImGui.button("Click Button");

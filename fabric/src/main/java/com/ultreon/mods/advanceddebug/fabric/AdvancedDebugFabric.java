@@ -9,7 +9,5 @@ public class AdvancedDebugFabric implements ClientModInitializer {
     public void onInitializeClient() {
         AdvancedDebug advancedDebug = new AdvancedDebug();
         advancedDebug.init();
-
-        Config.register(null);
     }
 }

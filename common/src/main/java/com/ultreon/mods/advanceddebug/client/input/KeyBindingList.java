@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Keybinding list class.
  *
- * @author Qboi123
+ * @author XyperCode
  */
 public class KeyBindingList {
     public static final List<KeyMapping> KEY_BINDINGS = new ArrayList<>();

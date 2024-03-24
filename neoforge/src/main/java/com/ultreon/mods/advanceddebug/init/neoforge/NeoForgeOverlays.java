@@ -1,18 +1,17 @@
-package com.ultreon.mods.advanceddebug.init.forge;
+package com.ultreon.mods.advanceddebug.init.neoforge;
 
 import com.ultreon.mods.advanceddebug.api.IAdvancedDebug;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.client.event.RegisterGuiOverlaysEvent;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-@EventBusSubscriber(value = Dist.CLIENT, modid = IAdvancedDebug.MOD_ID, bus = Bus.MOD)
-public class ForgeOverlays {
+@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = IAdvancedDebug.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
+public class NeoForgeOverlays {
     private static final List<Consumer<RegisterGuiOverlaysEvent>> LISTENERS = new ArrayList<>();
 
     @SubscribeEvent

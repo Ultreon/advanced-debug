@@ -61,7 +61,7 @@ package com.ultreon.mods.advanceddebug.api.common;
  * information on the Apache Software Foundation, please see
  * <http://www.apache.org/>.
  *
- * Note: this is modified to use type parameters. - Qboi123
+ * Note: this is modified to use type parameters. - XyperCode
  *
  */
 import org.jetbrains.annotations.NotNull;

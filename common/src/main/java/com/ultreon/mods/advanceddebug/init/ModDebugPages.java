@@ -1,7 +1,7 @@
 package com.ultreon.mods.advanceddebug.init;
 
 import com.ultreon.libs.commons.v0.Identifier;
-import com.ultreon.mods.advanceddebug.AdvancedDebug;
+import com.ultreon.mods.advanceddebug.api.IAdvancedDebug;
 import com.ultreon.mods.advanceddebug.api.client.menu.DebugPage;
 import com.ultreon.mods.advanceddebug.client.menu.DebugGui;
 import com.ultreon.mods.advanceddebug.client.menu.pages.*;
@@ -23,7 +23,7 @@ public class ModDebugPages {
     public static final ComputerPage COMPUTER = register("computer", new ComputerPage());
 
     private static <T extends DebugPage> T register(String name, T page) {
-        return DebugGui.get().registerPage(new Identifier(AdvancedDebug.MOD_ID, name), page);
+        return DebugGui.get().registerPage(new Identifier(IAdvancedDebug.MOD_ID, name), page);
     }
 
     public static void init() {

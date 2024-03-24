@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
 import java.util.function.IntConsumer;
@@ -72,7 +73,7 @@ public class ImGuiEx {
                     if (ImGuiFileDialog.isOk()) {
                         String filePathName = ImGuiFileDialog.getFilePathName();
                         try {
-                            NbtIo.writeCompressed(compoundTag, new File(filePathName));
+                            NbtIo.writeCompressed(compoundTag, Path.of(filePathName));
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -116,7 +117,7 @@ public class ImGuiEx {
 
                 String filePathName = ImGuiFileDialog.getFilePathName();
                 try {
-                    NbtIo.writeCompressed(compoundTag, new File(filePathName));
+                    NbtIo.writeCompressed(compoundTag, Path.of(filePathName));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

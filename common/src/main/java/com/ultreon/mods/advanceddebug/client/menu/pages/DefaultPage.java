@@ -18,7 +18,7 @@ public class DefaultPage extends DebugPage {
 
     @Override
     public void render(@NotNull GuiGraphics gfx, IDebugRenderContext ctx) {
-        if (Config.SHOW_FPS_ON_DEFAULT_PAGE.get()) {
+        if (Config.showFpsOnDefaultPage) {
             ctx.left("FPS", MinecraftAccessor.getFps());
             IntegratedServer server;
             if (mc.hasSingleplayerServer() && (server = mc.getSingleplayerServer()) != null) {

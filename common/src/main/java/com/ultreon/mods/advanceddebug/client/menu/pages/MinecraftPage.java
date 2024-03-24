@@ -45,7 +45,6 @@ public class MinecraftPage extends DebugPage {
         ctx.right("Game Paused", minecraft.isPaused());
         ctx.right("Local Server", minecraft.isLocalServer());
         ctx.right("Singleplayer", minecraft.hasSingleplayerServer());
-        ctx.right("Connected to Realms", minecraft.isConnectedToRealms());
         ctx.right();
     }
 }

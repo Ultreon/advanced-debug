@@ -3,10 +3,13 @@ package com.ultreon.mods.advanceddebug.api;
 import com.ultreon.mods.advanceddebug.api.client.menu.IDebugGui;
 import com.ultreon.mods.advanceddebug.api.client.registry.IFormatterRegistry;
 import com.ultreon.mods.advanceddebug.client.Config;
+import io.github.xypercode.craftyconfig.CraftyConfig;
 
 import java.lang.reflect.InvocationTargetException;
 
 public interface IAdvancedDebug {
+    String MOD_ID = "advanced_debug";
+
     static IAdvancedDebug get() {
         try {
             return (IAdvancedDebug) Class.forName("com.ultreon.mods.advanceddebug.AdvancedDebug").getDeclaredMethod("getInstance").invoke(null);
@@ -16,6 +19,8 @@ public interface IAdvancedDebug {
         }
     }
 
+    CraftyConfig getConfig();
+
     IDebugGui getGui();
 
     IFormatterRegistry getFormatterRegistry();
@@ -24,28 +29,28 @@ public interface IAdvancedDebug {
 
     @Deprecated(forRemoval = true)
     default boolean isSpacedNamespace() {
-        return Config.SPACED_NAMESPACES.get();
+        return Config.spacedNamespaces;
     }
 
     @Deprecated(forRemoval = true)
     default boolean isSpacedEnumConstants() {
-        return Config.SPACED_ENUM_CONSTANTS.get();
+        return Config.spacedEnumConstants;
     }
 
     @Deprecated(forRemoval = true)
     default boolean enableBubbleBlasterID() {
-        return Config.ENABLE_BUBBLE_BLASTER_ID.get();
+        return Config.enableBubbleBlasterId;
     }
 
     default boolean isNamespaceSpaced() {
-        return Config.SPACED_NAMESPACES.get();
+        return Config.spacedNamespaces;
     }
 
     default boolean isEnumConstantsSpaced() {
-        return Config.SPACED_ENUM_CONSTANTS.get();
+        return Config.spacedEnumConstants;
     }
 
     default boolean isBubbleBlasterIdEnabled() {
-        return Config.ENABLE_BUBBLE_BLASTER_ID.get();
+        return Config.enableBubbleBlasterId;
     }
 }

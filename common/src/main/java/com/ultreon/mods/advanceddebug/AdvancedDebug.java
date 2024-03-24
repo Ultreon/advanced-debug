@@ -4,6 +4,7 @@ import com.ultreon.mods.advanceddebug.api.IAdvancedDebug;
 import com.ultreon.mods.advanceddebug.api.client.menu.IDebugGui;
 import com.ultreon.mods.advanceddebug.api.client.registry.IFormatterRegistry;
 import com.ultreon.mods.advanceddebug.api.init.ModDebugFormatters;
+import com.ultreon.mods.advanceddebug.client.Config;
 import com.ultreon.mods.advanceddebug.client.input.KeyBindingList;
 import com.ultreon.mods.advanceddebug.client.menu.DebugGui;
 import com.ultreon.mods.advanceddebug.client.registry.FormatterRegistry;
@@ -15,6 +16,7 @@ import com.ultreon.mods.advanceddebug.inspect.InspectionRoot;
 import com.ultreon.mods.advanceddebug.util.TargetUtils;
 import dev.architectury.event.events.client.ClientLifecycleEvent;
 import dev.architectury.event.events.client.ClientTickEvent;
+import io.github.xypercode.craftyconfig.CraftyConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.server.IntegratedServer;
@@ -28,8 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class AdvancedDebug implements IAdvancedDebug {
-    public static final String MOD_ID = "advanced_debug";
-
     // Directly reference a log4j logger.
     public static final Logger LOGGER = LoggerFactory.getLogger("AdvancedDebug");
     private static AdvancedDebug instance;
@@ -38,17 +38,26 @@ public class AdvancedDebug implements IAdvancedDebug {
 
     public final InspectionRoot<Minecraft> inspections = new InspectionRoot<>(Minecraft.getInstance());
 
-    public static AdvancedDebug getInstance() {
-        return instance;
-    }
+    private final Config config = new Config();
 
     @SuppressWarnings("ConstantConditions")
     public AdvancedDebug() {
         instance = this;
+
+        config.load();
+    }
+
+    public static AdvancedDebug getInstance() {
+        return instance;
     }
 
     private static void tick(Minecraft minecraft) {
         DebugGui.get().tick();
+    }
+
+    @Override
+    public CraftyConfig getConfig() {
+        return config;
     }
 
     public void init() {

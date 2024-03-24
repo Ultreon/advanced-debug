@@ -1,5 +1,5 @@
 modLoader = "javafml"
-loaderVersion = "[${loaderVersion},)"
+loaderVersion = "[2,)"
 license = "Ultreon API 1.0"
 issueTrackerURL = "https://github.com/Ultreon/advanced-debug/issues"
 
@@ -18,31 +18,37 @@ ${description}
 """
 displayTest = "IGNORE_ALL_VERSION"
 
+[[mixins]]
+config = "advanced-debug.mixins.json"
+
+[[mixins]]
+config = "advanced-debug-common.mixins.json"
+
 # Dependencies for the main mod.
 [[dependencies.advanced_debug]]
-modId = "forge"
-mandatory = true
-versionRange = "[${forgeVersion},)"
+modId = "neoforge"
+type = "required"
+versionRange = "[${neoforgeVersion},)"
 ordering = "NONE"
 side = "CLIENT"
 
 [[dependencies.advanced_debug]]
 modId = "minecraft"
-mandatory = true
+type = "required"
 versionRange = "${minecraftVersion}"
 ordering = "NONE"
 side = "CLIENT"
 
 [[dependencies.advanced_debug]]
 modId = "architectury"
-mandatory = true
+type = "required"
 versionRange = "[11,12)"
 ordering = "NONE"
 side = "CLIENT"
 
 [[dependencies.advanced_debug]]
 modId = "ultreonlib"
-mandatory = true
+type = "required"
 versionRange = "[1.5,)"
-ordering = "NONE"
+ordering = "BEFORE"
 side = "CLIENT"

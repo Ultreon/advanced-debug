@@ -406,14 +406,6 @@ public final class ModDebugFormatters {
                     .other(BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(obj));
         }
     });
-    public static final Formatter<Advancement> ADVANCEMENT = REGISTRY.register(new Formatter<>(Advancement.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "minecraft/advancement")) {
-        @Override
-        public void format(Advancement obj, IFormatterContext context) {
-            context.className("advancement")
-                    .space()
-                    .other(obj.getId());
-        }
-    });
     public static final Formatter<Stat> STAT = REGISTRY.register(new Formatter<>(Stat.class, new ResourceLocation(IAdvancedDebug.get().getModId(), "minecraft/stat")) {
         @Override
         public void format(Stat obj, IFormatterContext context) {

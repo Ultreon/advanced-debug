@@ -10,14 +10,15 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
+@SuppressWarnings("UnstableApiUsage")
 @Mixin(GameRenderer.class)
 public class GameRendererMixin {
-    @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/ForgeHooksClient;drawScreen(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/gui/GuiGraphics;IIF)V"))
-    private void advancedDebug$redirectMouseForImGui(Screen instance, @NotNull GuiGraphics gfx, int i, int j, float f) {
+    @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/ForgeHooksClient;drawScreen(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/gui/GuiGraphics;IIF)V", remap = false))
+    private void advancedDebug$redirectMouseForImGui(Screen instance, @NotNull GuiGraphics gfx, int mouseX, int mouseY, float partialTicks) {
         if (DebugGui.isImGuiHovered()) {
-            ForgeHooksClient.drawScreen(instance, gfx, Integer.MAX_VALUE, Integer.MAX_VALUE, f);
+            ForgeHooksClient.drawScreen(instance, gfx, Integer.MAX_VALUE, Integer.MAX_VALUE, partialTicks);
         } else {
-            ForgeHooksClient.drawScreen(instance, gfx, i, j, f);
+            ForgeHooksClient.drawScreen(instance, gfx, mouseX, mouseY, partialTicks);
         }
     }
 }

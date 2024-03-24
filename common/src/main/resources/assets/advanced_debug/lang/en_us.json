@@ -2,5 +2,13 @@
   "key.advanced_debug.debug_screen": "Change Page",
   "key.categories.advanced_debug": "Advanced Debug",
   "key.advanced_debug.selectEntity": "Select Entity",
-  "key.advanced_debug.selectBlock": "Select Block"
+  "key.advanced_debug.selectBlock": "Select Block",
+  "screen.advanced_debug.config": "Advanced Debug Config",
+  "config.advanced_debug.showFpsOnDefaultPage.description": "Show FPS on Default Page",
+  "config.advanced_debug.customScale.description": "Custom Scale",
+  "config.advanced_debug.showCurrentPage.description": "Show Current Page",
+  "config.advanced_debug.useCustomScale.description": "Use Custom Scale",
+  "config.advanced_debug.spacedNamespaces.description": "Spaced Namespaces",
+  "config.advanced_debug.enableBubbleBlasterId.description": "Enable Bubble Blaster ID",
+  "config.advanced_debug.spacedEnumConstants.description": "Spaced Enum Constants"
 }

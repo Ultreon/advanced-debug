@@ -10,7 +10,7 @@ import java.util.Objects;
  * Use {@link #getValue() getValue} or {@link #setValue(double) setValue} for getting / settings the normalized value.<br>
  * <br>
  *
- * @author Qboi123
+ * @author XyperCode
  */
 public final class Percentage implements IFormattable {
     private double percentage;
