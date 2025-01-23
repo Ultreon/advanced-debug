@@ -14,7 +14,8 @@
     "MinecraftAccessor",
     "MouseHandlerMixin",
     "OptionsAccessor",
-    "WindowAccessor"
+    "WindowAccessor",
+    "WindowMixin"
   ],
   "injectors": {
     "defaultRequire": 1

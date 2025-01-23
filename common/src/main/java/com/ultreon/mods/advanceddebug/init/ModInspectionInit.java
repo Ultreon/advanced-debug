@@ -3,7 +3,7 @@ package com.ultreon.mods.advanceddebug.init;
 import com.google.common.collect.Lists;
 import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.platform.Window;
-import com.ultreon.data.types.*;
+import dev.ultreon.ubo.types.*;
 import com.ultreon.libs.commons.v0.tuple.Pair;
 import com.ultreon.libs.commons.v0.tuple.Quadruple;
 import com.ultreon.libs.commons.v0.tuple.Quintuple;

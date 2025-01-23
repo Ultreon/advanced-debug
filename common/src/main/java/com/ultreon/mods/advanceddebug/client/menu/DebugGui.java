@@ -39,6 +39,7 @@ import dev.architectury.platform.Platform;
 import imgui.ImGui;
 import imgui.ImVec2;
 import imgui.extension.implot.ImPlot;
+import imgui.extension.implot.flag.ImPlotAxis;
 import imgui.flag.*;
 import imgui.gl3.ImGuiImplGl3;
 import imgui.glfw.ImGuiImplGlfw;
@@ -158,9 +159,9 @@ public final class DebugGui implements Renderable, IDebugGui {
     private static boolean imGuiFocused;
     private static boolean renderingImGui = false;
     private static final int GRAPH_DENSITY = 60;
-    private static final @NotNull Integer[] GRAPH_TIME = new Integer[GRAPH_DENSITY];
-    private static final @NotNull Integer[] FPS_GRAPH = new Integer[GRAPH_DENSITY];
-    private static final @NotNull Integer[] TICK_TIME_GRAPH = new Integer[GRAPH_DENSITY];
+    private static final @NotNull int[] GRAPH_TIME = new int[GRAPH_DENSITY];
+    private static final @NotNull int[] FPS_GRAPH = new int[GRAPH_DENSITY];
+    private static final @NotNull int[] TICK_TIME_GRAPH = new int[GRAPH_DENSITY];
     static {
         for (int i = 0; i < GRAPH_DENSITY; i++) {
             GRAPH_TIME[i] = -(GRAPH_DENSITY - i);
@@ -489,12 +490,14 @@ public final class DebugGui implements Renderable, IDebugGui {
             ImGui.getWindowSize(vec);
             vec.y -= 36;
             vec.x -= 18;
-            int min = Arrays.stream(FPS_GRAPH).min(Integer::compareTo).orElse(0);
-            int max = Arrays.stream(FPS_GRAPH).max(Integer::compareTo).orElse(0);
+            int min = Arrays.stream(FPS_GRAPH).min().orElse(0);
+            int max = Arrays.stream(FPS_GRAPH).max().orElse(0);
             max = Math.max(max, min + 10);
 
-            ImPlot.setNextPlotLimits(-GRAPH_DENSITY, 0, min, max, ImGuiCond.Always);
-            if (ImPlot.beginPlot("##FpsGraph", "Seconds", "FPS", vec)) {
+            ImPlot.setNextAxesLimits(0, min, max, ImGuiCond.Always);
+            ImPlot.setupAxis(ImPlotAxis.X1, "Seconds");
+            ImPlot.setupAxis(ImPlotAxis.Y1, "FPS");
+            if (ImPlot.beginPlot("##FpsGraph", vec)) {
                 ImPlot.plotLine("FPS", GRAPH_TIME, FPS_GRAPH);
                 ImPlot.endPlot();
             }
@@ -514,12 +517,14 @@ public final class DebugGui implements Renderable, IDebugGui {
             ImGui.getWindowSize(vec);
             vec.y -= 36;
             vec.x -= 18;
-            int min = Arrays.stream(TICK_TIME_GRAPH).min(Integer::compareTo).orElse(0);
-            int max = Arrays.stream(TICK_TIME_GRAPH).max(Integer::compareTo).orElse(0);
+            int min = Arrays.stream(TICK_TIME_GRAPH).min().orElse(0);
+            int max = Arrays.stream(TICK_TIME_GRAPH).max().orElse(0);
             max = Math.max(max, min + 10);
 
-            ImPlot.setNextPlotLimits(-GRAPH_DENSITY, 0, min, max, ImGuiCond.Always);
-            if (ImPlot.beginPlot("##TpsGraph", "Seconds", "TPS", vec)) {
+            ImPlot.setNextAxesLimits(0, min, max, ImGuiCond.Always);
+            ImPlot.setupAxis(ImPlotAxis.X1, "Seconds");
+            ImPlot.setupAxis(ImPlotAxis.Y1, "TPS");
+            if (ImPlot.beginPlot("##TpsGraph", vec)) {
                 ImPlot.plotLine("Tick Time", GRAPH_TIME, TICK_TIME_GRAPH);
                 ImPlot.endPlot();
             }

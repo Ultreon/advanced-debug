@@ -34,7 +34,7 @@ dependencies {
     // Remove the next line if you don't want to depend on the API
     modApi "dev.architectury:architectury-fabric:$architectury_version"
 
-    modApi "com.github.Ultreon.ultreonlib:ultreon-lib-fabric:$ultreonlib_version"
+    modApi "dev.ultreon.mods:ultreonlib-fabric:$ultreonlib_version"
 
     modImplementation 'com.electronwill.night-config:core:3.6.5'
     modImplementation 'com.electronwill.night-config:toml:3.6.5'

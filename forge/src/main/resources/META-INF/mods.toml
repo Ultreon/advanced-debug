@@ -43,6 +43,6 @@ side = "CLIENT"
 [[dependencies.advanced_debug]]
 modId = "ultreonlib"
 mandatory = true
-versionRange = "[1.5.0,)"
+versionRange = "[1.5.1,)"
 ordering = "NONE"
 side = "CLIENT"

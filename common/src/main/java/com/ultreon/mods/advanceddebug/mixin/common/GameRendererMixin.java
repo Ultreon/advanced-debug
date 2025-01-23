@@ -60,8 +60,8 @@ public class GameRendererMixin {
 
     @Inject(method = "close", at = @At("TAIL"))
     private void advancedDebug$injectImGuiDispose(CallbackInfo ci) {
-        advanced_debug$imGuiGl3.dispose();
-        advanced_debug$imGuiGlfw.dispose();
+        advanced_debug$imGuiGl3.shutdown();
+        advanced_debug$imGuiGlfw.shutdown();
         ImGui.destroyContext();
     }
 

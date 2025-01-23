@@ -1,12 +1,12 @@
 package com.ultreon.mods.advanceddebug.util;
 
-import com.ultreon.libs.commons.v0.tuple.Pair;
 import com.ultreon.libs.commons.v0.util.EnumUtils;
 import com.ultreon.libs.functions.v0.consumer.DoubleConsumer;
 import com.ultreon.libs.functions.v0.consumer.*;
 import com.ultreon.libs.functions.v0.supplier.ByteSupplier;
 import com.ultreon.libs.functions.v0.supplier.FloatSupplier;
 import com.ultreon.libs.functions.v0.supplier.ShortSupplier;
+import com.ultreon.mods.advanceddebug.AdvancedDebug;
 import imgui.ImGui;
 import imgui.extension.imguifiledialog.ImGuiFileDialog;
 import imgui.extension.imguifiledialog.callback.ImGuiFileDialogPaneFun;
@@ -17,14 +17,11 @@ import imgui.type.*;
 import net.minecraft.ResourceLocationException;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Registry;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.StringTagVisitor;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,7 +37,7 @@ import java.util.function.*;
 public class ImGuiEx {
     private static final ImGuiFileDialogPaneFun DUMP_NBT_CALLBACK = new ImGuiFileDialogPaneFun() {
         @Override
-        public void paneFun(String filter, long userDatas, boolean canContinue) {
+        public void accept(String filter, long userDatas, boolean canContinue) {
             ImGui.text("Filter: " + filter);
         }
     };
@@ -74,7 +71,7 @@ public class ImGuiEx {
                         try {
                             NbtIo.writeCompressed(compoundTag, new File(filePathName));
                         } catch (IOException e) {
-                            e.printStackTrace();
+                            AdvancedDebug.LOGGER.error("Failed to write NBT to file", e);
                         }
                     }
                     ImGuiFileDialog.close();
@@ -118,7 +115,7 @@ public class ImGuiEx {
                 try {
                     NbtIo.writeCompressed(compoundTag, new File(filePathName));
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    AdvancedDebug.LOGGER.error("Failed to write NBT to file", e);
                 }
             }
             ImGuiFileDialog.close();
